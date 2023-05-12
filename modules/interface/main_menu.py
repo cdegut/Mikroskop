@@ -6,12 +6,12 @@ from .plate_parameters import Plate_parameters
 from .grid_record import GridRecord
 from .video import Video_record_window
 from .popup import Zoom_popup
+from ..microscope_param import Xmaxrange, Ymaxrange
 
 
 class MainMenu(Interface, tk.Frame):
 
     def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None):
-        tk.Frame.__init__(self, Tk_root)
         Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera)
         self.init_window()
 
@@ -23,7 +23,10 @@ class MainMenu(Interface, tk.Frame):
 
         self.pack(fill=tk.BOTH, expand=1)
 
+        #self.show_record_label()
+        self.show_record_label()
 
+        ######## Maine Menu buttons
         menu_button_w = 20
         menu_button_x = 20
         FreeMoveInterface = tk.Button(self, width=menu_button_w, text="Free Navigation", command=lambda: FreeMovementInterface.open(self))         
@@ -43,6 +46,12 @@ class MainMenu(Interface, tk.Frame):
 
         Quit = tk.Button(self, width=menu_button_w, fg='Red', text="Quit", command=self.exit)
         Quit.place(x=menu_button_x, y=400)
+        ParknQuit = tk.Button(self, width=menu_button_w, fg='Red', text="Park and Quit", command=self.parknquit)
+        ParknQuit.place(x=menu_button_x, y=480)
+    
+    def parknquit(self):
+        self.go_all_axis([Xmaxrange, Ymaxrange/2, 0,0,0])
+        self.exit()
     
     def open(self):
         self.clear_jobs()

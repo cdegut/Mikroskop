@@ -2,13 +2,12 @@ import tkinter as tk
 from .super import Interface
 from ..parametersIO import load_parameters
 from ..microscope_param import Xmaxrange, Ymaxrange
-from .popup import Led_popup, Focus_popup, Zoom_popup
+from .popup import led_focus_zoom_buttons
 
 
 class FreeMovementInterface(Interface, tk.Frame):
     
     def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None):
-        tk.Frame.__init__(self, Tk_root)
         Interface.__init__(self, Tk_root, last_window=self, microscope=microscope, grid=grid, camera=camera)
 
         self.init_window(last_window)
@@ -24,21 +23,16 @@ class FreeMovementInterface(Interface, tk.Frame):
         self.Tk_root.title("Control Panel")
         # allowing the widget to take the full space of the root window
         self.pack(fill=tk.BOTH, expand=1)
+        self.show_record_label()
 
         ##Generic buttons
         self.back_to_main_button()
         self.coordinate_place()
+        led_focus_zoom_buttons(self)
+        self.XYsliders()
 
         ######### creating buttons instances      
-        Snap = tk.Button(self, text="Snap!", command=self.snap_timestamp)
 
-        Focus = tk.Button(self, text="Focus", command=lambda: Focus_popup.open(self))
-
-        Ledbutton = tk.Button(self, text="Led", command=lambda: Led_popup.open(self))
-        ZoomButton = tk.Button(self, text="Zoom", command=lambda: Zoom_popup.open(self))
-
-        GoX =  tk.Button(self, text="Go X", command=lambda: self.microscope.checked_send_motor_cmd(1, self.Xaxis.get()*1000 ))
-        GoY =  tk.Button(self, text="Go Y", command=lambda: self.microscope.checked_send_motor_cmd(2, self.Yaxis.get()*1000 ))
 
 
         Start = tk.Button(self, fg='Green', text="Go Start", command=self.go_start)
@@ -48,27 +42,29 @@ class FreeMovementInterface(Interface, tk.Frame):
         
         self.snap_button()
         
-        #Sliders
-        self.Xaxis = tk.Scale(self, from_=0, to=Xmaxrange/1000, length=220, width=60)  
-        self.Yaxis = tk.Scale(self, from_=0, to=Ymaxrange/1000, length=220, width=60)
+
         
         ######## placing the elements
         ##Sliders
-        self.Xaxis.place(x=0, y=20)
-        GoX.place(x=20, y=260)
-        
-        self.Yaxis.place(x=115, y=20)
-        GoY.place(x=145, y=260)
+
 
         Start.place(x=10,y=310)
         XY_center.place(x=110, y=310)
         #Park.place(x=140,y=300)
         
         Save.place(x=80,y=450)
-        Focus.place(x=80, y=350)
 
-        Ledbutton.place(x=10, y=410)
-        ZoomButton.place(x=80, y=410)
+    def XYsliders(self, position=(0,10)): #### Place the two navigation sliders
+        GoX =  tk.Button(self, width=5, height=2, text="Go X", command=lambda: self.microscope.checked_send_motor_cmd(1, self.Xaxis.get()*1000 ))
+        GoY =  tk.Button(self, width=5, height=2,  text="Go Y", command=lambda: self.microscope.checked_send_motor_cmd(2, self.Yaxis.get()*1000 ))
+        self.Xaxis = tk.Scale(self, from_=0, to=Xmaxrange/1000, length=220, width=60)  
+        self.Yaxis = tk.Scale(self, from_=0, to=Ymaxrange/1000, length=220, width=60)
+    
+        self.Xaxis.place(x=position[0], y=position[1])
+        self.Yaxis.place(x=position[0]+115, y=position[1])
+        GoX.place(x=position[0]+ 15, y=position[1]+230)       
+        GoY.place(x=position[0]+140, y=position[1]+230)
+
 
         self.last_positions = None ##For scale updates
         self.set_scale() ##Continuously update scales, if positions are changed
@@ -81,3 +77,24 @@ class FreeMovementInterface(Interface, tk.Frame):
             Interface._freemove_main.init_window(self)
         else:
             Interface._freemove_main = FreeMovementInterface(self.Tk_root, last_window=self, microscope=self.microscope, grid=self.grid, camera=self.camera)
+
+#main loop for testing only
+if __name__ == "__main__": 
+    from ..microscope import Microscope
+    from ..position_grid import PositionsGrid
+    from ..microscope_param import *
+    from ..cameracontrol import previewPiCam
+
+    ### Object for microscope to run
+    microscope = Microscope(addr, ready_pin)
+    grid = PositionsGrid(microscope)
+    #camera = picamera.PiCamera()
+
+    #Tkinter object
+    Tk_root = tk.Tk()
+    Tk_root.geometry("230x560+800+35")   
+    
+    ### Don't display border if on the RPi display
+    Interface._freemove_main = FreeMovementInterface(Tk_root, last_window=None, microscope=microscope, grid=grid)
+
+    Tk_root.mainloop()

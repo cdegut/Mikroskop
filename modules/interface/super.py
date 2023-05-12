@@ -13,6 +13,7 @@ from ..microscope_param import Xmaxrange, Ymaxrange
 class Interface: 
 
     def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None):
+        tk.Frame.__init__(self, Tk_root)
         self.Tk_root = Tk_root
         self.microscope = microscope
         self.grid = grid
@@ -45,13 +46,14 @@ class Interface:
     #####################################################
     _coordinates_job = None
     _scale_job = None
+    _blink = None
     _job1 = None
     _job2 = None
     _job3 = None
-    _video_timer = None ## this job should never be cleared, only stoped by the proper method
+    _video_timer = None ## This is the timer object, it is started when recording video and stopped after it should not be cleared on window change
 
     def clear_jobs(self): ## Clear all tk job that have been put in the job list
-        jobs_list = [Interface._coordinates_job, Interface._scale_job, Interface._job1, Interface._job2, Interface._job3]
+        jobs_list = [Interface._coordinates_job, Interface._scale_job, Interface._blink, Interface._job1, Interface._job2, Interface._job3]
         for job in jobs_list:
             if job:
                 self.Tk_root.after_cancel(job)
@@ -61,6 +63,7 @@ class Interface:
         Interface._job1 = None
         Interface._job2 = None
         Interface._job3 = None
+        Interface._blink = None
 
 
     ######## update the label to corespond tothe actual curent position of the microscope
@@ -69,7 +72,7 @@ class Interface:
         text_coordinates = "X: " + str(positions[0]) + "   Y: " + str(positions[1]) + "   F: " + str(positions[2]) + "\nLed "+ str(positions[4])  + ": " + str(positions[3])
         self.Coordinates.configure(text=text_coordinates)
 
-        if hasattr(self, 'well_info'):
+        if hasattr(self, 'well_info'): ## update the well_info atribute if needed
             self.well_info.configure(text=self.grid.current_grid_position)
         
         Interface._coordinates_job = self.after(500, self.update_coordinates_label)
@@ -107,6 +110,15 @@ class Interface:
         picture_name = self.timestamp()
         save_image(self.camera, picture_name)
     
+    def show_record_label(self):
+        if Interface._video_timer:
+            self.RecordingLabel = tk.Label(self, fg = "red4", font=("Arial", 25), text = "◉")
+            self.RecordingLabel.place(x=200, y=520)
+            Interface._blink = self.after(1000, self.hide_record_label)
+    
+    def hide_record_label(self):
+        self.RecordingLabel.destroy()
+        self.after(500, self.show_record_label)
 
     
     #############################################
@@ -142,17 +154,17 @@ class Interface:
     
     _exit = False
     def exit(self):
-        self.clear_jobs()
+        #self.clear_jobs() no need to clear jobs it is done by the root.destroy comand
         Interface._exit = True
 
     #############
     ###Generic buttons
 
-    def back_to_main_button(self, position=[0,450]):
+    def back_to_main_button(self, position=[10,450]):
         Main = tk.Button(self, fg='Red', text="Main", command=self.back_to_main)
         Main.place(x=position[0],y=position[1])
     
-    def coordinate_place(self, x_p=10, y_p=490):
+    def coordinate_place(self, x_p=10, y_p=500):
         self.Coordinates = tk.Label(self, text="test")
         self.Coordinates.place(x=x_p, y=y_p)
         self.update_coordinates_label()
@@ -164,6 +176,8 @@ class Interface:
     def back_button(self, position=(10,450)):
         Back =  tk.Button(self, text="Back", command=self.close)
         Back.place(x=position[0], y=position[1])
+
+    
 
        
 

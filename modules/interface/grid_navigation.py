@@ -2,13 +2,12 @@ import tkinter as tk
 from ..parametersIO import load_parameters
 from .super import Interface
 from ..microscope_param import Xmaxrange, Ymaxrange
-from .popup import Led_popup, Focus_popup
+from .popup import led_focus_zoom_buttons
 
 
 class MainGridInterface(Interface, tk.Frame): #main GUI window
     
     def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None):
-        tk.Frame.__init__(self, Tk_root)
         Interface.__init__(self, Tk_root, last_window=self, microscope=microscope, grid=grid, camera=camera)
 
         self.init_window(last_window)
@@ -28,55 +27,48 @@ class MainGridInterface(Interface, tk.Frame): #main GUI window
         ##Generic buttons
         self.back_to_main_button()
         self.coordinate_place()
+        led_focus_zoom_buttons(self)
 
-        # creating buttons instances           
+        ##Navigation pads as function
+        self.grid_position_pad((100,60))
+        self.grid_navigation_pad((100,220))
 
-        Focus = tk.Button(self, text="Focus", command=lambda: Focus_popup.open(self))
-        ObjOn = tk.Button(self, text="ObjOn", command=lambda: self.microscope.checked_send_motor_cmd(3, self.start_position[2] ))
-        ObjOff = tk.Button(self, text="ObjOff", command=lambda: self.microscope.checked_send_motor_cmd(3, 0 ))
-        
-        Ledbutton = tk.Button(self, text="Led", command=lambda: Led_popup.open(self))
+        # creating buttons instances          
 
-        Start = tk.Button(self, fg='Green', text="Start", command=self.go_start)
-        H12 = tk.Button(self, text="go H12", command=lambda: self.grid.go("H12"))
-        C6 = tk.Button(self, text="go C6", command=lambda: self.grid.go("C6"))
+        self.snap_button()
 
-        NextC = tk.Button(self, text="Col +", command=lambda: self.grid.go_next_well("column", 1))
-        NextL = tk.Button(self, text="Line +", command=lambda:self.grid.go_next_well("line", 1))
-        PrevC = tk.Button(self, text="Col -", command=lambda: self.grid.go_next_well("column", -1))
-        PrevL = tk.Button(self, text="Line -", command=lambda:self.grid.go_next_well("line", -1))
-
-        SubW = tk.Button(self, text="Sub", command=lambda:self.grid.switch_subwell())
-
-        Park = tk.Button(self, fg='Green', text="Park", command=lambda: self.go_all_axis([Xmaxrange, Ymaxrange/2, 0,0]))
-
-        Snap = tk.Button(self, text="Snap!", command=self.snap_grid)
-
-        self.well_info = tk.Label(self, text="## - #")
-        
-        
         # placing the elements
-        Start.place(x=0,y=10)
-        H12.place(x=150, y=10)
-        C6.place(x=75, y=10)
 
-        PrevC.place(x=10, y=100)
-        NextC.place(x=150, y=100)
-        NextL.place(x=75, y=60)
-        PrevL.place(x=75, y=140)
-        self.well_info.place(x=90, y=105)
-        SubW.place(x=150, y=140)
+    
+    def grid_position_pad(self, pad_position):
+        A1 = tk.Button(self, width=3, heigh=2,  fg='Green', text="A1", command=lambda: self.grid.go("A1"))
+        A12 = tk.Button(self, width=3, heigh=2, text="A12", command=lambda: self.grid.go("A12"))
+        H1 = tk.Button(self, width=3, heigh=2, text="H1", command=lambda: self.grid.go("H1"))
+        H12 = tk.Button(self, width=3, heigh=2, text="H12", command=lambda: self.grid.go("H12"))
+        C6 = tk.Button(self, width=3, heigh=2, text="C6", command=lambda: self.grid.go("C6"))
+        ### Pad as relative position to pad_position       
+        A1.place(x=pad_position[0]-90, y=pad_position[1]-50)
+        A12.place(x=pad_position[0]+70, y=pad_position[1]-50)
+        H1.place(x=pad_position[0]-90, y=pad_position[1])
+        H12.place(x=pad_position[0]+70, y=pad_position[1])
+        C6.place(x=pad_position[0]-10, y=pad_position[1]-25)
+    
+    def grid_navigation_pad(self, pad_position):
+        NextC = tk.Button(self, text="Col +",  width=5, heigh=2, command=lambda: self.grid.go_next_well("column", 1))
+        NextL = tk.Button(self, text="Line +", width=5, heigh=2, command=lambda:self.grid.go_next_well("line", 1))
+        PrevC = tk.Button(self, text="Col -",  width=5, heigh=2, command=lambda: self.grid.go_next_well("column", -1))
+        PrevL = tk.Button(self, text="Line -", width=5, heigh=2, command=lambda:self.grid.go_next_well("line", -1))
+        SubW = tk.Button(self, text="Sub", command=lambda:self.grid.switch_subwell())
+        self.well_info = tk.Label(self, text="## - #")
+
+        PrevC.place(x=pad_position[0]-90, y=pad_position[1])
+        NextC.place(x=pad_position[0]+60, y=pad_position[1])
+        NextL.place(x=pad_position[0]-15, y=pad_position[1]+50)
+        PrevL.place(x=pad_position[0]-15, y=pad_position[1]-50)
+        self.well_info.place(x=pad_position[0], y=pad_position[1]+10)
+        SubW.place(x=pad_position[0]+70, y=pad_position[1]+60)
 
 
-        Park.place(x=0,y=190)
-
-        ObjOff.place(x=70, y=360)
-        ObjOn.place(x=140, y=360)
-        Focus.place(x=0, y=360)
-
-        Ledbutton.place(x=0, y=400)
-
-        Snap.place(x=135,y=450)
 
     
     def open(self):
@@ -86,4 +78,28 @@ class MainGridInterface(Interface, tk.Frame): #main GUI window
             Interface._grid_main.init_window(self)
         else:
             Interface._grid_main = MainGridInterface(self.Tk_root, grid=self.grid, camera=self.camera,  microscope=self.microscope)
+
+#main loop for testing only
+if __name__ == "__main__": 
+    from ..microscope import Microscope
+    from ..position_grid import PositionsGrid
+    import picamera
+    from ..microscope_param import *
+    from ..cameracontrol import previewPiCam
+
+    ### Object for microscope to run
+    microscope = Microscope(addr, ready_pin)
+    grid = PositionsGrid(microscope)
+    camera = picamera.PiCamera()
+
+    #Tkinter object
+    Tk_root = tk.Tk()
+    Tk_root.geometry("230x560+800+35")   
     
+    ### Don't display border if on the RPi display
+    Interface._grid_main = MainGridInterface(Tk_root, last_window=None, microscope=microscope, grid=grid, camera=camera)
+
+    #start picamPreview
+    #previewPiCam(camera)
+
+    Tk_root.mainloop()

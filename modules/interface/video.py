@@ -2,6 +2,7 @@ from .super import Interface
 import tkinter as tk
 from ..cameracontrol import start_recording
 from time import time
+from .popup import led_focus_zoom_buttons
 
 
 class Video_record_window(Interface, tk.Frame):
@@ -21,16 +22,22 @@ class Video_record_window(Interface, tk.Frame):
     ### Generate the window content, called every time window is (re)opened 
     def init_window(self):
         self.pack(fill=tk.BOTH, expand=1)
+
+        #generic buttons
         self.back_to_main_button()
         self.coordinate_place()
+        self.show_record_label()
+        led_focus_zoom_buttons(self)
 
         
         self.timer = tk.Label(self, text="0 min 0 sec")
+        QualityLabel = tk.Label(self, text="Video Quality:")
         QualityMenu = tk.OptionMenu(self, self.quality, *[1600,1200,720,480])        
      
         self.record_button_place((60,50))
-        self.timer.place(x=80, y=100)      
-        QualityMenu.place(x=20, y=200)
+        self.timer.place(x=80, y=100)
+        QualityLabel.place(x=10, y=150)      
+        QualityMenu.place(x=20, y=170)
 
         self.timer_update()
         self.snap_button()
@@ -52,6 +59,7 @@ class Video_record_window(Interface, tk.Frame):
         Interface._video_timer = VideoTimer()
         Interface._video_timer.start()
         self.timer_update()
+        self.show_record_label()
     
     ##### Update the timer text if the _video_timer object exist
     def timer_update(self):
@@ -70,7 +78,10 @@ class Video_record_window(Interface, tk.Frame):
             self.recorder = None
             self.Stop.place_forget()
             self.Rec.place(x=position[0], y=position[1])
-            Interface._video_timer = None  ## Deactivate the timer 
+            Interface._video_timer = None  ## Deactivate the timer
+            if Interface._blink:
+                self.Tk_root.after_cancel(Interface._blink)
+            self.hide_record_label()
 
     def open(self):
         self.clear_jobs()

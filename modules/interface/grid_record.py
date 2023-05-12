@@ -6,7 +6,6 @@ import time
 class GridRecord(Interface, tk.Frame):
 
     def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None):
-        tk.Frame.__init__(self, Tk_root)
         Interface.__init__(self, Tk_root, last_window=self, microscope=microscope, grid=grid, camera=camera)
 
         self.last_window = last_window
@@ -199,3 +198,5 @@ class Stop_popup(tk.Frame): #widget to fill popup window, show a stop button and
     
     def stop_switch(self):
         self.stop = True    
+
+

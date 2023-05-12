@@ -3,12 +3,18 @@ import tkinter as tk
 from ..parametersIO import update_parameters_led, load_parameters, update_parameters_start
 from ..cameracontrol import change_zoom
 
+def led_focus_zoom_buttons(self, position=400):
+    Focus = tk.Button(self, width=4, text="Focus", command=lambda: Focus_popup.open(self))     
+    Ledbutton = tk.Button(self, width=4, text="Led", command=lambda: Led_popup.open(self))
+    ZoomButton = tk.Button(self, width=4, text="Zoom", command=lambda: Zoom_popup.open(self))
+    Focus.place(x=80, y=position)
+    Ledbutton.place(x=10, y=position)
+    ZoomButton.place(x=150, y=position)
+
 class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop button and a modifiable label
 
     def __init__(self, Tk_root, last_window, microscope):
-        tk.Frame.__init__(self, Tk_root)
         Interface.__init__(self, Tk_root,last_window=self, microscope=microscope)
-
         self.init_window(last_window)
 
     ###########
@@ -69,7 +75,6 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
 class Focus_popup(Interface, tk.Frame):
 
     def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None):
-        tk.Frame.__init__(self, Tk_root)
         Interface.__init__(self, Tk_root,last_window=self, microscope=microscope)    
         self.init_window(last_window)
 
@@ -80,6 +85,7 @@ class Focus_popup(Interface, tk.Frame):
         
         self.Tk_root.title("Focus") 
         self.pack(fill=tk.BOTH, expand=1)
+        self.show_record_label()
 
         Fp100 = tk.Button(self, text="Fcs +200", command=lambda: self.microscope.move_1axis(3,200))
         Fm100 = tk.Button(self, text="Fcs -200", command=lambda: self.microscope.move_1axis(3,-200))
@@ -125,9 +131,7 @@ class Focus_popup(Interface, tk.Frame):
 class Zoom_popup(Interface, tk.Frame): #widget to fill popup window, show an stop button and a modifiable label
 
     def __init__(self, Tk_root, last_window=None, microscope=None, camera=None):
-        tk.Frame.__init__(self, Tk_root)
         Interface.__init__(self, Tk_root, microscope=microscope, camera=camera)
-
         self.init_window(last_window)
 
     ###########
@@ -136,13 +140,14 @@ class Zoom_popup(Interface, tk.Frame): #widget to fill popup window, show an sto
         self.last_window = last_window 
         self.Tk_root.title("Zoom") 
         self.pack(fill=tk.BOTH, expand=1)
+        self.show_record_label()
 
         zoom_buttons = [(" 1x", 1),("1.5x", 0.75),(" 2x", 0.5),(" 4x", 0.25),(" 8x", 0.125)]
-        y_p = 50
+        y_p = 30
         for button in zoom_buttons:
-            b = tk.Button(self, text=button[0], width=10, command=lambda value = button[1]: change_zoom(self.camera, value))
-            b.place(x=70, y=y_p)
-            y_p = y_p+50
+            b = tk.Button(self, text=button[0], width=10, heigh=2, command=lambda value = button[1]: change_zoom(self.camera, value))
+            b.place(x=60, y=y_p)
+            y_p = y_p+60
 
         self.back_button()
         self.snap_button()

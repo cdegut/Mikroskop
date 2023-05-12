@@ -59,8 +59,7 @@ if __name__ == "__main__":
         Tk_root.update_idletasks()
         Tk_root.update()
 
-        if Interface._exit: 
-            Tk_root.destroy()
+    Tk_root.destroy()
 
     #GPIO cleanup
     GPIO.cleanup()
