@@ -1,9 +1,10 @@
-from ..cameracontrol import save_image, start_recording
-from ..parametersIO import load_parameters
+from ..cameracontrol import save_image
+from ..parametersIO import load_parameters, update_parameters_start
 import tkinter as tk
 from ..microscope import Microscope
 from ..position_grid import PositionsGrid
 from time import localtime
+from ..microscope_param import Xmaxrange, Ymaxrange
 
 ############
 ## Super class that contain shared functions for all interface windows
@@ -62,6 +63,7 @@ class Interface:
         Interface._job3 = None
 
 
+    ######## update the label to corespond tothe actual curent position of the microscope
     def update_coordinates_label(self):
         positions = self.microscope.positions
         text_coordinates = "X: " + str(positions[0]) + "   Y: " + str(positions[1]) + "   F: " + str(positions[2]) + "\nLed "+ str(positions[4])  + ": " + str(positions[3])
@@ -89,7 +91,7 @@ class Interface:
     ####### Pictures, videos ##########################
     ###################################################
 
-    def timestamp(self):
+    def timestamp(self): ### return a timestamp for file naming
         current_time = localtime()
         date = str(current_time[0])[2:] + str(current_time[1]).zfill(2) + str(current_time[2]).zfill(2) + "_"  \
             + str(current_time[3]).zfill(2) + str(current_time[4]).zfill(2) + str(current_time[5]).zfill(2)
@@ -141,7 +143,6 @@ class Interface:
     _exit = False
     def exit(self):
         self.clear_jobs()
-        #self.Tk_root.destroy()
         Interface._exit = True
 
     #############
@@ -155,6 +156,14 @@ class Interface:
         self.Coordinates = tk.Label(self, text="test")
         self.Coordinates.place(x=x_p, y=y_p)
         self.update_coordinates_label()
+    
+    def snap_button(self, position=(10,350)):
+        Snap = tk.Button(self, text="Snap!", command=self.snap_timestamp)
+        Snap.place(x=position[0], y=position[1])
+    
+    def back_button(self, position=(10,450)):
+        Back =  tk.Button(self, text="Back", command=self.close)
+        Back.place(x=position[0], y=position[1])
 
        
 
