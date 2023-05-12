@@ -1,0 +1,1 @@
+{"lines": 8, "columns": 12, "subwells": 1, "subwells_spacing": [3000, 0, 0], "repeat": 2, "delay": 2, "Xsteps": 7085, "Ysteps": 1814, "start": [30040, 36920, 18147, 208, 1], "start_well": "A1", "finish_well": "B2", "grid_subwells": 1, "data_dir": "/home/pi/microscope_data/"}

@@ -1,0 +1,8 @@
+Python3 software
+
+Python package needed:
+imutils
+opencv-python
+
+system dependancies :
+libatlas-base-dev
