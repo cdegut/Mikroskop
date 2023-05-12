@@ -4,11 +4,11 @@ from ..parametersIO import load_parameters, update_parameters
 from .freemove import FreeMovementInterface
 
 class Plate_parameters(Interface,tk.Frame):
-    def __init__(self, Tk_window, microscope, grid, last_window):
+    def __init__(self, Tk_root, microscope, grid, last_window):
         Interface.__init__(self, Tk_root, microscope=microscope, grid=grid)
         self.last_window = last_window
         self.microscope = microscope                 
-        self.Tk_window = Tk_window
+        self.Tk_window = Tk_root
         self.grid = grid
         self.init_window()
 
@@ -90,9 +90,9 @@ class Plate_parameters(Interface,tk.Frame):
 
 class XYsteps_popup(Interface, tk.Frame):
 
-    def __init__(self, microscope, grid, Xsteps, Ysteps, last_window, Tk_window):
+    def __init__(self, microscope, grid, Xsteps, Ysteps, last_window, Tk_root):
         Interface.__init__(self, Tk_root, microscope=microscope, grid=grid)               
-        self.Tk_window = Tk_window
+        self.Tk_window = Tk_root
         self.Xold_steps = Xsteps
         self.Yold_steps = Ysteps
         self.last_window = last_window
