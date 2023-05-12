@@ -11,7 +11,8 @@ class Plate_parameters(Interface,tk.Frame):
         self.grid = grid
         self.init_window()
 
-   #Creation of init_window
+    ###########
+    ### Generate the window content, called every time window is (re)opened 
     def init_window(self):
  
         self.Tk_window.title("Grid") 

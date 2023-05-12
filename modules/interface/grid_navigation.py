@@ -14,8 +14,8 @@ class MainGridInterface(Interface, tk.Frame): #main GUI window
         self.init_window(last_window)
         self.start_position = load_parameters()["start"]
 
-
-    #Creation of init_window
+    ###########
+    ### Generate the window content, called every time window is (re)opened 
     def init_window(self, last_window):
         self.last_window = last_window
               

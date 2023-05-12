@@ -35,18 +35,32 @@ def save_img_thread(camera, name):
      camera.capture(name, format = 'png')
 
 class VideoRecorder(Thread):
-    def __init__(self,camera, video_name,event_rec_on):
+    def __init__(self,camera, video_quality, video_name,event_rec_on):
         Thread.__init__(self)
         self.camera = camera
         self.video_name = video_name
         self.event = event_rec_on
+        self.video_quality = video_quality
 
     def run(self):
-        old_resolution = self.camera.resolution
+        ## Save the current preview settings
+        preview_resolution = self.camera.resolution
+
+        ## If the video quality demanded is higher than the preview, get back to the preview (avoided useless oversampling of zoomed in video)
+        if preview_resolution[0] < self.video_quality:          
+            record_resolution = preview_resolution
+        
+        ## else set the camera to the new resolution
+        else:
+            record_resolution = (self.video_quality, 
+                int((self.video_quality)*(camera_full_resolution[1]/camera_full_resolution[0])))
 
         #### Change resolution if incompatible with the video
-        if old_resolution[0] > h264_max_resolution[0]:
-            self.camera.resolution=(h264_max_resolution[0],h264_max_resolution[1])
+        if record_resolution[0] > h264_max_resolution[0]:
+            record_resolution = h264_max_resolution
+        
+        #### Set the resolution
+        self.camera.resolution = record_resolution
 
         ### Start recording and wait for stop button
         self.camera.start_recording(self.video_name)
@@ -57,18 +71,20 @@ class VideoRecorder(Thread):
         self.camera.stop_recording()
 
         ### put back the former resolution setting
-        if old_resolution != self.camera.resolution:
-            self.camera.resolution= old_resolution
+        if preview_resolution != self.camera.resolution:
+            self.camera.resolution= preview_resolution
 
-def start_recording(camera, video_name="test"):
+
+##### Function that generate the worker and pass the information to it
+def start_recording(camera, video_quality=320, video_name="test"):
     data_dir = load_parameters()["data_dir"]
     create_folder(data_dir + "rec/")
     data_name = data_dir + "rec/" + video_name + ".h264"
     rec_off = Event()
-    rec = VideoRecorder(camera, data_name, rec_off)
+    rec = VideoRecorder(camera, video_quality, data_name, rec_off)
     rec.start()
 
-    return rec , rec_off
+    return rec , rec_off ## return the worker and the event to stop the recording
 
 def stop_video(off_event):
     off_event.set()

@@ -12,24 +12,29 @@ class Video_record_window(Interface, tk.Frame):
         
         self.rec_off_event = None
         self.recorder = None
-        
-        self.init_window()
+        self.quality = tk.StringVar()  
+        self.quality.set(720)      
 
+        self.init_window() 
 
-    ######### generate local window ######
+    ###########
+    ### Generate the window content, called every time window is (re)opened 
     def init_window(self):
         self.pack(fill=tk.BOTH, expand=1)
         self.back_to_main_button()
         self.coordinate_place()
-        self.record_button_place((60,50))
+
+        
         self.timer = tk.Label(self, text="0 min 0 sec")
-        self.timer.place(x=80, y=100)
+        QualityMenu = tk.OptionMenu(self, self.quality, *[1600,1200,720,480])        
+     
+        self.record_button_place((60,50))
+        self.timer.place(x=80, y=100)      
+        QualityMenu.place(x=20, y=200)
+
         self.timer_update()
-
-        self.quality = tk.StringVar()
-
-
-   
+        self.snap_button()
+        
     def record_button_place(self, rec_position):
         self.Rec = tk.Button(self, text="Start Recording", command=lambda: self.start_recording_action(rec_position))
         self.Stop = tk.Button(self, fg='Red', text="Stop Recording", command=lambda: self.stop_recording_action(rec_position))
@@ -41,7 +46,7 @@ class Video_record_window(Interface, tk.Frame):
         
     def start_recording_action(self, position):
         timestamp = self.timestamp()
-        self.recorder, self.rec_off_event = start_recording(self.camera, timestamp)
+        self.recorder, self.rec_off_event = start_recording(self.camera, int(self.quality.get()), timestamp)
         self.Rec.place_forget()
         self.Stop.place(x=position[0], y=position[1])
         Interface._video_timer = VideoTimer()

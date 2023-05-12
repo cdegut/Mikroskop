@@ -22,7 +22,8 @@ class GridRecord(Interface, tk.Frame):
 
         self.init_window()
 
-   #Creation of init_window
+    ###########
+    ### Generate the window content, called every time window is (re)opened 
     def init_window(self):
 
         self.pack(fill=tk.BOTH, expand=1)
@@ -182,7 +183,8 @@ class Stop_popup(tk.Frame): #widget to fill popup window, show a stop button and
         self.init_window()
 
 
-    #Creation of init_window
+    ###########
+    ### Generate the window content, called every time window is (re)opened 
     def init_window(self):
 
         self.Tk_window.geometry("220x540+800+35")      

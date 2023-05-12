@@ -14,6 +14,19 @@ from modules.microscope_param import *
 #main loop
 if __name__ == "__main__": 
 
+    #Generate the objects for the physical interface
+    try:
+        encoder_F = Encoder(6, 12, "up",sw_pin=21)
+        encoder_Y = Encoder(19, 16,"up",sw_pin=13)
+        encoder_X = Encoder(26, 20,"up",sw_pin=5)
+    except: ##sometimes crash, try to redo it after gpio cleanup
+        GPIO.cleanup()
+        GPIO.setmode(GPIO.BCM)
+        print("Trying the controller set up again")
+        encoder_F = Encoder(6, 12, "up",sw_pin=21)
+        encoder_Y = Encoder(19, 16,"up",sw_pin=13)
+        encoder_X = Encoder(26, 20,"up",sw_pin=5)
+
     ### Object for microscope to run
     microscope = Microscope(addr, ready_pin)
     grid = PositionsGrid(microscope)
@@ -32,10 +45,6 @@ if __name__ == "__main__":
     #start picamPreview
     previewPiCam(camera)
 
-    #Generate the objects for the physical interface
-    encoder_F = Encoder(6, 12, "up",sw_pin=21)
-    encoder_Y = Encoder(19, 16,"up",sw_pin=13)
-    encoder_X = Encoder(26, 20,"up",sw_pin=5)
 
 
     ## Microscope controler main loop
