@@ -4,6 +4,7 @@ from .super import Interface
 from ..microscope_param import Xmaxrange, Ymaxrange
 from .popup import led_focus_zoom_buttons
 
+plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
 
 class MainGridInterface(Interface, tk.Frame): #main GUI window
     
@@ -11,7 +12,7 @@ class MainGridInterface(Interface, tk.Frame): #main GUI window
         Interface.__init__(self, Tk_root, last_window=self, microscope=microscope, grid=grid, camera=camera)
 
         self.init_window(last_window)
-        self.start_position = load_parameters()["start"]
+        self.start_position = load_parameters(plate_name)["start"]
 
     ###########
     ### Generate the window content, called every time window is (re)opened 
@@ -24,17 +25,19 @@ class MainGridInterface(Interface, tk.Frame): #main GUI window
         # allowing the widget to take the full space of the root window
         self.pack(fill=tk.BOTH, expand=1)
 
+        ###### Load the proper dynamic endstop for the curent window
+        self.microscope.set_dynamic_endsotop(load_parameters(plate_name)["dyn_endstops"])
+
         ##Generic buttons
         self.back_to_main_button()
-        self.coordinate_place()
         led_focus_zoom_buttons(self)
 
         ##Navigation pads as function
         self.grid_position_pad((100,60))
         self.grid_navigation_pad((100,220))
+        self.coordinate_place()
 
         # creating buttons instances          
-
         self.snap_button()
 
         # placing the elements
@@ -67,10 +70,7 @@ class MainGridInterface(Interface, tk.Frame): #main GUI window
         PrevL.place(x=pad_position[0]-15, y=pad_position[1]-50)
         self.well_info.place(x=pad_position[0], y=pad_position[1]+10)
         SubW.place(x=pad_position[0]+70, y=pad_position[1]+60)
-
-
-
-    
+   
     def open(self):
         self.clear_jobs()
         self.clear_frame()
@@ -78,6 +78,14 @@ class MainGridInterface(Interface, tk.Frame): #main GUI window
             Interface._grid_main.init_window(self)
         else:
             Interface._grid_main = MainGridInterface(self.Tk_root, grid=self.grid, camera=self.camera,  microscope=self.microscope)
+    
+    def go_start(self):
+        start_position = load_parameters("Free")["start"]
+        led = load_parameters("Free")["led"]
+        self.microscope.go_absolute(start_position) #this function return only after arduin is ready
+        self.microscope.set_ledpwr(led[0])
+        self.microscope.set_led_state(led[1])
+
 
 #main loop for testing only
 if __name__ == "__main__": 

@@ -11,7 +11,7 @@ class FreeMovementInterface(Interface, tk.Frame):
         Interface.__init__(self, Tk_root, last_window=self, microscope=microscope, grid=grid, camera=camera)
 
         self.init_window(last_window)
-        self.start_position = load_parameters()["start"]
+        self.start_position = load_parameters("Free")["start"]
         
 
     ###########
@@ -31,14 +31,13 @@ class FreeMovementInterface(Interface, tk.Frame):
         led_focus_zoom_buttons(self)
         self.XYsliders()
 
+        ###### Load the proper dynamic endstop for the curent window
+        self.microscope.set_dynamic_endsotop(load_parameters("Free")["dyn_endstops"])
+
         ######### creating buttons instances      
-
-
-
         Start = tk.Button(self, fg='Green', text="Go Start", command=self.go_start)
-        #Park = tk.Button(self, fg='Green', text="Park", command=lambda: self.go_all_axis([Xmaxrange, Ymaxrange/2, 0,0,0]))
         XY_center = tk.Button(self, fg='Green', text="CentXY", command=self.go_centerXY)
-        Save = tk.Button(self, fg='Green', text="Save Start", command=self.save_positions)
+        Save = tk.Button(self, fg='Green', text="Save Start", command=lambda: self.save_positions("Free"))
         
         self.snap_button()
         
@@ -69,6 +68,12 @@ class FreeMovementInterface(Interface, tk.Frame):
         self.last_positions = None ##For scale updates
         self.set_scale() ##Continuously update scales, if positions are changed
 
+    def go_start(self):
+        start_position = load_parameters("Free")["start"]
+        led = load_parameters("Free")["led"]
+        self.microscope.go_absolute(start_position) #this function return only after arduin is ready
+        self.microscope.set_ledpwr(led[0])
+        self.microscope.set_led_state(led[1])
 
     def open(self):
         self.clear_jobs()

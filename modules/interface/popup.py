@@ -1,7 +1,8 @@
 from .super import Interface
 import tkinter as tk
-from ..parametersIO import update_parameters_led, load_parameters, update_parameters_start
+from ..parametersIO import update_parameters, load_parameters, update_parameters_start
 from ..cameracontrol import change_zoom
+
 
 def led_focus_zoom_buttons(self, position=400):
     Focus = tk.Button(self, width=4, text="Focus", command=lambda: Focus_popup.open(self))     
@@ -14,27 +15,28 @@ def led_focus_zoom_buttons(self, position=400):
 class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop button and a modifiable label
 
     def __init__(self, Tk_root, last_window, microscope):
-        Interface.__init__(self, Tk_root,last_window=self, microscope=microscope)
+        Interface.__init__(self, Tk_root, last_window, microscope)
         self.init_window(last_window)
 
     ###########
     ### Generate the window content, called every time window is (re)opened 
-    def init_window(self, last_window):    
-
+    def init_window(self, last_window):  
         self.last_window = last_window
+        self.parameters_subset = self.guess_parameters_subset()
+        
         self.Tk_root.title("Led") 
         self.pack(fill=tk.BOTH, expand=1)
 
-        self.Led = tk.Scale(self, from_=0, to=255, length=200, width=60, orient=tk.HORIZONTAL)
-        Default = tk.Button(self, text="Default LED 1&2 pwr = 200", command=self.set_default)
-        Save =  tk.Button(self, text="Save", command=lambda: update_parameters_led(self.microscope.positions[3], self.microscope.positions[4]))
+        self.Led_scale = tk.Scale(self, from_=0, to=255, length=200, width=60, orient=tk.HORIZONTAL)
+        Default = tk.Button(self, text="Default LED 1 pwr = 200", command=self.set_default)
+        Save =  tk.Button(self, text="Save", command=self.save_led)
 
         Led1 = tk.Button(self, text="Led 1", command= lambda: self.microscope.set_led_state(1))
         Led2 = tk.Button(self, text="Led 2", command= lambda: self.microscope.set_led_state(2))
         Led12 = tk.Button(self, text="Led 1+2", command= lambda: self.microscope.set_led_state(3))
         LedOff = tk.Button(self, text="Led Off", command= lambda: self.microscope.set_led_state(0))
 
-        self.Led.place(x=10,y=100)
+        self.Led_scale.place(x=10,y=100)
 
         Save.place(x=20, y=380)
         
@@ -45,23 +47,28 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
         Led12.place(x=20,y=300)   
         LedOff.place(x=110,y=300) 
 
-        self.Led.set(self.microscope.positions[3])
+        self.Led_scale.set(self.microscope.positions[3])
 
         self.set_led()
         self.back_button()
+    
+    def save_led(self):
+        update_parameters([("led",[self.microscope.positions[3], self.microscope.positions[4]])], 
+                          self.parameters_subset)
 
     def set_led(self): ## Read the scale and set the led at the proper power
-        pwr = self.Led.get()
+        pwr = self.Led_scale.get()
         if pwr != self.microscope.positions[3]:
             self.microscope.positions[3] = pwr
             self.microscope.set_ledpwr(pwr)
         Interface._job1 = self.after(100, self.set_led)
 
-    def set_default(self):
-        self.microscope.set_ledpwr(200)
-        self.microscope.positions[3] = 200
-        self.microscope.set_led_state(3)
-        self.Led.set(self.microscope.positions[3])
+    def set_default(self): ## Read led power from Default parameter set
+        led = load_parameters("Default")["led"]
+        self.microscope.set_ledpwr(led[0])
+        self.microscope.positions[3] = led[0]
+        self.microscope.set_led_state(led[1])
+        self.Led_scale.set(self.microscope.positions[3])
     
     def open(self):
         self.clear_jobs()
@@ -86,6 +93,7 @@ class Focus_popup(Interface, tk.Frame):
         self.Tk_root.title("Focus") 
         self.pack(fill=tk.BOTH, expand=1)
         self.show_record_label()
+        self.parameters_subset = self.guess_parameters_subset()
 
         Fp100 = tk.Button(self, text="Fcs +200", command=lambda: self.microscope.move_1axis(3,200))
         Fm100 = tk.Button(self, text="Fcs -200", command=lambda: self.microscope.move_1axis(3,-200))
@@ -97,9 +105,9 @@ class Focus_popup(Interface, tk.Frame):
         Fm5 = tk.Button(self, text="Fcs -5  ", command=lambda: self.microscope.move_1axis(3,-5))
 
         save = tk.Button(self, fg='green',text="Save", command=self.save_focus)
-        Reset = tk.Button(self, fg='red', text="Reset", command=lambda: self.microscope.checked_send_motor_cmd(3, load_parameters()["start"][2]))
+        Reset = tk.Button(self, fg='red', text="Reset", command=lambda: self.microscope.checked_send_motor_cmd(3, load_parameters(self.parameters_subset)["start"][2]))
         
-        ObjOn = tk.Button(self, text="ObjOn", command=lambda: self.microscope.checked_send_motor_cmd(3, self.start_position[2] ))
+        ObjOn = tk.Button(self, text="ObjOn", command=lambda:  self.microscope.checked_send_motor_cmd(3, load_parameters(self.parameters_subset)["start"][2] - 600 ))
         ObjOff = tk.Button(self, text="ObjOff", command=lambda: self.microscope.checked_send_motor_cmd(3, 0 ))
         
         Fp100.place(x=10, y=200)
@@ -116,9 +124,11 @@ class Focus_popup(Interface, tk.Frame):
         save.place(x=80,y=350)
         Reset.place(x=10, y=350)
         self.back_button()
+
     def save_focus(self):
-        update_parameters_start(None , None, self.microscope.positions[2])
+        update_parameters_start(None , None, self.microscope.positions[2], self.parameters_subset)
         self.grid.generate_grid()
+   
     
     def open(self):
         self.clear_jobs()

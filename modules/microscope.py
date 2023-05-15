@@ -3,6 +3,7 @@ import time
 from smbus2 import SMBus, i2c_msg
 import RPi.GPIO as GPIO
 from .microscope_param import *
+from .parametersIO import load_parameters
 
 # Use GPIO numbers not pin numbers
 GPIO.setmode(GPIO.BCM)
@@ -15,17 +16,18 @@ class Microscope:
         GPIO.setup(ready_pin, GPIO.IN) # set up the GPIO channels - one input for ready pin
         self.wait_ready()
         self.positions = self.checked_read_positions()
-        self.set_dynamic_endsotop(soft_Xmax, soft_Xmin, soft_Ymax, soft_Ymin, soft_maxFcs, safe_Fcs)
+        endstops_dict = load_parameters()["dyn_endstops"]
+        self.set_dynamic_endsotop(endstops_dict)
 
         #Dynamic endsotop these will be used to modify the movement according to etablished safe parameters
-    def set_dynamic_endsotop(self, soft_Xmax, soft_Xmin, soft_Ymax, soft_Ymin, soft_maxFcs, safe_Fcs):
+    def set_dynamic_endsotop(self, endstops_dict):
         self.dynamic_endstops = True
-        self.soft_Xmax = soft_Xmax
-        self.soft_Xmin = soft_Xmin
-        self.soft_Ymax = soft_Ymax
-        self.soft_Ymin = soft_Ymin
-        self.soft_maxFcs = soft_maxFcs
-        self.safe_Fcs = safe_Fcs
+        self.dyn_Xmax = endstops_dict["dyn_Xmax"]
+        self.dyn_Xmin = endstops_dict["dyn_Xmin"]
+        self.dyn_Ymax = endstops_dict["dyn_Ymax"]
+        self.dyn_Ymin = endstops_dict["dyn_Ymin"]
+        self.dyn_maxFcs = endstops_dict["dyn_maxFcs"]
+        self.safe_Fcs = endstops_dict["safe_Fcs"]
       
 
     def wait_ready(self): # wait until arduino is ready
@@ -103,24 +105,24 @@ class Microscope:
         #Dynamic endstops should be used to delimite a safe area coresponding to the observation window
         if self.dynamic_endstops:
 
-            if self.positions[2] >=safe_Fcs: ### Stop movement if the objective is to close to unsafe borders
+            if self.positions[2] >= self.safe_Fcs: ### Stop movement if the objective is to close to unsafe borders
                 
-                if motor == 1 and destination < self.soft_Xmin:
-                    destination = soft_Xmin
-                if motor == 1 and destination >  self.soft_Xmax:
-                    destination = soft_Xmax
+                if motor == 1 and destination < self.dyn_Xmin:
+                    destination = self.dyn_Xmin
+                if motor == 1 and destination >  self.dyn_Xmax:
+                    destination = self.dyn_Xmax
                 
-                if motor == 2 and destination <  self.soft_Ymin:
-                    destination = soft_Ymin
-                if motor == 2 and destination >  self.soft_Ymax:
-                    destination = soft_Ymax
+                if motor == 2 and destination <  self.dyn_Ymin:
+                    destination = self.dyn_Ymin
+                if motor == 2 and destination >  self.dyn_Ymax:
+                    destination = self.dyn_Ymax
             
-            if motor == 3 and destination > self.soft_maxFcs:
-                destination = self.soft_maxFcs   
+            if motor == 3 and destination > self.dyn_maxFcs:
+                destination = self.dyn_maxFcs   
              
-            if motor == 3 and destination > safe_Fcs and (self.positions[0] < soft_Xmin or self.positions[0] > soft_Xmax or 
-                                                            self.positions[1] >  soft_Ymax or self.positions[1] < soft_Ymin ):
-                destination = safe_Fcs
+            if motor == 3 and destination > self.safe_Fcs and (self.positions[0] < self.dyn_Xmin or self.positions[0] > self.dyn_Xmax or 
+                                                            self.positions[1] >  self.dyn_Ymax or self.positions[1] < self.dyn_Ymin ):
+                destination = self.safe_Fcs
             
 
 
@@ -135,7 +137,7 @@ class Microscope:
         self.checked_send_motor_cmd(axis, motor_destination)           
         self.wait_ready()
         
-    def go_absolute(self, destinations): #ordered movement of the 3 axis, move focus first of last depending on condition to avoid triggering soft_endstop
+    def go_absolute(self, destinations): #ordered movement of the 3 axis, move focus first of last depending on condition to avoid triggering dyn_endstop
         if destinations[2] < self.positions[2]: #move focus first if it's going down (park)
             self.checked_send_motor_cmd(3, destinations[2])
             self.wait_ready()    

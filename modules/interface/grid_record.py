@@ -3,6 +3,8 @@ from .super import Interface
 from ..parametersIO import load_parameters, update_parameters, create_folder
 import time
 
+plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
+
 class GridRecord(Interface, tk.Frame):
 
     def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None):
@@ -26,7 +28,7 @@ class GridRecord(Interface, tk.Frame):
     def init_window(self):
 
         self.pack(fill=tk.BOTH, expand=1)
-        self.parameters = load_parameters()
+        self.parameters = load_parameters(plate_name)
 
         #Set all menus on default options
         self.repeat.set(self.parameters["repeat"])
@@ -93,7 +95,8 @@ class GridRecord(Interface, tk.Frame):
         ("finish_well", str(self.finishline.get()) + str(self.finishcolumn.get())  ), 
         ("grid_subwells", int(self.grid_subwells.get())), 
         ("delay", int(self.delay.get())), 
-        ("repeat", int(self.repeat.get())) ])
+        ("repeat", int(self.repeat.get())) ],
+        plate_name)
 
     def refresh_popup(self, popup, abort): # refresh popup  return True if stop button is clicked
         popup.update_idletasks()
@@ -123,7 +126,7 @@ class GridRecord(Interface, tk.Frame):
         current_time = time.localtime()        
         date = str(current_time[0])[2:] + str(current_time[1]).zfill(2) + str(current_time[2]).zfill(2) + "_"  \
             + str(current_time[3]).zfill(2) + str(current_time[4]).zfill(2)
-        data_dir= load_parameters()["data_dir"]
+        data_dir= load_parameters(plate_name)["data_dir"]
 
         grid_folder = data_dir + "grid-" + date + "/"
         create_folder(grid_folder)

@@ -4,6 +4,8 @@ from .parametersIO import *
 from .microscope import *
 from .cameracontrol import *
 
+plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
+
 class PositionsGrid:
 
     def __init__(self, microscope):
@@ -18,7 +20,7 @@ class PositionsGrid:
         # generate the position grid of all the well and subwell based onthe parameter file
         # the grid is a dictionary of well, containing dictionary of subwell
         absolute_grid = {}
-        parameters = load_parameters()
+        parameters = load_parameters(plate_name)
 
         for l in range (0, parameters["lines"]):
             x = parameters['start'][0] + parameters['Xsteps']*l
@@ -35,7 +37,7 @@ class PositionsGrid:
                 absolute_grid[str(self.line_namespace[l])+str(c+1)] = sub_position
 
         #initialise nb_of_subwell for subwell switching fct
-        self.nb_of_subwells = load_parameters()["subwells"]
+        self.nb_of_subwells = load_parameters(plate_name)["subwells"]
 
         self.absolute_grid = absolute_grid
         return absolute_grid

@@ -3,6 +3,8 @@ from .super import Interface
 from ..parametersIO import load_parameters, update_parameters
 from .freemove import FreeMovementInterface
 
+plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
+
 class Plate_parameters(Interface,tk.Frame):
     def __init__(self, Tk_root, microscope, grid, last_window):
         Interface.__init__(self, Tk_root, microscope=microscope, grid=grid)
@@ -22,7 +24,7 @@ class Plate_parameters(Interface,tk.Frame):
         self.columns = tk.StringVar()
         self.subwells = tk.StringVar()
 
-        self.parameters = load_parameters()
+        self.parameters = load_parameters(plate_name)
 
         self.lines.set(self.parameters["lines"])
         self.columns.set(self.parameters["columns"])
@@ -72,7 +74,8 @@ class Plate_parameters(Interface,tk.Frame):
         update_parameters([ 
         ("lines", int(self.lines.get())), 
         ("columns", int(self.columns.get())),
-        ("subwells", int(self.subwells.get())) ])
+        ("subwells", int(self.subwells.get())) ],
+        plate_name)
         self.grid.generate_grid()
     
     def set_steps(self):
@@ -105,7 +108,7 @@ class XYsteps_popup(Interface, tk.Frame):
         self.Tk_window.title("Steps") 
         self.pack(fill=tk.BOTH, expand=1)
         self.show_record_label()
-        self.start = load_parameters()["start"]   
+        self.start = load_parameters(plate_name)["start"]   
             
         FreeMovementInterface.XYsliders(self)
 
@@ -144,10 +147,10 @@ class XYsteps_popup(Interface, tk.Frame):
         self.label_update()
 
     def save_A1(self):
-        start = load_parameters()["start"]
+        start = load_parameters(plate_name)["start"]
         start[0] = self.microscope.positions[0]
         start[1] = self.microscope.positions[1]
-        update_parameters([("start", start)])
+        update_parameters([("start", start)],plate_name)
         self.start = start
         self.grid.generate_grid()
 
@@ -164,9 +167,9 @@ class XYsteps_popup(Interface, tk.Frame):
     def save_measure(self, x=False, y=False ):
         self.measure()
         if x:
-            update_parameters([("X steps", self.Xsteps)])
+            update_parameters([("X steps", self.Xsteps)],plate_name)
         if y:
-            update_parameters([("Y steps", self.Ysteps)])
+            update_parameters([("Y steps", self.Ysteps)],plate_name)
         self.grid.generate_grid()
         self.close()
     

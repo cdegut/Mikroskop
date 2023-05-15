@@ -6,6 +6,8 @@ from ..position_grid import PositionsGrid
 from time import localtime
 from ..microscope_param import Xmaxrange, Ymaxrange
 
+plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
+
 ############
 ## Super class that contain shared functions for all interface windows
 ## and job handelers
@@ -24,22 +26,13 @@ class Interface:
     ###########################################
     # Interface specific movements#############
     # #########################################
-          
-    def go_all_axis(self, destination): #destination is an array of X Y F Led possibility to specify led state
-        if len(destination) == 5: #if led state is specified
-            self.microscope.set_led_state(destination[4])
-
-        self.microscope.set_ledpwr(destination[3])    
-        self.microscope.go_absolute(destination) #this function return only after arduin is ready
     
     def go_centerXY(self):
-        self.microscope.checked_send_motor_cmd(1, Xmaxrange/2)
-        self.microscope.checked_send_motor_cmd(2, Ymaxrange/2)
+        X_center = self.microscope.dyn_Ymin + (self.microscope.dyn_Xmax - self.microscope.dyn_Xmin)/2
+        Y_center = self.microscope.dyn_Ymin + (self.microscope.dyn_Ymax - self.microscope.dyn_Ymin)/2
+        self.microscope.checked_send_motor_cmd(1, X_center)
+        self.microscope.checked_send_motor_cmd(2, Y_center)
 
-    def go_start(self):
-        start_position = load_parameters()["start"]
-        self.go_all_axis(start_position)
-        self.grid.find_current_position()
 
     #####################################################
     ##### Jobs Interface scales, coordinates, etc #######
@@ -66,7 +59,7 @@ class Interface:
         Interface._blink = None
 
 
-    ######## update the label to corespond tothe actual curent position of the microscope
+    ######## update the label to corespond to the actual curent position of the microscope
     def update_coordinates_label(self):
         positions = self.microscope.positions
         text_coordinates = "X: " + str(positions[0]) + "   Y: " + str(positions[1]) + "   F: " + str(positions[2]) + "\nLed "+ str(positions[4])  + ": " + str(positions[3])
@@ -77,6 +70,7 @@ class Interface:
         
         Interface._coordinates_job = self.after(500, self.update_coordinates_label)
 
+    ########## Handel the scale that allow large movements
     def set_scale(self):
         positions = self.microscope.positions
         if positions != self.last_positions:       
@@ -86,9 +80,16 @@ class Interface:
         self.last_positions = positions
         Interface._scale_job = self.after(500, self.set_scale)
     
-    def save_positions(self): 
-        update_parameters_start(self.microscope.positions[0],self.microscope.positions[1], self.microscope.positions[2],)
-        self.grid.generate_grid()    
+    def save_positions(self,parameter_subset): 
+        update_parameters_start(self.microscope.positions[0],self.microscope.positions[1], self.microscope.positions[2],parameter_subset)
+        self.grid.generate_grid() 
+
+    def guess_parameters_subset(self):
+        if self.last_window == Interface._freemove_main:
+            parameters_subset = "Free"
+        elif self.last_window == Interface._grid_main:
+            parameters_subset = plate_name   
+        return parameters_subset
 
     ###################################################
     ####### Pictures, videos ##########################
