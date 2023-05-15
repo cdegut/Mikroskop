@@ -142,12 +142,16 @@ class Zoom_popup(Interface, tk.Frame): #widget to fill popup window, show an sto
         self.pack(fill=tk.BOTH, expand=1)
         self.show_record_label()
 
-        zoom_buttons = [(" 1x", 1),("1.5x", 0.75),(" 2x", 0.5),(" 4x", 0.25),(" 8x", 0.125)]
-        y_p = 30
-        for button in zoom_buttons:
-            b = tk.Button(self, text=button[0], width=10, heigh=2, command=lambda value = button[1]: change_zoom(self.camera, value))
-            b.place(x=60, y=y_p)
-            y_p = y_p+60
+        if not Interface._video_timer: ## Deactivate zoom button if filming
+            zoom_buttons = [(" 1x", 1),("1.5x", 0.75),(" 2x", 0.5),(" 4x", 0.25),(" 8x", 0.125)]
+            y_p = 30
+            for button in zoom_buttons:
+                b = tk.Button(self, text=button[0], width=10, heigh=2, command=lambda value = button[1]: change_zoom(self.camera, value))
+                b.place(x=60, y=y_p)
+                y_p = y_p+60
+        else:
+            warning = tk.Label(self, text="Can't change zoom \n whilerecording video")
+            warning.place(x=10, y=30)
 
         self.back_button()
         self.snap_button()

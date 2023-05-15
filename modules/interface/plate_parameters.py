@@ -115,27 +115,31 @@ class XYsteps_popup(Interface, tk.Frame):
         self.divisorX.set(7)
         self.divisorY.set(11)
         DivisorXLabel = tk.Label(self, text="Divisor X")
-        DivisorXMenu = tk.OptionMenu(self, self.divisorX, *[1,2,5,7])
+        DivisorXMenu = tk.OptionMenu(self,  self.divisorX, *["      1   ","      2   ","      5   ","      7    "])
+        DivisorXMenu.config(width=4)
         DivisorYLabel = tk.Label(self, text="Divisor Y")
-        DivisorYMenu = tk.OptionMenu(self, self.divisorY, *[1,2,5,11])
+        DivisorYMenu = tk.OptionMenu(self,  self.divisorY, *["      1   ","      2   ","      5   ","      11   "])
+        DivisorYMenu.config(width=4)
         DivisorXLabel.place(x=menus_position[0], y=menus_position[1])
         DivisorXMenu.place(x=menus_position[0], y=menus_position[1]+20)
         DivisorYLabel.place(x=menus_position[0]+125, y=menus_position[1])
         DivisorYMenu.place(x=menus_position[0]+125, y=menus_position[1]+20)
 
-        self.XSteps = tk.Label(self, text="test")
-        self.YSteps = tk.Label(self, text="test")
-        self.XSteps.place(x=10, y=440)
-        self.YSteps.place(x=130, y=440)
+        self.XSteps_label = tk.Label(self, text="test")
+        self.YSteps_label = tk.Label(self, text="test")
+        self.XSteps_label.place(x=10, y=440)
+        self.YSteps_label.place(x=130, y=440)
 
-        Accept =  tk.Button(self, text="Save X Y steps", command=self.save_measure)
+        SaveX =  tk.Button(self, text="Save X ", command=lambda:  self.save_measure(x=True))
+        SaveY =  tk.Button(self, text="Save Y", command=lambda: self.save_measure(y=True))
         SaveA1 = tk.Button(self, text="Save A1 center", command=self.save_A1)
         Cancel =  tk.Button(self, text="Cancel", command=self.close_xy)
 
-        SaveA1.place(x=10,y=360)
-        Accept.place(x=10,y=400)
+        SaveA1.place(x=10,y=410)
+        SaveX.place(x=10,y=480)
+        SaveY.place(x=100,y=480)
 
-        Cancel.place(x=10,y=500)
+        Cancel.place(x=10,y=530)
 
         self.label_update()
 
@@ -153,14 +157,16 @@ class XYsteps_popup(Interface, tk.Frame):
     
     def label_update(self):
         self.measure()
-        self.XSteps.configure(text="Current X: " + str(self.Xold_steps)+ "\nNew:     " + str(self.Xsteps))
-        self.YSteps.configure(text="Y: " + str(self.Yold_steps)+ "\n   " + str(self.Ysteps))
+        self.XSteps_label.configure(text="Current X: " + str(self.Xold_steps)+ "\nNew:     " + str(self.Xsteps))
+        self.YSteps_label.configure(text="Y: " + str(self.Yold_steps)+ "\n   " + str(self.Ysteps))
         Interface._job1 = self.after(500, self.label_update)
     
-    def save_measure(self):
+    def save_measure(self, x=False, y=False ):
         self.measure()
-        update_parameters([("X steps", self.Xsteps)])
-        update_parameters([("Y steps", self.Ysteps)])
+        if x:
+            update_parameters([("X steps", self.Xsteps)])
+        if y:
+            update_parameters([("Y steps", self.Ysteps)])
         self.grid.generate_grid()
         self.close()
     

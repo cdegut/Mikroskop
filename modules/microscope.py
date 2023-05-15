@@ -15,7 +15,18 @@ class Microscope:
         GPIO.setup(ready_pin, GPIO.IN) # set up the GPIO channels - one input for ready pin
         self.wait_ready()
         self.positions = self.checked_read_positions()
+        self.set_dynamic_endsotop(soft_Xmax, soft_Xmin, soft_Ymax, soft_Ymin, soft_maxFcs, safe_Fcs)
 
+        #Dynamic endsotop these will be used to modify the movement according to etablished safe parameters
+    def set_dynamic_endsotop(self, soft_Xmax, soft_Xmin, soft_Ymax, soft_Ymin, soft_maxFcs, safe_Fcs):
+        self.dynamic_endstops = True
+        self.soft_Xmax = soft_Xmax
+        self.soft_Xmin = soft_Xmin
+        self.soft_Ymax = soft_Ymax
+        self.soft_Ymin = soft_Ymin
+        self.soft_maxFcs = soft_maxFcs
+        self.safe_Fcs = safe_Fcs
+      
 
     def wait_ready(self): # wait until arduino is ready
         while not GPIO.input(self.ready_pin):  
@@ -54,29 +65,30 @@ class Microscope:
 	#wait for movement to be done
 	#read position from arduino and check that movement was executed corectly
 	#retry the movement if the position is not the expected one (with checksum added, this should never happen)
-       
-        
+               
         destination = self.make_safe(motor, destination) #update destination with max value acccording to set soft endstop if needed
 
-        if motor in [1,2,3]: #simple check that motor havn't an abherant index
-            i = 1
-            while i <= retry:
-                if self.is_ready: #nothing is done if arduino is not available
+        if motor not in [1,2,3]: #simple check that motor havn't an abherant index
+            return
 
-                    self.send_motor_cmd(motor, destination)
+        i = 1
+        while i <= retry:
+            if self.is_ready: #nothing is done if arduino is not available
+
+                self.send_motor_cmd(motor, destination)
+                self.wait_ready()
+
+                #update position and check that it was corectly done
+                self.positions = self.checked_read_positions()
+                if self.positions[motor-1] == destination:
                     self.wait_ready()
+                    return
 
-                    #update position and check that it was corectly done
-                    self.positions = self.checked_read_positions()
-                    if self.positions[motor-1] == destination:
-                        self.wait_ready()
-                        return
-
-                #Loop if the function was not returned after the check position (with checksum added to I²C communication, this should never happen)
-				#May happen if axis maxrange are > to endstop set in arduino firmware
-                print("At "+ time.strftime("%H:%M:%S", time.localtime()) +" motor did not move as expected, retrying "+str(i)+" of "+ str(retry) +" times") 
-                time.sleep(0.5)
-                i += 1
+            #Loop if the function was not returned after the check position (with checksum added to I²C communication, this should never happen)
+            #May happen if axis maxrange are > to endstop set in arduino firmware
+            print("At "+ time.strftime("%H:%M:%S", time.localtime()) +" motor did not move as expected, retrying "+str(i)+" of "+ str(retry) +" times") 
+            time.sleep(0.5)
+            i += 1
 
     def make_safe(self, motor, destination): #Software and dynamic endstops, update destination to avoid collision or out of range
 
@@ -88,22 +100,29 @@ class Microscope:
             if motor == 3 and destination > Fmaxrange:
                 destination = Fmaxrange   
 
-        if dynamic_endstops:
-            if self.positions[2] >=safe_Fcs:
+        #Dynamic endstops should be used to delimite a safe area coresponding to the observation window
+        if self.dynamic_endstops:
+
+            if self.positions[2] >=safe_Fcs: ### Stop movement if the objective is to close to unsafe borders
                 
-                if motor == 1 and destination < soft_Xmin:
+                if motor == 1 and destination < self.soft_Xmin:
                     destination = soft_Xmin
-                if motor == 1 and destination > soft_Xmax:
+                if motor == 1 and destination >  self.soft_Xmax:
                     destination = soft_Xmax
                 
-                if motor == 2 and destination < soft_Ymin:
+                if motor == 2 and destination <  self.soft_Ymin:
                     destination = soft_Ymin
-                if motor == 2 and destination > soft_Ymax:
+                if motor == 2 and destination >  self.soft_Ymax:
                     destination = soft_Ymax
             
+            if motor == 3 and destination > self.soft_maxFcs:
+                destination = self.soft_maxFcs   
+             
             if motor == 3 and destination > safe_Fcs and (self.positions[0] < soft_Xmin or self.positions[0] > soft_Xmax or 
                                                             self.positions[1] >  soft_Ymax or self.positions[1] < soft_Ymin ):
                 destination = safe_Fcs
+            
+
 
         return destination
 

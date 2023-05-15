@@ -20,7 +20,7 @@ class Video_record_window(Interface, tk.Frame):
 
     ###########
     ### Generate the window content, called every time window is (re)opened 
-    def init_window(self):
+    def init_window(self, last_window=None):
         self.pack(fill=tk.BOTH, expand=1)
 
         #generic buttons
@@ -39,6 +39,7 @@ class Video_record_window(Interface, tk.Frame):
         QualityLabel.place(x=10, y=150)      
         QualityMenu.place(x=20, y=170)
 
+        self.show_record_label()
         self.timer_update()
         self.snap_button()
         
@@ -54,12 +55,12 @@ class Video_record_window(Interface, tk.Frame):
     def start_recording_action(self, position):
         timestamp = self.timestamp()
         self.recorder, self.rec_off_event = start_recording(self.camera, int(self.quality.get()), timestamp)
-        self.Rec.place_forget()
         self.Stop.place(x=position[0], y=position[1])
         Interface._video_timer = VideoTimer()
         Interface._video_timer.start()
-        self.timer_update()
-        self.show_record_label()
+        
+        ### Reset the window with the new elements
+        self.open()
     
     ##### Update the timer text if the _video_timer object exist
     def timer_update(self):
@@ -68,21 +69,19 @@ class Video_record_window(Interface, tk.Frame):
             self.timer.configure(text=Interface._video_timer.text_output)
             Interface._job1 = self.after(500, self.timer_update)
 
-
     ######### End recording, set the off event for the recording Thread        
     def stop_recording_action(self, position):
         if self.rec_off_event:
+            ### Tell the worker to stop recording
             self.rec_off_event.set()
-            self.recorder.join()
+            self.recorder.join()           
+            #### Reinitialise all the object related to video recording
             self.rec_off_event = None
             self.recorder = None
-            self.Stop.place_forget()
-            self.Rec.place(x=position[0], y=position[1])
-            Interface._video_timer = None  ## Deactivate the timer
-            if Interface._blink:
-                self.Tk_root.after_cancel(Interface._blink)
-            self.hide_record_label()
-
+            Interface._video_timer = None  ## Deactivate the timer           
+            ### Reset the window with the new elements
+            self.open()
+            
     def open(self):
         self.clear_jobs()
         self.clear_frame()

@@ -170,9 +170,13 @@ class Interface:
         self.update_coordinates_label()
     
     def snap_button(self, position=(10,350)):
-        Snap = tk.Button(self, text="Snap!", command=self.snap_timestamp)
-        Snap.place(x=position[0], y=position[1])
-    
+        if not Interface._video_timer:
+            Snap = tk.Button(self, text="Snap!", command=self.snap_timestamp)
+            Snap.place(x=position[0], y=position[1])
+        else:
+            Snap = tk.Button(self, text="Snap!", fg="Red")
+            Snap.place(x=position[0], y=position[1])    
+        
     def back_button(self, position=(10,450)):
         Back =  tk.Button(self, text="Back", command=self.close)
         Back.place(x=position[0], y=position[1])
