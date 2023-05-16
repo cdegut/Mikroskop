@@ -1,4 +1,4 @@
-from .parametersIO import load_parameters, create_folder
+from .parametersIO import create_folder
 from time import sleep
 from threading import Thread, Event
 
@@ -24,8 +24,7 @@ def change_zoom(camera, value):
     camera.zoom=(position_scale,position_scale, value, value)
 
 
-def save_image(camera, picture_name):
-    data_dir= load_parameters()["data_dir"]
+def save_image(camera, picture_name, data_dir):
     create_folder(data_dir + "img/")
     full_data_name = data_dir + "img/"  + picture_name + ".png"
     save = Thread(target = save_img_thread, args=(camera, full_data_name))
@@ -76,8 +75,7 @@ class VideoRecorder(Thread):
 
 
 ##### Function that generate the worker and pass the information to it
-def start_recording(camera, video_quality=320, video_name="test"):
-    data_dir = load_parameters()["data_dir"]
+def start_recording(camera, data_dir, video_quality=320, video_name="test"):
     create_folder(data_dir + "rec/")
     data_name = data_dir + "rec/" + video_name + ".h264"
     rec_off = Event()

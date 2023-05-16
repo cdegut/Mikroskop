@@ -1,10 +1,9 @@
 from ..cameracontrol import save_image
-from ..parametersIO import load_parameters, update_parameters_start
 import tkinter as tk
 from ..microscope import Microscope
 from ..position_grid import PositionsGrid
 from time import localtime
-from ..microscope_param import Xmaxrange, Ymaxrange
+
 
 plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
 
@@ -14,12 +13,13 @@ plate_name = "Plate" ##is a place holder to later add a plate type selector, may
 
 class Interface: 
 
-    def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None):
+    def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None, parameters=None):
         tk.Frame.__init__(self, Tk_root)
         self.Tk_root = Tk_root
         self.microscope = microscope
         self.grid = grid
         self.camera = camera
+        self.parameters = parameters
 
         self.last_positions = None
 
@@ -27,6 +27,8 @@ class Interface:
     # Interface specific movements#############
     # #########################################
     
+    _current_parameters_set = None
+
     def go_centerXY(self):
         X_center = self.microscope.dyn_Ymin + (self.microscope.dyn_Xmax - self.microscope.dyn_Xmin)/2
         Y_center = self.microscope.dyn_Ymin + (self.microscope.dyn_Ymax - self.microscope.dyn_Ymin)/2
@@ -81,7 +83,7 @@ class Interface:
         Interface._scale_job = self.after(500, self.set_scale)
     
     def save_positions(self,parameter_subset): 
-        update_parameters_start(self.microscope.positions[0],self.microscope.positions[1], self.microscope.positions[2],parameter_subset)
+        self.parameters.update_start(self.microscope.positions[0],self.microscope.positions[1], self.microscope.positions[2],parameter_subset)
         self.grid.generate_grid() 
 
     def guess_parameters_subset(self):
@@ -105,11 +107,13 @@ class Interface:
     def snap_grid(self):
         timestamp = self.timestamp()
         picture_name = timestamp + "_" + str(self.grid.current_grid_position[0]) + "-" + str(self.grid.current_grid_position[1])
-        save_image(self.camera, picture_name)
+        data_dir = self.parameters.get()["data_dir"]
+        save_image(self.camera, picture_name, data_dir)
     
     def snap_timestamp(self):
         picture_name = self.timestamp()
-        save_image(self.camera, picture_name)
+        data_dir = self.parameters.get()["data_dir"]
+        save_image(self.camera, picture_name, data_dir)
     
     def show_record_label(self):
         if Interface._video_timer:
@@ -151,7 +155,7 @@ class Interface:
     def back_to_main(self):
         self.clear_jobs()
         self.clear_frame()
-        self._main_menu.init_window(self)
+        self._main_menu.init_window()
     
     _exit = False
     def exit(self):

@@ -3,20 +3,19 @@ import time
 from smbus2 import SMBus, i2c_msg
 import RPi.GPIO as GPIO
 from .microscope_param import *
-from .parametersIO import load_parameters
 
 # Use GPIO numbers not pin numbers
 GPIO.setmode(GPIO.BCM)
 
 class Microscope:
 
-    def __init__(self, addr, ready_pin):
+    def __init__(self, addr, ready_pin, parameters):
         self.addr = addr
         self.ready_pin = ready_pin
         GPIO.setup(ready_pin, GPIO.IN) # set up the GPIO channels - one input for ready pin
         self.wait_ready()
         self.positions = self.checked_read_positions()
-        endstops_dict = load_parameters()["dyn_endstops"]
+        endstops_dict = parameters.get("Default")["dyn_endstops"]
         self.set_dynamic_endsotop(endstops_dict)
 
         #Dynamic endsotop these will be used to modify the movement according to etablished safe parameters

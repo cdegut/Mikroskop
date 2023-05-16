@@ -7,9 +7,8 @@ from .popup import led_focus_zoom_buttons
 
 class Video_record_window(Interface, tk.Frame):
         
-    def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None):
-        tk.Frame.__init__(self, Tk_root)
-        Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera)
+    def __init__(self, Tk_root, microscope, camera, parameters):
+        Interface.__init__(self, Tk_root, microscope=microscope, camera=camera, parameters=parameters)
         
         self.rec_off_event = None
         self.recorder = None
@@ -18,9 +17,19 @@ class Video_record_window(Interface, tk.Frame):
 
         self.init_window() 
 
+    ######Function called to open this window, generate an new object the first time, 
+    ###### then recall the init_window function of the same object
+    def open(self):
+        self.clear_jobs()
+        self.clear_frame()
+        if Interface._video_record:
+            Interface._video_record.init_window()
+        else:
+            Interface._video_record = Video_record_window(self.Tk_root, self.microscope, self.camera, self.parameters)
+
     ###########
     ### Generate the window content, called every time window is (re)opened 
-    def init_window(self, last_window=None):
+    def init_window(self):
         self.pack(fill=tk.BOTH, expand=1)
 
         #generic buttons
@@ -82,13 +91,6 @@ class Video_record_window(Interface, tk.Frame):
             ### Reset the window with the new elements
             self.open()
             
-    def open(self):
-        self.clear_jobs()
-        self.clear_frame()
-        if Interface._video_record:
-            Interface._video_record.init_window()
-        else:
-            Interface._video_record = Video_record_window(self.Tk_root, last_window=self, microscope=self.microscope, grid=self.grid, camera=self.camera)
 
 class VideoTimer(): ## callable timer for measuring video lengh
     def __init__(self):

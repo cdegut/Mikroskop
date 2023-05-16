@@ -9,6 +9,7 @@ from modules.position_grid import PositionsGrid
 from modules.physical_controler import Encoder, encoder_read
 from modules.interface.main_menu import *
 from modules.microscope_param import *
+from modules.parametersIO import ParametersSets
 
 
 #main loop
@@ -28,8 +29,9 @@ if __name__ == "__main__":
         encoder_X = Encoder(26, 20,"up",sw_pin=5)
 
     ### Object for microscope to run
-    microscope = Microscope(addr, ready_pin)
-    grid = PositionsGrid(microscope)
+    parameters = ParametersSets()
+    microscope = Microscope(addr, ready_pin, parameters)
+    grid = PositionsGrid(microscope, parameters)
     camera = picamera.PiCamera()
 
     #Tkinter object
@@ -40,7 +42,7 @@ if __name__ == "__main__":
     display = environ.get('DISPLAY')
     if display == ":0.0" or display == ":0": ## :0.0 in terminal and :0 without terminal
         Tk_root.overrideredirect(1) ### not working with remote display !!
-    Interface._main_menu = MainMenu(Tk_root, microscope=microscope, grid=grid, camera=camera)
+    Interface._main_menu = MainMenu(Tk_root, microscope=microscope, grid=grid, camera=camera,  parameters=parameters)
 
     #start picamPreview
     previewPiCam(camera)

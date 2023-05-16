@@ -1,32 +1,36 @@
 import tkinter as tk
-from ..parametersIO import load_parameters
 from .super import Interface
-from ..microscope_param import Xmaxrange, Ymaxrange
 from .popup import led_focus_zoom_buttons
 
 plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
 
 class MainGridInterface(Interface, tk.Frame): #main GUI window
     
-    def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None):
-        Interface.__init__(self, Tk_root, last_window=self, microscope=microscope, grid=grid, camera=camera)
+    def __init__(self, Tk_root, microscope, grid, camera, parameters):
+        Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera, parameters=parameters)
 
-        self.init_window(last_window)
-        self.start_position = load_parameters(plate_name)["start"]
+        self.init_window()
+        self.start_position = self.parameters.get()["start"]
+    
+    ######Function called to open this window, generate an new object the first time, 
+    ###### then recall the init_window function of the same object
+    def open(self):
+        self.clear_jobs()
+        self.clear_frame()
+        if Interface._grid_main:
+            Interface._grid_main.init_window()
+        else:
+            Interface._grid_main = MainGridInterface(self.Tk_root, self.microscope, self.grid, self.camera, self.parameters)
 
     ###########
     ### Generate the window content, called every time window is (re)opened 
-    def init_window(self, last_window):
-        self.last_window = last_window
+    def init_window(self):
               
         #Title of the root  
         self.Tk_root.title("Control Panel")
         
         # allowing the widget to take the full space of the root window
         self.pack(fill=tk.BOTH, expand=1)
-
-        ###### Load the proper dynamic endstop for the curent window
-        self.microscope.set_dynamic_endsotop(load_parameters(plate_name)["dyn_endstops"])
 
         ##Generic buttons
         self.back_to_main_button()
@@ -70,18 +74,11 @@ class MainGridInterface(Interface, tk.Frame): #main GUI window
         PrevL.place(x=pad_position[0]-15, y=pad_position[1]-50)
         self.well_info.place(x=pad_position[0], y=pad_position[1]+10)
         SubW.place(x=pad_position[0]+70, y=pad_position[1]+60)
-   
-    def open(self):
-        self.clear_jobs()
-        self.clear_frame()
-        if Interface._grid_main:
-            Interface._grid_main.init_window(self)
-        else:
-            Interface._grid_main = MainGridInterface(self.Tk_root, grid=self.grid, camera=self.camera,  microscope=self.microscope)
-    
+
+
     def go_start(self):
-        start_position = load_parameters("Free")["start"]
-        led = load_parameters("Free")["led"]
+        start_position = self.parameters.get()["start"]
+        led = self.parameters.get()["led"]
         self.microscope.go_absolute(start_position) #this function return only after arduin is ready
         self.microscope.set_ledpwr(led[0])
         self.microscope.set_led_state(led[1])

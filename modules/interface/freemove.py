@@ -1,23 +1,30 @@
 import tkinter as tk
 from .super import Interface
-from ..parametersIO import load_parameters
 from ..microscope_param import Xmaxrange, Ymaxrange
 from .popup import led_focus_zoom_buttons
 
 
 class FreeMovementInterface(Interface, tk.Frame):
-    
-    def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None):
-        Interface.__init__(self, Tk_root, last_window=self, microscope=microscope, grid=grid, camera=camera)
 
-        self.init_window(last_window)
-        self.start_position = load_parameters("Free")["start"]
+    def __init__(self, Tk_root, microscope, grid, camera, parameters):
+        Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera, parameters=parameters)
+
+        self.init_window()
+        self.start_position = self.parameters.get()["start"]
+
+    ######Function called to open this window, generate an new object the first time, 
+    ###### then recall the init_window function of the same object
+    def open(self):
+        self.clear_jobs()
+        self.clear_frame()
+        if Interface._freemove_main:
+            Interface._freemove_main.init_window()
+        else:
+            Interface._freemove_main = FreeMovementInterface(self.Tk_root, self.microscope, self.grid, self.camera, self.parameters)
         
-
     ###########
     ### Generate the window content, called every time window is (re)opened 
-    def init_window(self, last_window):
-        self.last_window = last_window
+    def init_window(self):
 
         #Title of the root
         self.Tk_root.title("Control Panel")
@@ -31,9 +38,6 @@ class FreeMovementInterface(Interface, tk.Frame):
         led_focus_zoom_buttons(self)
         self.XYsliders()
 
-        ###### Load the proper dynamic endstop for the curent window
-        self.microscope.set_dynamic_endsotop(load_parameters("Free")["dyn_endstops"])
-
         ######### creating buttons instances      
         Start = tk.Button(self, fg='Green', text="Go Start", command=self.go_start)
         XY_center = tk.Button(self, fg='Green', text="CentXY", command=self.go_centerXY)
@@ -41,12 +45,9 @@ class FreeMovementInterface(Interface, tk.Frame):
         
         self.snap_button()
         
-
         
         ######## placing the elements
         ##Sliders
-
-
         Start.place(x=10,y=310)
         XY_center.place(x=110, y=310)
         #Park.place(x=140,y=300)
@@ -69,19 +70,11 @@ class FreeMovementInterface(Interface, tk.Frame):
         self.set_scale() ##Continuously update scales, if positions are changed
 
     def go_start(self):
-        start_position = load_parameters("Free")["start"]
-        led = load_parameters("Free")["led"]
+        start_position = self.parameters.get()["start"]
+        led = self.parameters.get()["led"]
         self.microscope.go_absolute(start_position) #this function return only after arduin is ready
         self.microscope.set_ledpwr(led[0])
         self.microscope.set_led_state(led[1])
-
-    def open(self):
-        self.clear_jobs()
-        self.clear_frame()
-        if Interface._freemove_main:
-            Interface._freemove_main.init_window(self)
-        else:
-            Interface._freemove_main = FreeMovementInterface(self.Tk_root, last_window=self, microscope=self.microscope, grid=self.grid, camera=self.camera)
 
 #main loop for testing only
 if __name__ == "__main__": 

@@ -1,16 +1,15 @@
 import tkinter as tk
 from .super import Interface
-from ..parametersIO import load_parameters, update_parameters, create_folder
+from ..parametersIO import create_folder
 import time
 
 plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
 
 class GridRecord(Interface, tk.Frame):
 
-    def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None):
-        Interface.__init__(self, Tk_root, last_window=self, microscope=microscope, grid=grid, camera=camera)
+    def __init__(self, Tk_root, microscope, grid, camera, parameters):
+        Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera, parameters=parameters)
 
-        self.last_window = last_window
 
         self.repeat = tk.StringVar()
         self.delay = tk.StringVar()
@@ -23,12 +22,23 @@ class GridRecord(Interface, tk.Frame):
 
         self.init_window()
 
+    ######Function called to open this window, generate an new object the first time, 
+    ###### then recall the init_window function of the same object    
+    def open(self):
+        self.clear_jobs()
+        self.clear_frame()
+        if Interface._grid_record:
+            Interface._grid_record.init_window()
+        else:
+            pass
+            Interface._grid_record = GridRecord(self.Tk_root, self.microscope, self.grid, self.camera, self.parameters)
+
     ###########
     ### Generate the window content, called every time window is (re)opened 
     def init_window(self):
 
         self.pack(fill=tk.BOTH, expand=1)
-        self.parameters = load_parameters(plate_name)
+        self.parameters = self.parameters.get()
 
         #Set all menus on default options
         self.repeat.set(self.parameters["repeat"])
@@ -62,10 +72,10 @@ class GridRecord(Interface, tk.Frame):
         SubwellLabel = tk.Label(self, text ="N# of subwell")
         SubwellMenu = tk.OptionMenu(self, self.grid_subwells, *SubwellsList)
 
-        Save = tk.Button(self, text="Save", command=self.save_grid_pareameters)
+        Save = tk.Button(self, text="Save", command=self.save_grid_parameters)
         Start = tk.Button(self, text="Image grid", command=self.start_grid)
 
-        Quit = tk.Button(self, fg='Red', text="Return", command=self.close)
+        self.back_to_main_button()
 
         RepeatLabel.place(x=10,y=10)
         RepeatMenu.place(x=10,y=30)
@@ -86,17 +96,14 @@ class GridRecord(Interface, tk.Frame):
 
         Save.place(x=10, y=260 )
         Start.place(x=10, y=300 )
-
-        Quit.place(x=0,y=450)
     
-    def save_grid_pareameters(self):
-        update_parameters([ 
+    def save_grid_parameters(self):
+        self.parameters.update([ 
         ("start_well", str(self.startline.get()) + str(self.startcolumn.get()) ), 
         ("finish_well", str(self.finishline.get()) + str(self.finishcolumn.get())  ), 
         ("grid_subwells", int(self.grid_subwells.get())), 
         ("delay", int(self.delay.get())), 
-        ("repeat", int(self.repeat.get())) ],
-        plate_name)
+        ("repeat", int(self.repeat.get())) ])
 
     def refresh_popup(self, popup, abort): # refresh popup  return True if stop button is clicked
         popup.update_idletasks()
@@ -126,7 +133,7 @@ class GridRecord(Interface, tk.Frame):
         current_time = time.localtime()        
         date = str(current_time[0])[2:] + str(current_time[1]).zfill(2) + str(current_time[2]).zfill(2) + "_"  \
             + str(current_time[3]).zfill(2) + str(current_time[4]).zfill(2)
-        data_dir= load_parameters(plate_name)["data_dir"]
+        data_dir= self.parameters.get()["data_dir"]
 
         grid_folder = data_dir + "grid-" + date + "/"
         create_folder(grid_folder)
@@ -166,14 +173,6 @@ class GridRecord(Interface, tk.Frame):
         
         popup.destroy()
     
-    def open(self):
-        self.clear_jobs()
-        self.clear_frame()
-        if Interface._grid_record:
-            Interface._grid_record.init_window(self)
-        else:
-            pass
-            Interface._grid_record = GridRecord(self.Tk_root, last_window=self, grid=self.grid, camera=self.camera,  microscope=self.microscope)
 
 
 class Stop_popup(tk.Frame): #widget to fill popup window, show a stop button and a modifiable label

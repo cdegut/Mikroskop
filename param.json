@@ -1,5 +1,6 @@
 {
     "Default": {
+        "Selected": false,
         "lines": 4,
         "columns": 12,
         "subwells": 1,
@@ -34,11 +35,28 @@
         "grid_subwells": 1,
         "data_dir": "/home/pi/microscope_data/"
     },
-    "Free": {
+    "Slide": {
+        "Selected": false,
+        "lines": 4,
+        "columns": 12,
+        "subwells": 1,
+        "subwells_spacing": [
+            3000,
+            0,
+            0
+        ],
+        "repeat": 2,
+        "delay": 2,
+        "Xsteps": 7085,
+        "Ysteps": 1814,
         "start": [
             29450,
             52730,
             19701
+        ],
+        "led": [
+            200,
+            1
         ],
         "dyn_endstops": {
             "dyn_Xmax": 34500,
@@ -48,12 +66,13 @@
             "dyn_maxFcs": 20600,
             "safe_Fcs": 19000
         },
-        "led": [
-            80,
-            1
-        ]
+        "start_well": "A1",
+        "finish_well": "B2",
+        "grid_subwells": 1,
+        "data_dir": "/home/pi/microscope_data/"
     },
     "Plate": {
+        "Selected": true,
         "lines": 4,
         "columns": 12,
         "subwells": 1,

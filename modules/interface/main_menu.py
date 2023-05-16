@@ -11,13 +11,24 @@ from ..microscope_param import Xmaxrange, Ymaxrange
 
 class MainMenu(Interface, tk.Frame):
 
-    def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None):
-        Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera)
+    def __init__(self, Tk_root, microscope, grid, camera, parameters):
+        Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera, parameters=parameters)
         self.init_window()
-
+   
+    ######Function called to open this window, generate an new object the first time, 
+    ###### then recall the init_window function of the same object
+    def open(self):
+        self.clear_jobs()
+        self.clear_frame()
+        if Interface._main_menu:
+            Interface._main_menu.init_window()
+        else:
+            pass
+            Interface._main_menu = MainMenu(self.Tk_root, self.microscope, self.grid, self.camera, self.parameters)
+        
     ###########
     ### Generate the window content, called every time window is (re)opened 
-    def init_window(self, last_window=None):
+    def init_window(self):
         #Geometry and title of the root  
         self.Tk_root.title("Control Panel")
 
@@ -27,37 +38,32 @@ class MainMenu(Interface, tk.Frame):
         self.show_record_label()
 
         ######## Maine Menu buttons
-        menu_button_w = 20
-        menu_button_x = 20
-        FreeMoveInterface = tk.Button(self, width=menu_button_w, text="Free Navigation", command=lambda: FreeMovementInterface.open(self))         
-        GridNavigation = tk.Button(self, width=menu_button_w, text="Grid Navigation", command=lambda: MainGridInterface.open(self))
-        GridRec = tk.Button(self, width=menu_button_w, text="Grid Record", command=lambda: GridRecord.open(self))
-        GridParameters = tk.Button(self, width=menu_button_w, text="Plate Parameters", command=lambda:  Plate_parameters.open(self))
-        VideoRecord = tk.Button(self, width=menu_button_w, text="Video", command=lambda: Video_record_window.open(self))
-        Zoom = tk.Button(self, width=menu_button_w, text="Zoom", command=lambda: Zoom_popup.open(self))   
-        
+        self.menu_button_w = 20
+        self.menu_button_x = 20
+        FreeMoveInterface = tk.Button(self, width=self.menu_button_w, text="Free Navigation", command=lambda: FreeMovementInterface.open(self))         
+        GridNavigation = tk.Button(self, width=self.menu_button_w, text="Grid Navigation", command=lambda: MainGridInterface.open(self))
+        GridRec = tk.Button(self, width=self.menu_button_w, text="Grid Record", command=lambda: GridRecord.open(self))
+        VideoRecord = tk.Button(self, width=self.menu_button_w, text="Video", command=lambda: Video_record_window.open(self))       
 
-        FreeMoveInterface.place(x=menu_button_x, y=50)
-        GridNavigation.place(x=menu_button_x, y=100)
-        GridRec.place(x=menu_button_x, y=150)
-        GridParameters.place(x=menu_button_x, y=200)
-        VideoRecord.place(x=menu_button_x, y=250)
-        Zoom.place(x=menu_button_x, y=300)
+        Current_parameters_set = tk.Label(self, text = f"Selected parameter set: \n {self.parameters.selected}")
+        GridParameters = tk.Button(self, width=self.menu_button_w, text="Change Parameters", command=lambda:  Plate_parameters.open(self))
 
-        Quit = tk.Button(self, width=menu_button_w, fg='Red', text="Quit", command=self.exit)
-        Quit.place(x=menu_button_x, y=400)
-        ParknQuit = tk.Button(self, width=menu_button_w, fg='Red', text="Park and Quit", command=self.parknquit)
-        ParknQuit.place(x=menu_button_x, y=480)
+        FreeMoveInterface.place(x=self.menu_button_x, y=50)
+        GridNavigation.place(x=self.menu_button_x, y=100)
+        GridRec.place(x=self.menu_button_x, y=150)
+        VideoRecord.place(x=self.menu_button_x, y=200)
+
+        Current_parameters_set.place(x=self.menu_button_x+15, y=300)
+        GridParameters.place(x=self.menu_button_x, y=350)
+
+
+        Quit = tk.Button(self, width=self.menu_button_w, fg='Red', text="Quit", command=self.exit)
+        Quit.place(x=self.menu_button_x, y=450)
+        ParknQuit = tk.Button(self, width=self.menu_button_w, fg='Red', text="Park and Quit", command=self.parknquit)
+        ParknQuit.place(x=self.menu_button_x, y=500)
     
     def parknquit(self):
-        self.go_all_axis([Xmaxrange, Ymaxrange/2, 0,0,0])
+        self.microscope.go_absolute([Xmaxrange, Ymaxrange/2, 0])
+        self.micrscope.set_ledpwr(0)
+        self.micrscope.set_led_state(0)
         self.exit()
-    
-    def open(self):
-        self.clear_jobs()
-        self.clear_frame()
-        if Interface._main_menu:
-            Interface._main_menu.init_window(self)
-        else:
-            pass
-            Interface._main_menu = MainMenu(self.Tk_root, grid=self.grid, camera=self.camera, microscope=self.microscope)

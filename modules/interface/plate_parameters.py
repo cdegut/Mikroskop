@@ -1,38 +1,30 @@
 import tkinter as tk
 from .super import Interface
-from ..parametersIO import load_parameters, update_parameters
 from .freemove import FreeMovementInterface
 
-plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
 
 class Plate_parameters(Interface,tk.Frame):
-    def __init__(self, Tk_root, microscope, grid, last_window):
-        Interface.__init__(self, Tk_root, microscope=microscope, grid=grid)
-        self.last_window = last_window
-        self.microscope = microscope                 
-        self.Tk_window = Tk_root
-        self.grid = grid
+    def __init__(self, Tk_root, microscope, grid, parameters):
+        Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, parameters=parameters)
         self.init_window()
 
     ###########
     ### Generate the window content, called every time window is (re)opened 
     def init_window(self):
  
-        self.Tk_window.title("Grid") 
+        self.Tk_root.title("Grid") 
         self.pack(fill=tk.BOTH, expand=1)
         self.lines = tk.StringVar()
         self.columns = tk.StringVar()
         self.subwells = tk.StringVar()
 
-        self.parameters = load_parameters(plate_name)
+        self.lines.set(self.parameters.get()["lines"])
+        self.columns.set(self.parameters.get()["columns"])
+        self.subwells.set(self.parameters.get()["subwells"])
 
-        self.lines.set(self.parameters["lines"])
-        self.columns.set(self.parameters["columns"])
-        self.subwells.set(self.parameters["subwells"])
-
-        self.Xsteps = self.parameters["Xsteps"]
-        self.Ysteps = self.parameters["Ysteps"]
-        self.subwells_spacing = self.parameters["subwells_spacing"]
+        self.Xsteps = self.parameters.get()["Xsteps"]
+        self.Ysteps = self.parameters.get()["Ysteps"]
+        self.subwells_spacing = self.parameters.get()["subwells_spacing"]
 
         #button definitions
 
@@ -50,8 +42,8 @@ class Plate_parameters(Interface,tk.Frame):
         self.YstepsLabel = tk.Label(self, text="Y steps:\n" + str(self.Ysteps))
 
         Save = tk.Button(self, text="Save", command=self.save_grid_param)
-        Cancel =  tk.Button(self, text="Cancel", command=self.close)
 
+        self.back_to_main_button()
         #buttons organisation
 
         LinesLabel.place(x=10,y=10)
@@ -68,19 +60,29 @@ class Plate_parameters(Interface,tk.Frame):
         self.YstepsLabel.place(x=80,y=260)
 
         Save.place(x=10, y=160)
-        Cancel.place(x=10,y=440)
+    
+        self.parameter_menu()
+
+    def parameter_menu(self):
+        self.parameters_selector = tk.StringVar()
+        self.parameters_selector.set(self.parameters.selected)
+        parameters_set_list = self.parameters.list_all()
+
+        ParametersSet = tk.OptionMenu(self, self.parameters_selector, *parameters_set_list,  command=self.parameters.select)
+        ParametersSet.config(width=15)
+        ParametersSet.place(x=20, y=350)
+
 
     def save_grid_param(self):
-        update_parameters([ 
+        self.parameters.update([ 
         ("lines", int(self.lines.get())), 
         ("columns", int(self.columns.get())),
-        ("subwells", int(self.subwells.get())) ],
-        plate_name)
+        ("subwells", int(self.subwells.get())) ])
         self.grid.generate_grid()
     
     def set_steps(self):
         self.clear_frame()
-        XYsteps_popup(self.microscope, self.grid, self.Xsteps, self.Ysteps, self, self.Tk_window)
+        XYsteps_popup(self.Tk_root, self.microscope, self.grid, self.Xsteps, self.Ysteps, self.parameters)
 
     def open(self):
         self.clear_jobs()
@@ -89,16 +91,15 @@ class Plate_parameters(Interface,tk.Frame):
             Interface._plate_parameters.init_window()
         else:
             pass
-            Interface._plate_parameters = Plate_parameters(self.Tk_root, last_window=self, grid=self.grid, microscope=self.microscope)
+            Interface._plate_parameters = Plate_parameters(self.Tk_root, self.microscope, self.grid, self.parameters)
 
 class XYsteps_popup(Interface, tk.Frame):
 
-    def __init__(self, microscope, grid, Xsteps, Ysteps, last_window, Tk_root):
-        Interface.__init__(self, Tk_root, microscope=microscope, grid=grid)               
+    def __init__(self, Tk_root, microscope, grid, Xsteps, Ysteps, parameters):
+        Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, parameters=parameters)               
         self.Tk_window = Tk_root
         self.Xold_steps = Xsteps
         self.Yold_steps = Ysteps
-        self.last_window = last_window
 
         self.init_window()
 
@@ -108,7 +109,7 @@ class XYsteps_popup(Interface, tk.Frame):
         self.Tk_window.title("Steps") 
         self.pack(fill=tk.BOTH, expand=1)
         self.show_record_label()
-        self.start = load_parameters(plate_name)["start"]   
+        self.start = self.parameters.get()["start"]   
             
         FreeMovementInterface.XYsliders(self)
 
@@ -147,10 +148,10 @@ class XYsteps_popup(Interface, tk.Frame):
         self.label_update()
 
     def save_A1(self):
-        start = load_parameters(plate_name)["start"]
+        start = self.parameters.get()["start"]
         start[0] = self.microscope.positions[0]
         start[1] = self.microscope.positions[1]
-        update_parameters([("start", start)],plate_name)
+        self.parameters.update([("start", start)])
         self.start = start
         self.grid.generate_grid()
 
@@ -167,9 +168,9 @@ class XYsteps_popup(Interface, tk.Frame):
     def save_measure(self, x=False, y=False ):
         self.measure()
         if x:
-            update_parameters([("X steps", self.Xsteps)],plate_name)
+            self.parameters.update([("X steps", self.Xsteps)])
         if y:
-            update_parameters([("Y steps", self.Ysteps)],plate_name)
+            self.parameters.update([("Y steps", self.Ysteps)])
         self.grid.generate_grid()
         self.close()
     
