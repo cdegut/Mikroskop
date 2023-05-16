@@ -28,14 +28,6 @@ class Plate_parameters(Interface,tk.Frame):
 
         #button definitions
 
-        LinesLabel = tk.Label(self, text="Lines")
-        LinesMenu = tk.OptionMenu(self, self.lines, *[4,8,16])
-        ColumnsLabel = tk.Label(self, text="columns")
-        ColumnsMenu = tk.OptionMenu(self, self.columns, *[6,12,24])
-
-        SubWellsLabel = tk.Label(self, text="N# of subwell")
-        SubWellsMenu = tk.OptionMenu(self, self.subwells, *[1,2,3,4])
-
         self.XstepsLabel = tk.Label(self, text="X steps:\n" + str(self.Xsteps))
         Xset =  tk.Button(self, text="Set X and Y step", command=self.set_steps)
 
@@ -43,34 +35,59 @@ class Plate_parameters(Interface,tk.Frame):
 
         Save = tk.Button(self, text="Save", command=self.save_grid_param)
 
-        self.back_to_main_button()
+
         #buttons organisation
-
-        LinesLabel.place(x=10,y=10)
-        LinesMenu.place(x=10,y=30)
-        ColumnsLabel.place(x=80,y=10)
-        ColumnsMenu.place(x=80, y=30)
-
-        SubWellsLabel.place(x=10,y=80)
-        SubWellsMenu.place(x=10, y=100)
 
         self.XstepsLabel.place(x=10,y=260)
         Xset.place(x=10,y=300)
-
         self.YstepsLabel.place(x=80,y=260)
+        Save.place(x=10, y=200)
 
-        Save.place(x=10, y=160)
+        self.back_to_main_button()   
+        self.parameter_menu(20,10)
+        self.lines_columns_subwels(10,80)
     
-        self.parameter_menu()
+    def lines_columns_subwels(self, x_p=10, y_p=10):
+        
+        self.TopLabel = tk.Label(self, text="Plates characteristics:")
+        self.LinesLabel = tk.Label(self, text="Lines:")
+        self.LinesMenu = tk.OptionMenu(self, self.lines, *[4,8,16])
+        self.ColumnsLabel = tk.Label(self, text="Columns:")
+        self.ColumnsMenu = tk.OptionMenu(self, self.columns, *[6,12,24])
+        self.SubWellsLabel = tk.Label(self, text="Subwells:")
+        self.SubWellsMenu = tk.OptionMenu(self, self.subwells, *[1,2,3,4])
+        
+        w=3
+        self.LinesMenu.config(width=w)
+        self.ColumnsMenu.config(width=w)
+        self.SubWellsMenu.config(width=w)
 
-    def parameter_menu(self):
+        self.TopLabel.place(x=x_p, y=y_p)
+        y_p = y_p +20
+        self.LinesLabel.place(x=x_p, y=y_p)
+        self.LinesMenu.place(x=x_p, y=y_p+20)
+        self.ColumnsLabel.place(x=x_p+70, y=y_p)
+        self.ColumnsMenu.place(x=x_p+70, y=y_p+20)
+        self.SubWellsLabel.place(x=x_p+140, y=y_p)
+        self.SubWellsMenu.place(x=x_p+140, y=y_p+20)
+
+    def parameter_menu(self, x_p, y_p):
         self.parameters_selector = tk.StringVar()
         self.parameters_selector.set(self.parameters.selected)
         parameters_set_list = self.parameters.list_all()
 
-        ParametersSet = tk.OptionMenu(self, self.parameters_selector, *parameters_set_list,  command=self.parameters.select)
+        ParametersSet = tk.OptionMenu(self, self.parameters_selector, *parameters_set_list,  command=self.parameter_set_changed)
         ParametersSet.config(width=15)
-        ParametersSet.place(x=20, y=350)
+        ParametersSet_label =  tk.Label(self, text="Parameters set:")
+        ParametersSet_label.place(x=x_p, y=y_p)
+        ParametersSet.place(x=x_p, y=y_p+20)
+    
+    def parameter_set_changed(self, new_param):
+        self.parameters.select(new_param)
+        endstops_dict = self.parameters.get()["dyn_endstops"]
+        self.microscope.set_dynamic_endsotop(endstops_dict)
+        self.init_window()
+
 
 
     def save_grid_param(self):

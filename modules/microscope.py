@@ -9,24 +9,32 @@ GPIO.setmode(GPIO.BCM)
 
 class Microscope:
 
-    def __init__(self, addr, ready_pin, parameters):
+    def __init__(self, addr, ready_pin, parameters=None):
         self.addr = addr
         self.ready_pin = ready_pin
         GPIO.setup(ready_pin, GPIO.IN) # set up the GPIO channels - one input for ready pin
         self.wait_ready()
         self.positions = self.checked_read_positions()
-        endstops_dict = parameters.get("Default")["dyn_endstops"]
+        
+        if parameters: ## if no parameter set are given, dynamic endstop are disabled
+            endstops_dict = parameters.get()["dyn_endstops"]
+        else:
+            endstops_dict = None
+
         self.set_dynamic_endsotop(endstops_dict)
 
         #Dynamic endsotop these will be used to modify the movement according to etablished safe parameters
     def set_dynamic_endsotop(self, endstops_dict):
-        self.dynamic_endstops = True
-        self.dyn_Xmax = endstops_dict["dyn_Xmax"]
-        self.dyn_Xmin = endstops_dict["dyn_Xmin"]
-        self.dyn_Ymax = endstops_dict["dyn_Ymax"]
-        self.dyn_Ymin = endstops_dict["dyn_Ymin"]
-        self.dyn_maxFcs = endstops_dict["dyn_maxFcs"]
-        self.safe_Fcs = endstops_dict["safe_Fcs"]
+        if endstops_dict:
+            self.dynamic_endstops = True
+            self.dyn_Xmax = endstops_dict["dyn_Xmax"]
+            self.dyn_Xmin = endstops_dict["dyn_Xmin"]
+            self.dyn_Ymax = endstops_dict["dyn_Ymax"]
+            self.dyn_Ymin = endstops_dict["dyn_Ymin"]
+            self.dyn_maxFcs = endstops_dict["dyn_maxFcs"]
+            self.safe_Fcs = endstops_dict["safe_Fcs"]
+        else:
+            self.dynamic_endstops = False
       
 
     def wait_ready(self): # wait until arduino is ready
