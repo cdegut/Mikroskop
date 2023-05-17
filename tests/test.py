@@ -1,2 +1,2 @@
-from time import time, sleep
-
+l =[ 10,5,9,0]
+print(str(l))
