@@ -71,7 +71,7 @@ class VideoRecorder(Thread):
 
         ### put back the former resolution setting
         if preview_resolution != self.camera.resolution:
-            self.camera.resolution= preview_resolution
+            self.camera.resolution=preview_resolution
 
 
 ##### Function that generate the worker and pass the information to it
