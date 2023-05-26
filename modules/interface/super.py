@@ -150,7 +150,7 @@ class Interface:
     def close(self):
         self.clear_jobs()
         self.clear_frame()
-        self.last_window.init_window(self)
+        self.last_window.init_window()
     
     def back_to_main(self):
         self.clear_jobs()
