@@ -76,6 +76,17 @@ class VideoRecorder(Thread):
 
 ##### Function that generate the worker and pass the information to it
 def start_recording(camera, data_dir, video_quality=320, video_name="test"):
+    """Start a recording worker as a separate thread
+
+    Args:
+        camera (Pi.camera object): _description_
+        data_dir (str): data directory 
+        video_quality (int, optional): image heigh. Defaults to 320.
+        video_name (str, optional): video name. Defaults to "test".
+
+    Returns:
+        VideoRecorder, Event: the video recorder object, and the event to stop it
+    """
     create_folder(data_dir + "rec/")
     data_name = data_dir + "rec/" + video_name + ".h264"
     rec_off = Event()
@@ -87,5 +98,4 @@ def start_recording(camera, data_dir, video_quality=320, video_name="test"):
 def stop_video(off_event):
     off_event.set()
 
-    
-             
+
