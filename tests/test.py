@@ -1,2 +1,2 @@
-l =[ 10,5,9,0]
-print(str(l))
+test= 3 + 0x10
+print(test)

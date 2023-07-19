@@ -73,7 +73,7 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
         if Interface._led_popup:
             Interface._led_popup.init_window(self)
         else:
-            Interface._led_popup = Led_popup(self.Tk_root, last_window=self, microscope=self.microscope)
+            Interface._led_popup = Led_popup(self.Tk_root, last_window=self, microscope=self.microscope, parameters=self.parameters)
 
 
 class Focus_popup(Interface, tk.Frame):

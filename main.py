@@ -53,9 +53,9 @@ if __name__ == "__main__":
     while not Interface._exit:
 
         ##Read physical interface
-        encoder_read(microscope, encoder_X,1,X_controler_steps, sw_step_multiplier)
-        encoder_read(microscope, encoder_Y,2,Y_controler_steps, sw_step_multiplier)
-        encoder_read(microscope, encoder_F,3,F_controler_steps, sw_step_multiplier)
+        encoder_read(microscope, encoder_X,1,X_controler_short, X_controler_long)
+        encoder_read(microscope, encoder_Y,2,Y_controler_short, Y_controler_long)
+        encoder_read(microscope, encoder_F,3,F_controler_short, F_controler_long)
 
         #Tkinter mainloop
         Tk_root.update_idletasks()

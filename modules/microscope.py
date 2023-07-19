@@ -99,6 +99,11 @@ class Microscope:
             time.sleep(0.5)
             i += 1
 
+    def push_axis(self, motor, amount):
+        with SMBus(1) as bus: #open I²C bus, and do the proper comunication
+            #bus.write_i2c_block_data(self.addr, motor + 10, 100)
+            bus.write_byte_data(self.addr, motor + 0x10, amount)
+
     def make_safe(self, motor, destination): #Software and dynamic endstops, update destination to avoid collision or out of range
 
         if software_endstops:
@@ -143,6 +148,7 @@ class Microscope:
             return
         self.checked_send_motor_cmd(axis, motor_destination)           
         self.wait_ready()
+    
         
     def go_absolute(self, destinations): #ordered movement of the 3 axis, move focus first of last depending on condition to avoid triggering dyn_endstop
         if destinations[2] < self.positions[2]: #move focus first if it's going down (park)

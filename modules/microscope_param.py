@@ -13,9 +13,11 @@ read_retry = 10
 addr = 0x8 
 ready_pin = 4
 
-# physical controler parameters
-Y_controler_steps = 10
-X_controler_steps = 10
-F_controler_steps = 1
-sw_step_multiplier = 20
+# physical controler parameters max value is 128
+Y_controler_short = 10
+X_controler_short = 10
+F_controler_short = 1
 
+Y_controler_long = 100
+X_controler_long = 100
+F_controler_long = 10
