@@ -1,35 +1,20 @@
 from .encoder_class import Encoder
-from time import sleep
-from threading import Thread
+
 
     
-def encoder_read(microscope, encoder, axis, base_step, step_multiplier):
+def encoder_read(microscope, encoder, axis, short_steps, long_steps):
     value = encoder.internal_counter
     if value == 0:
         return
     
-    ## Allow for large movement when switch is in True position ##
-    if encoder.sw_state: 
-        sleep(0.05)
-        new_value = encoder.internal_counter ## Check if the knob is turning
-        
-        while new_value != value: ## Try to continue pooling value if turning
-            value = new_value
-            sleep(0.25)
-            new_value = encoder.internal_counter
-
-    if value > 1 or value < -1:
-        value * 5 ## increase large pooled value
-    
     ## Check state to know if doing large or small movement, calculate steps accordingly
     if encoder.sw_state:
-        steps = value * base_step * step_multiplier 
+        steps = short_steps * value
     else:
-        steps = value *base_step
+        steps = long_steps * value
 
-    ## Finally move   
     if microscope.is_ready():
-        microscope.move_1axis(axis , steps)
+        microscope.push_axis(axis , steps)
         encoder.internal_counter = 0
 
 
@@ -56,9 +41,9 @@ if __name__ == "__main__":
     try:
         while True:
             time.sleep(0.01)
-            encoder_read(microscope, encoder_X,1,X_controler_steps, sw_step_multiplier)
-            encoder_read(microscope,encoder_Y,2,Y_controler_steps, sw_step_multiplier)
-            encoder_read(microscope,encoder_F,3,F_controler_steps, sw_step_multiplier)
+            encoder_read(microscope, encoder_X,1,X_controler_short, X_controler_long)
+            encoder_read(microscope, encoder_Y,2,Y_controler_short, Y_controler_long)
+            encoder_read(microscope, encoder_F,3,F_controler_short, F_controler_long)
         
     except KeyboardInterrupt:
         pass
