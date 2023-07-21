@@ -101,10 +101,10 @@ class Focus_popup(Interface, tk.Frame):
         Fm5 = tk.Button(self, text="Fcs -5  ", command=lambda: self.microscope.move_1axis(3,-5))
 
         save = tk.Button(self, fg='green',text="Save", command=self.save_focus)
-        Reset = tk.Button(self, fg='red', text="Reset", command=lambda: self.microscope.checked_send_motor_cmd(3, self.parameters.get()["start"][2]))
+        Reset = tk.Button(self, fg='red', text="Reset", command=lambda: self.microscope.move_focus(self.parameters.get()["start"][2]))
         
-        ObjOn = tk.Button(self, text="ObjOn", command=lambda:  self.microscope.checked_send_motor_cmd(3, self.parameters.get()["start"][2] - 600 ))
-        ObjOff = tk.Button(self, text="ObjOff", command=lambda: self.microscope.checked_send_motor_cmd(3, 0 ))
+        ObjOn = tk.Button(self, text="ObjOn", command=lambda:  self.microscope.move_focus(self.parameters.get()["start"][2] - 600 ))
+        ObjOff = tk.Button(self, text="ObjOff", command=lambda: self.microscope.move_focus(0))
         
         Fp100.place(x=10, y=200)
         Fm100.place(x=100, y=200)
