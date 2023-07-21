@@ -55,8 +55,8 @@ class FreeMovementInterface(Interface, tk.Frame):
         Save.place(x=80,y=450)
 
     def XYsliders(self, position=(0,10), l=220): #### Place the two navigation sliders
-        GoX =  tk.Button(self, width=5, height=2, text="Go X", command=lambda: self.microscope.checked_send_motor_cmd(1, self.Xaxis.get()*1000 ))
-        GoY =  tk.Button(self, width=5, height=2,  text="Go Y", command=lambda: self.microscope.checked_send_motor_cmd(2, self.Yaxis.get()*1000 ))
+        GoX =  tk.Button(self, width=5, height=2, text="Go X", command=lambda: self.microscope.move_single_axis(1, self.Xaxis.get()*1000 ))
+        GoY =  tk.Button(self, width=5, height=2,  text="Go Y", command=lambda: self.microscope.move_single_axis(2, self.Yaxis.get()*1000 ))
         self.Xaxis = tk.Scale(self, from_=0, to=Xmaxrange/1000, length=l, width=60)  
         self.Yaxis = tk.Scale(self, from_=0, to=Ymaxrange/1000, length=l, width=60)
     

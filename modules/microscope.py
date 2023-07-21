@@ -23,7 +23,7 @@ class Microscope:
 
         self.set_dynamic_endsotop(endstops_dict)
 
-        #Dynamic endsotop these will be used to modify the movement according to etablished safe parameters
+        #Dynamic endsotop these will be used to modify the movement according to established safe parameters
     def set_dynamic_endsotop(self, endstops_dict):
         if endstops_dict:
             self.dynamic_endstops = True
@@ -44,61 +44,77 @@ class Microscope:
     def is_ready(self): #check if arduino is ready
         return GPIO.input(self.ready_pin) 
 
+
     def send_motor_cmd(self, motor, destination):
 
-        if self.is_ready: #nothing is done if arduino is not available
-            destination_as_bytes = int(destination).to_bytes(4, byteorder='big', signed=False)
-			
-            checksum = (sum(destination_as_bytes)+motor) % 256 #compute simple checksum
-            destination_as_bytes += bytes([checksum]) #add checksum byte to the destination bytes liste
-			
-            i=0
-            while i <= retry: #do the comunication, but catch error and retry in case of problem
-                try:
-                    with SMBus(1) as bus: #open I²C bus, and do the proper comunication
-                        bus.write_i2c_block_data(self.addr, motor, destination_as_bytes)
-                except:
-                    time.sleep(1)
-                    i=i+1
-                    print("At "+ time.strftime("%H:%M:%S", time.localtime()) +" motor comunication error, retrying "+str(i)+" of "+ str(retry) +" times")
-                else:
-                    break
+        #Generate the message
+        destination_as_bytes = int(destination).to_bytes(4, byteorder='big', signed=False)        
+        checksum = (sum(destination_as_bytes)+motor) % 256
+        destination_as_bytes += bytes([checksum])
+                
+        i=0
+        while i <= retry: #do the comunication, but catch error and retry in case of problem
+            try:
+                with SMBus(1) as bus: #open I²C bus, and do the proper comunication
+                    bus.write_i2c_block_data(self.addr, motor, destination_as_bytes)
+            except:
+                time.sleep(1)
+                i=i+1
+                print("At "+ time.strftime("%H:%M:%S", time.localtime()) +" motor comunication error, retrying "+str(i)+" of "+ str(retry) +" times")
+            else:
+                break
 
-            if i > retry:
-                    print("At "+ time.strftime("%H:%M:%S", time.localtime()) + "motor comunication error, exit after "+str(i)+"retry")
-                    exit()
+        if i > retry:
+                print("At "+ time.strftime("%H:%M:%S", time.localtime()) + "motor comunication error, exit after "+str(i)+"retry")
+                exit()
 
     
-    def checked_send_motor_cmd(self, motor, destination): 
-	#use the software endstop if set
-	#send command (including checksum)
-	#wait for movement to be done
-	#read position from arduino and check that movement was executed corectly
-	#retry the movement if the position is not the expected one (with checksum added, this should never happen)
+    def safe_destination_update(self, motor, destination):
                
-        destination = self.make_safe(motor, destination) #update destination with max value acccording to set soft endstop if needed
+        destination = self.make_safe(motor, destination) #update destination with max value acccording to set soft endstop if needed      
+        self.send_motor_cmd(motor, destination)
 
-        if motor not in [1,2,3]: #simple check that motor havn't an abherant index
-            return
 
+    def move_single_axis(self, motor, destination):
         i = 1
         while i <= retry:
-            if self.is_ready: #nothing is done if arduino is not available
 
-                self.send_motor_cmd(motor, destination)
-                self.wait_ready()
+            self.safe_destination_update(motor, destination)
+            self.wait_ready()
 
-                #update position and check that it was corectly done
-                self.positions = self.checked_read_positions()
-                if self.positions[motor-1] == destination:
-                    self.wait_ready()
-                    return
+            #update position and check that it was corectly done
+            self.positions = self.checked_read_positions()
+            if self.positions[motor-1] == destination:
+                return
 
             #Loop if the function was not returned after the check position (with checksum added to I²C communication, this should never happen)
             #May happen if axis maxrange are > to endstop set in arduino firmware
             print("At "+ time.strftime("%H:%M:%S", time.localtime()) +" motor did not move as expected, retrying "+str(i)+" of "+ str(retry) +" times") 
             time.sleep(0.5)
             i += 1
+
+    def move_focus(self, destination):
+        self.move_single_axis(3, destination)
+    
+    def move_X_Y(self, destination_X, destination_Y):
+        i = 1
+        while i <= retry:
+
+            self.safe_destination_update(1, destination_X)
+            self.safe_destination_update(2, destination_Y)
+            self.wait_ready()
+
+            #update position and check that it was corectly done
+            self.positions = self.checked_read_positions()
+            if self.positions[1] == destination_X and self.positions[2]:
+                return
+
+            #Loop if the function was not returned after the check position (with checksum added to I²C communication, this should never happen)
+            #May happen if axis maxrange are > to endstop set in arduino firmware
+            print("At "+ time.strftime("%H:%M:%S", time.localtime()) +" motor did not move as expected, retrying "+str(i)+" of "+ str(retry) +" times") 
+            time.sleep(0.5)
+            i += 1
+
 
     def push_axis(self, motor, amount):
         with SMBus(1) as bus: #open I²C bus, and do the proper comunication
@@ -137,8 +153,6 @@ class Microscope:
                                                             self.positions[1] >  self.dyn_Ymax or self.positions[1] < self.dyn_Ymin ):
                 destination = self.safe_Fcs
             
-
-
         return destination
 
     def move_1axis(self, axis, movement): # for small axis movement 
@@ -147,25 +161,15 @@ class Microscope:
         motor_destination = motor_position + movement
         if motor_destination < 0:
             return
-        self.checked_send_motor_cmd(axis, motor_destination)           
-        self.wait_ready()
-    
+        self.move_single_axis(axis, motor_destination)           
         
     def go_absolute(self, destinations): #ordered movement of the 3 axis, move focus first of last depending on condition to avoid triggering dyn_endstop
         if destinations[2] < self.positions[2]: #move focus first if it's going down (park)
-            self.checked_send_motor_cmd(3, destinations[2])
-            self.wait_ready()    
-            self.checked_send_motor_cmd(1, destinations[0])
-            self.wait_ready()
-            self.checked_send_motor_cmd(2, destinations[1])
-            self.wait_ready()       
+            self.move_focus(destinations[2]) 
+            self.move_X_Y(destinations[0],destinations[1])
         else: #move focus last if it's going up (start)
-            self.checked_send_motor_cmd(1, destinations[0])
-            self.wait_ready()
-            self.checked_send_motor_cmd(2, destinations[1])
-            self.wait_ready()
-            self.checked_send_motor_cmd(3, destinations[2])
-            self.wait_ready()
+            self.move_X_Y(destinations[0],destinations[1])    
+            self.move_focus(destinations[2])
    
     def set_ledpwr(self, pwr):
         if self.is_ready: #nothing is done if arduino is not available

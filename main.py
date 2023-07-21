@@ -32,7 +32,7 @@ if __name__ == "__main__":
     parameters = ParametersSets()
     microscope = Microscope(addr, ready_pin, parameters)
     grid = PositionsGrid(microscope, parameters)
-    camera = picamera.PiCamera()loop
+    camera = picamera.PiCamera()
 
     #Tkinter object
     Tk_root = tk.Tk()

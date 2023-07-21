@@ -32,8 +32,7 @@ class Interface:
     def go_centerXY(self):
         X_center = self.microscope.dyn_Ymin + (self.microscope.dyn_Xmax - self.microscope.dyn_Xmin)/2
         Y_center = self.microscope.dyn_Ymin + (self.microscope.dyn_Ymax - self.microscope.dyn_Ymin)/2
-        self.microscope.checked_send_motor_cmd(1, X_center)
-        self.microscope.checked_send_motor_cmd(2, Y_center)
+        self.microscope.mmove_X_Y(X_center,Y_center) 
 
 
     #####################################################
@@ -63,6 +62,9 @@ class Interface:
 
     ######## update the label to corespond to the actual curent position of the microscope
     def update_coordinates_label(self):
+        if self.microscope.is_ready():
+            self.microscope.positions = self.microscope.checked_read_positions()
+        
         positions = self.microscope.positions
         text_coordinates = "X: " + str(positions[0]) + "   Y: " + str(positions[1]) + "   F: " + str(positions[2]) + "\nLed "+ str(positions[4])  + ": " + str(positions[3])
         self.Coordinates.configure(text=text_coordinates)
