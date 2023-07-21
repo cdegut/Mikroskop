@@ -68,6 +68,7 @@ class Microscope:
                     print("At "+ time.strftime("%H:%M:%S", time.localtime()) + "motor comunication error, exit after "+str(i)+"retry")
                     exit()
 
+    
     def checked_send_motor_cmd(self, motor, destination): 
 	#use the software endstop if set
 	#send command (including checksum)
