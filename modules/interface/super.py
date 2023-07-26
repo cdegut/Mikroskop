@@ -32,7 +32,7 @@ class Interface:
     def go_centerXY(self):
         X_center = self.microscope.dyn_Ymin + (self.microscope.dyn_Xmax - self.microscope.dyn_Xmin)/2
         Y_center = self.microscope.dyn_Ymin + (self.microscope.dyn_Ymax - self.microscope.dyn_Ymin)/2
-        self.microscope.mmove_X_Y(X_center,Y_center) 
+        self.microscope.move_X_Y(X_center,Y_center) 
 
 
     #####################################################

@@ -106,7 +106,7 @@ class Microscope:
 
             #update position and check that it was corectly done
             self.positions = self.checked_read_positions()
-            if self.positions[1] == destination_X and self.positions[2]:
+            if self.positions[0] == destination_X and self.positions[1] == destination_Y:
                 return
 
             #Loop if the function was not returned after the check position (with checksum added to I²C communication, this should never happen)

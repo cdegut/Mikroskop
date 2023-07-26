@@ -1,18 +1,22 @@
 from smbus2 import SMBus, i2c_msg
+from time import sleep
 
 addr = 0x8 # bus address
 
 def read_postions():
 
     with SMBus(1) as bus:
-        # Read 64 bytes from address 80
-        msg = i2c_msg.read(addr, 12)
+        #bus.pec =1
+        msg = i2c_msg.read(addr, 15) #generate I²C msg instance as msg
         bus.i2c_rdwr(msg)
+	#I²C transaction
+        #msg = bus.read_block_data(addr, 0xff, 15)
 
     X_b = []
     Y_b = []
     Focus_b = []
     i = 1
+    print(msg)
     for value in msg:
         if i <= 4:
             X_b.append(value) 
