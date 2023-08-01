@@ -68,7 +68,20 @@ class Microscope:
                 print("At "+ time.strftime("%H:%M:%S", time.localtime()) + "motor comunication error, exit after "+str(i)+"retry")
                 exit()
 
-    
+    def push_axis(self, motor, amount):
+        with SMBus(1) as bus: #open I²C bus, and do the proper comunication
+            #bus.write_i2c_block_data(self.addr, motor + 10, 100)
+            #bus.write_byte_data(self.addr, motor + 0x10, amount)
+
+            steps = abs(amount)
+            if amount > 0:
+                cmd =  motor + 0x10
+            else:
+                cmd =  motor + 0x20
+
+            data = bytes([steps, steps])
+            bus.write_i2c_block_data(self.addr, cmd, data)
+            
     def safe_destination_update(self, motor, destination):
                
         destination = self.make_safe(motor, destination) #update destination with max value acccording to set soft endstop if needed      
@@ -114,12 +127,6 @@ class Microscope:
             print("At "+ time.strftime("%H:%M:%S", time.localtime()) +" motor did not move as expected, retrying "+str(i)+" of "+ str(retry) +" times") 
             time.sleep(0.5)
             i += 1
-
-
-    def push_axis(self, motor, amount):
-        with SMBus(1) as bus: #open I²C bus, and do the proper comunication
-            #bus.write_i2c_block_data(self.addr, motor + 10, 100)
-            bus.write_byte_data(self.addr, motor + 0x10, amount)
 
     def make_safe(self, motor, destination): #Software and dynamic endstops, update destination to avoid collision or out of range
 

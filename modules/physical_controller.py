@@ -1,21 +1,27 @@
 from .encoder_class import Encoder
 
-
+def twos_comp(val, bits):
+    """compute the 2's complement of int value val"""
+    if (val & (1 << (bits - 1))) != 0: # if sign bit is set e.g., 8bit: 128-255
+        val = val - (1 << bits)        # compute negative value
+    return val     
     
 def encoder_read(microscope, encoder, axis, short_steps, long_steps):
     value = encoder.internal_counter
     if value == 0:
         return
-    
+    elif value >0:
+        sign = 1
+    else:
+        sign = -1 
     ## Check state to know if doing large or small movement, calculate steps accordingly
     if encoder.sw_state:
-        steps = short_steps * value
+        steps = short_steps * sign
     else:
-        steps = long_steps * value
+        steps = long_steps * sign
 
-    if microscope.is_ready():
-        microscope.push_axis(axis , steps)
-        encoder.internal_counter = 0
+    microscope.push_axis(axis , steps)
+    encoder.internal_counter = 0
 
 
 if __name__ == "__main__":
@@ -44,6 +50,7 @@ if __name__ == "__main__":
             encoder_read(microscope, encoder_X,1,X_controller_short, X_controller_long)
             encoder_read(microscope, encoder_Y,2,Y_controller_short, Y_controller_long)
             encoder_read(microscope, encoder_F,3,F_controller_short, F_controller_long)
+
         
     except KeyboardInterrupt:
         pass
