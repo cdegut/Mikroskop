@@ -41,7 +41,7 @@ class FreeMovementInterface(Interface, tk.Frame):
         ######### creating buttons instances      
         Start = tk.Button(self, fg='Green', text="Go Start", command=self.go_start)
         XY_center = tk.Button(self, fg='Green', text="CentXY", command=self.go_centerXY)
-        Save = tk.Button(self, fg='Green', text="Save Start", command=lambda: self.save_positions("Free"))
+        Save = tk.Button(self, fg='Green', text="Save Start",command=lambda: self.save_positions(None))
         
         self.snap_button()
         

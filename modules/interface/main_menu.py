@@ -64,6 +64,6 @@ class MainMenu(Interface, tk.Frame):
     
     def parknquit(self):
         self.microscope.go_absolute([Xmaxrange, Ymaxrange/2, 0])
-        self.micrscope.set_ledpwr(0)
-        self.micrscope.set_led_state(0)
+        self.microscope.set_ledpwr(0)
+        self.microscope.set_led_state(0)
         self.exit()

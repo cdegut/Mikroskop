@@ -88,12 +88,12 @@ class Interface:
         self.parameters.update_start(self.microscope.positions[0],self.microscope.positions[1], self.microscope.positions[2],parameter_subset)
         self.grid.generate_grid() 
 
-    def guess_parameters_subset(self):
-        if self.last_window == Interface._freemove_main:
-            parameters_subset = "Free"
-        elif self.last_window == Interface._grid_main:
-            parameters_subset = plate_name   
-        return parameters_subset
+    #def guess_parameters_subset(self):
+    #    if self.last_window == Interface._freemove_main:
+    #        parameters_subset = "Free"
+    #    elif self.last_window == Interface._grid_main:
+    #        parameters_subset = plate_name   
+    #    return parameters_subset
 
     ###################################################
     ####### Pictures, videos ##########################

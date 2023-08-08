@@ -61,7 +61,9 @@ class ParametersSets:
             self.all_parameters_sets[subset][parameter[0]] = parameter[1]
         self.__save_all()
 
-    def update_start(self, x,y,f,subset="Default"):
+    def update_start(self, x,y,f,subset=None):
+        if not subset:
+            subset = self.selected
         if x:    
             self.all_parameters_sets[subset]["start"][0] = x
         if y:

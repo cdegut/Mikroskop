@@ -78,8 +78,8 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
 
 class Focus_popup(Interface, tk.Frame):
 
-    def __init__(self, Tk_root, last_window, microscope, parameters):
-        Interface.__init__(self, Tk_root,last_window=self, microscope=microscope, parameters=parameters)    
+    def __init__(self, Tk_root, last_window, microscope,  grid, parameters):
+        Interface.__init__(self, Tk_root, last_window=self, microscope=microscope, grid=grid, parameters=parameters)    
         self.init_window(last_window)
 
     ###########
@@ -122,7 +122,7 @@ class Focus_popup(Interface, tk.Frame):
         self.back_button()
 
     def save_focus(self):
-        self.parameters.update_start(None , None, self.microscope.positions[2], self.parameters_subset)
+        self.parameters.update_start(None , None, self.microscope.positions[2], None)
         self.grid.generate_grid()
    
     
@@ -132,7 +132,7 @@ class Focus_popup(Interface, tk.Frame):
         if Interface._focus_popup:
             Interface._focus_popup.init_window(self)
         else:
-            Interface._focus_popup = Focus_popup(self.Tk_root, last_window=self, microscope=self.microscope, parameters=self.parameters)
+            Interface._focus_popup = Focus_popup(self.Tk_root, last_window=self, microscope=self.microscope, grid=self.grid, parameters=self.parameters)
 
 class Zoom_popup(Interface, tk.Frame): #widget to fill popup window, show an stop button and a modifiable label
 

@@ -3,6 +3,8 @@ from .encoder_class import Encoder
 
 def encoder_read(microscope, encoder, axis, short_steps, long_steps):
     value = encoder.internal_counter
+    if value == 0:
+        return
     ## Check state to know if doing large or small movement, calculate steps accordingly
     if encoder.sw_state:
         steps = short_steps * value
