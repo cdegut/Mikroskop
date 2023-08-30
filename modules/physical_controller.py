@@ -19,6 +19,24 @@ def encoder_read(microscope, encoder, axis, short_steps, long_steps):
     microscope.push_axis(axis , steps)
     encoder.internal_counter = 0
 
+def controller_startup():
+    from .microscope_param import F_controller_pinA, F_controller_pinB, F_controller_Switch, Y_controller_pinA , Y_controller_pinB, Y_controller_Switch, X_controller_pinA, X_controller_pinB, X_controller_Switch
+        #Generate the objects for the physical interface
+    try:
+        encoder_F = Encoder(F_controller_pinA, F_controller_pinB, "up", F_controller_Switch)
+        encoder_Y = Encoder(Y_controller_pinA , Y_controller_pinB ,"up",Y_controller_Switch)
+        encoder_X = Encoder(X_controller_pinA, X_controller_pinB,"up",X_controller_Switch)
+    except: ##sometimes crash, try to redo it after gpio cleanup
+        from RPi import GPIO
+        GPIO.cleanup()
+        GPIO.setmode(GPIO.BCM)
+        print("Trying the controller set up again")
+        encoder_F = Encoder(F_controller_pinA, F_controller_pinB, "up", F_controller_Switch)
+        encoder_Y = Encoder(Y_controller_pinA , Y_controller_pinB ,"up",Y_controller_Switch)
+        encoder_X = Encoder(X_controller_pinA, X_controller_pinB,"up",X_controller_Switch)
+    
+    return encoder_X, encoder_Y, encoder_F
+
 
 if __name__ == "__main__":
 
@@ -36,9 +54,7 @@ if __name__ == "__main__":
     #camera = picamera.PiCamera()
     #previewPiCam(camera)
 
-    encoder_F = Encoder(6, 12, "up",sw_pin=21)
-    encoder_Y = Encoder(19, 16,"up",sw_pin=13)
-    encoder_X = Encoder(26, 20,"up",sw_pin=5)
+    encoder_X, encoder_Y, encoder_F = controller_startup()
     
     try:
         while True:

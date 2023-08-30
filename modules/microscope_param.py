@@ -21,3 +21,13 @@ F_controller_short = 1
 Y_controller_long = 100
 X_controller_long = 100
 F_controller_long = 10
+
+Y_controller_pinA = 19
+Y_controller_pinB = 16
+Y_controller_Switch = 13
+X_controller_pinA = 26
+X_controller_pinB = 20
+X_controller_Switch = 21
+F_controller_pinA = 6
+F_controller_pinB = 12
+F_controller_Switch = 5

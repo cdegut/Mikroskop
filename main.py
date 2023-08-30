@@ -6,7 +6,7 @@ from os import environ
 from modules.cameracontrol import previewPiCam
 from modules.microscope import Microscope
 from modules.position_grid import PositionsGrid
-from modules.physical_controller import Encoder, encoder_read
+from modules.physical_controller import encoder_read, controller_startup
 from modules.interface.main_menu import *
 from modules.microscope_param import *
 from modules.parametersIO import ParametersSets
@@ -15,18 +15,6 @@ from modules.parametersIO import ParametersSets
 #main loop
 if __name__ == "__main__": 
 
-    #Generate the objects for the physical interface
-    try:
-        encoder_F = Encoder(6, 12, "up",sw_pin=21)
-        encoder_Y = Encoder(19, 16,"up",sw_pin=13)
-        encoder_X = Encoder(26, 20,"up",sw_pin=5)
-    except: ##sometimes crash, try to redo it after gpio cleanup
-        GPIO.cleanup()
-        GPIO.setmode(GPIO.BCM)
-        print("Trying the controller set up again")
-        encoder_F = Encoder(6, 12, "up",sw_pin=21)
-        encoder_Y = Encoder(19, 16,"up",sw_pin=13)
-        encoder_X = Encoder(26, 20,"up",sw_pin=5)
 
     ### Object for microscope to run
     parameters = ParametersSets()
@@ -47,7 +35,7 @@ if __name__ == "__main__":
     #start picamPreview
     previewPiCam(camera)
 
-
+    encoder_X, encoder_Y, encoder_F = controller_startup()
 
     ## Microscope controller main loop
     while not Interface._exit:
