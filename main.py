@@ -35,6 +35,7 @@ if __name__ == "__main__":
     #start picamPreview
     previewPiCam(camera)
 
+
     encoder_X, encoder_Y, encoder_F = controller_startup()
 
     ## Microscope controller main loop
@@ -44,6 +45,8 @@ if __name__ == "__main__":
         encoder_read(microscope, encoder_X,1,X_controller_short, X_controller_long)
         encoder_read(microscope, encoder_Y,2,Y_controller_short, Y_controller_long)
         encoder_read(microscope, encoder_F,3,F_controller_short, F_controller_long)
+        #print(camera.exposure_speed)
+
 
         #Tkinter mainloop
         Tk_root.update_idletasks()

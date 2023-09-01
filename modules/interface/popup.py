@@ -5,7 +5,7 @@ from ..cameracontrol import change_zoom
 
 def led_focus_zoom_buttons(self, position=400):
     Focus = tk.Button(self, width=4, text="Focus", command=lambda: Focus_popup.open(self))     
-    Ledbutton = tk.Button(self, width=4, text="Led", command=lambda: Led_popup.open(self))
+    Ledbutton = tk.Button(self, width=4, text="Light", command=lambda: Led_popup.open(self))
     ZoomButton = tk.Button(self, width=4, text="Zoom", command=lambda: Zoom_popup.open(self))
     Focus.place(x=80, y=position)
     Ledbutton.place(x=10, y=position)
@@ -13,8 +13,9 @@ def led_focus_zoom_buttons(self, position=400):
 
 class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop button and a modifiable label
 
-    def __init__(self, Tk_root, last_window, microscope, parameters):
-        Interface.__init__(self, Tk_root, last_window, microscope, parameters=parameters)
+    def __init__(self, Tk_root, last_window, microscope, parameters, camera):
+        Interface.__init__(self, Tk_root, last_window, microscope, parameters=parameters, camera=camera)
+        self.auto_exp_value = "auto"
         self.init_window(last_window)
 
     ###########
@@ -34,21 +35,39 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
         Led12 = tk.Button(self, text="Led 1+2", command= lambda: self.microscope.set_led_state(3))
         LedOff = tk.Button(self, text="Led Off", command= lambda: self.microscope.set_led_state(0))
 
-        self.Led_scale.place(x=10,y=100)
+        AutoExpOn = tk.Button(self, text="AutoExp ON", command= lambda: self.auto_exp("auto"))
+        AutoExpOff = tk.Button(self, text="AutoExp OFF", command= lambda: self.auto_exp("off"))
+        self.Exp_scale = tk.Scale(self, from_=0, to=10000, length=200, width=60, orient=tk.HORIZONTAL)
 
-        Save.place(x=20, y=380)
+        Default.place(x=20,y=30)
+        self.Led_scale.place(x=10,y=80)
+
+        Save.place(x=20, y=490)
         
-        Default.place(x=10,y=40)
 
-        Led1.place(x=20,y=250)
-        Led2.place(x=90,y=250)
-        Led12.place(x=20,y=300)   
-        LedOff.place(x=110,y=300) 
+        Led1.place(x=20,y=200)
+        Led2.place(x=90,y=200)
+        Led12.place(x=20,y=240)   
+        LedOff.place(x=110,y=240) 
+        
+        AutoExpOn.place(x=30,y=300) 
+        AutoExpOff.place(x=30,y=340)
+        self.Exp_scale.place(x=10,y=380)
 
         self.Led_scale.set(self.microscope.positions[3])
+        self.Exp_scale.set(self.camera.exposure_speed)
 
         self.set_led()
-        self.back_button()
+        self.set_exp()
+        self.back_button(position=(90,490))
+    
+    def auto_exp(self, value):
+        self.auto_exp_value = value
+        if value == "auto":
+            self.camera.shutter_speed = 0
+        self.camera.exposure_mode = value
+
+
     
     def save_led(self):
         self.parameters.update([("led",[self.microscope.positions[3], self.microscope.positions[4]])])
@@ -59,6 +78,17 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
             self.microscope.positions[3] = pwr
             self.microscope.set_ledpwr(pwr)
         Interface._job1 = self.after(100, self.set_led)
+    
+    def set_exp(self): ## Read the scale and set the led at the proper power
+        exp = self.Exp_scale.get()
+        if exp != self.camera.exposure_speed:
+            if self.auto_exp_value == "off":
+                    self.camera.shutter_speed = exp
+            elif self.auto_exp_value == "auto":
+                self.Exp_scale.set(self.camera.exposure_speed)
+        
+
+        Interface._job2 = self.after(100, self.set_exp)
 
     def set_default(self): ## Read led power from Default parameter set
         led = self.parameters.get("Default")["led"]
@@ -73,7 +103,7 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
         if Interface._led_popup:
             Interface._led_popup.init_window(self)
         else:
-            Interface._led_popup = Led_popup(self.Tk_root, last_window=self, microscope=self.microscope, parameters=self.parameters)
+            Interface._led_popup = Led_popup(self.Tk_root, last_window=self, microscope=self.microscope, parameters=self.parameters, camera=self.camera)
 
 
 class Focus_popup(Interface, tk.Frame):

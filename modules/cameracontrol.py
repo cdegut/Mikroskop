@@ -11,7 +11,12 @@ def previewPiCam(camera): #show preview directly as screen overlay
     camera.preview_window=(0,25, 800, 625)
     camera.resolution=(camera_max_resolution) #change picture resolution here
     camera.video_stabilization=True
+    camera.iso = 400
     camera.start_preview()
+    camera.awb_mode = 'fluorescent'
+    camera.exposure_mode = 'auto'
+
+
 
 def change_zoom(camera, value):
     ##Centered zoom
