@@ -31,3 +31,7 @@ X_controller_Switch = 21
 F_controller_pinA = 6
 F_controller_pinB = 12
 F_controller_Switch = 5
+
+#fluorescent gain value
+awbR = 1
+awbB = 0.35

@@ -11,10 +11,10 @@ def previewPiCam(camera): #show preview directly as screen overlay
     camera.preview_window=(0,25, 800, 625)
     camera.resolution=(camera_max_resolution) #change picture resolution here
     camera.video_stabilization=True
-    camera.iso = 400
+    camera.iso = 200
     camera.start_preview()
-    camera.awb_mode = 'fluorescent'
-    camera.exposure_mode = 'auto'
+    camera.vflip = True
+    camera.hflip = True
 
 
 
@@ -103,4 +103,58 @@ def start_recording(camera, data_dir, video_quality=320, video_name="test"):
 def stop_video(off_event):
     off_event.set()
 
+if __name__ == "__main__":
+    import picamera
+    from RPi import GPIO
+    from os import environ
 
+    from modules.cameracontrol import previewPiCam
+    from modules.microscope import Microscope
+    from modules.position_grid import PositionsGrid
+    from modules.physical_controller import encoder_read, controller_startup
+    from modules.interface.main_menu import *
+    from modules.microscope_param import *
+    from modules.parametersIO import ParametersSets
+    from time import sleep
+
+
+    ### Object for microscope to run
+    parameters = ParametersSets()
+    microscope = Microscope(addr, ready_pin, parameters)
+    grid = PositionsGrid(microscope, parameters)
+    camera = picamera.PiCamera()
+
+    
+    #start picamPreview
+    previewPiCam(camera)
+    sleep(1)
+    camera.exposure_mode = 'off'
+
+
+    while True:
+        print("1 AWB \n2 Shutter \n3 Brightness \n4 ISO")
+        setting_choice = input("Seting:")
+       
+        if setting_choice == "1":
+            camera.awb_mode = 'off'
+            blue_input = input("AWB_blue: ")
+            red_input = input("AWB_red: ")
+            camera.awb_gains = (float(red_input), float(blue_input))
+
+        if setting_choice == "2":        
+            shutter_input = input("Shutter_speed: ")
+            camera.shutter_speed = (int(shutter_input))
+        
+        if setting_choice == "3":     
+            bright_input = input("Brightness: ")
+            camera.brightness = int(bright_input)
+
+        if setting_choice == "4": 
+            iso_input = input("Iso: ")
+            camera.iso = int(iso_input)
+
+
+
+
+    #GPIO cleanup
+    GPIO.cleanup()

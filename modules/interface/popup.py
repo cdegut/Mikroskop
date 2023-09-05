@@ -1,6 +1,7 @@
 from .super import Interface
 import tkinter as tk
 from ..cameracontrol import change_zoom
+from ..microscope_param import awbR, awbB
 
 
 def led_focus_zoom_buttons(self, position=400):
@@ -16,6 +17,7 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
     def __init__(self, Tk_root, last_window, microscope, parameters, camera):
         Interface.__init__(self, Tk_root, last_window, microscope, parameters=parameters, camera=camera)
         self.auto_exp_value = "auto"
+        self.awb_value = "auto"
         self.init_window(last_window)
 
     ###########
@@ -27,48 +29,89 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
         self.pack(fill=tk.BOTH, expand=1)
 
         self.Led_scale = tk.Scale(self, from_=0, to=255, length=200, width=60, orient=tk.HORIZONTAL)
-        Default = tk.Button(self, text="Default LED 1 pwr = 200", command=self.set_default)
+        #Default = tk.Button(self, text="Default LED 1 pwr = 200", command=self.set_default)
         Save =  tk.Button(self, text="Save", command=self.save_led)
 
-        Led1 = tk.Button(self, text="Led 1", command= lambda: self.microscope.set_led_state(1))
-        Led2 = tk.Button(self, text="Led 2", command= lambda: self.microscope.set_led_state(2))
+        Led1 = tk.Button(self, text="Led 1", command= lambda: self.led_change(1))
+        Led2 = tk.Button(self, text="Led 2", command= lambda:  self.led_change(2))
         Led12 = tk.Button(self, text="Led 1+2", command= lambda: self.microscope.set_led_state(3))
-        LedOff = tk.Button(self, text="Led Off", command= lambda: self.microscope.set_led_state(0))
+        Led12Low = tk.Button(self, text="Led 1Low+2", command= lambda: self.microscope.set_led_state(4))
+        LedOff = tk.Button(self, text="Off", command= lambda: self.microscope.set_led_state(0))
 
-        AutoExpOn = tk.Button(self, text="AutoExp ON", command= lambda: self.auto_exp("auto"))
-        AutoExpOff = tk.Button(self, text="AutoExp OFF", command= lambda: self.auto_exp("off"))
+        self.AutoExp = tk.Button(self, text="AutoExp ON", command=self.auto_exp)
         self.Exp_scale = tk.Scale(self, from_=0, to=10000, length=200, width=60, orient=tk.HORIZONTAL)
 
-        Default.place(x=20,y=30)
-        self.Led_scale.place(x=10,y=80)
+        self.AWB_button = tk.Button(self, text="Normal mode", command=self.awb)
 
-        Save.place(x=20, y=490)
-        
 
-        Led1.place(x=20,y=200)
-        Led2.place(x=90,y=200)
-        Led12.place(x=20,y=240)   
-        LedOff.place(x=110,y=240) 
+        #Default.place(x=20,y=30)
+        self.Led_scale.place(x=10,y=60)
         
-        AutoExpOn.place(x=30,y=300) 
-        AutoExpOff.place(x=30,y=340)
-        self.Exp_scale.place(x=10,y=380)
+        Led1.place(x=20,y=30)
+        Led2.place(x=90,y=30)
+        LedOff.place(x=160,y=30)
+        Led12.place(x=20,y=170)
+        Led12Low.place(x=110,y=170)   
+                
+        self.AutoExp.place(x=20,y=230) 
+        self.Exp_scale.place(x=10,y=260)
+
+        self.AWB_button.place(x=20,y=420)
 
         self.Led_scale.set(self.microscope.positions[3])
         self.Exp_scale.set(self.camera.exposure_speed)
 
+
         self.set_led()
         self.set_exp()
+        Save.place(x=20, y=490)
         self.back_button(position=(90,490))
-    
-    def auto_exp(self, value):
-        self.auto_exp_value = value
-        if value == "auto":
+
+        if self.auto_exp_value == "off":
+            self.AutoExp.config(text="AutoExp OFF")
+        
+        if self.awb_value == "off":
+            self.AWB_button.config(text="AWB Fluo")
+
+
+    def led_change(self, led):
+        if led == 1:
+            self.microscope.set_led_state(1)
+            self.camera.awb_mode = "auto"
+            self.awb_value = "auto"
+            self.AWB_button.config(text="Normal mode")
+
+        if led == 2:
+            self.microscope.set_led_state(2)
+            self.camera.awb_mode = 'off'
+            self.awb_value = "off"
+            self.camera.awb_gains = (awbR, awbB)
+            self.AWB_button.config(text="Green Fluo Mode")
+
+    def auto_exp(self):
+        if self.auto_exp_value == "auto":
+            self.camera.exposure_mode = "off"
+            self.auto_exp_value = "off"
+            self.AutoExp.config(text="AutoExp OFF")
+        
+        elif self.auto_exp_value == "off":
             self.camera.shutter_speed = 0
-        self.camera.exposure_mode = value
-
-
+            self.camera.exposure_mode = "auto"
+            self.auto_exp_value = "auto"
+            self.AutoExp.config(text="AutoExp ON")
     
+    def awb(self):
+        if self.awb_value == "auto":
+            self.camera.awb_mode = 'off'
+            self.awb_value = "off"
+            self.camera.awb_gains = (awbR, awbB)
+            self.AWB_button.config(text="Green Fluo Mode")
+
+        elif self.awb_value == "off":
+            self.camera.awb_mode = "auto"
+            self.awb_value = "auto"
+            self.AWB_button.config(text="Normal mode")
+   
     def save_led(self):
         self.parameters.update([("led",[self.microscope.positions[3], self.microscope.positions[4]])])
 
@@ -87,7 +130,6 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
             elif self.auto_exp_value == "auto":
                 self.Exp_scale.set(self.camera.exposure_speed)
         
-
         Interface._job2 = self.after(100, self.set_exp)
 
     def set_default(self): ## Read led power from Default parameter set

@@ -188,10 +188,7 @@ class Microscope:
             with SMBus(1) as bus:
                 bus.write_byte_data(addr, cmd, cmd) #command need to be sent twice to be executed (crude error check)
     
-    def set_led_state(self, state):
-        if state not in [0,1,2,3]:
-            return
-        
+    def set_led_state(self, state):        
         if state == 0:
             self.send_simplecmd(8)
             self.positions[4] = 0
@@ -204,6 +201,9 @@ class Microscope:
         elif state == 3:
             self.send_simplecmd(7)
             self.positions[4] = 3
+        elif state == 4:
+            self.send_simplecmd(9)
+            self.positions[4] = 2
          
     def read_positions(self): #get position from the microscope
 
