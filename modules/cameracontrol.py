@@ -1,9 +1,16 @@
 from .parametersIO import create_folder
 from time import sleep
 from threading import Thread, Event
+from .microscope_param import awbR, awbB
+from PIL import Image
+from os import remove
+from io import BytesIO
+import numpy as np
+import cv2
+
 
 camera_full_resolution = (4056,3040)
-camera_max_resolution = (3000, 2248)
+camera_max_resolution = (3040, 2240)
 h264_max_resolution = (1664,1248)
 
 def previewPiCam(camera): #show preview directly as screen overlay
@@ -15,7 +22,6 @@ def previewPiCam(camera): #show preview directly as screen overlay
     camera.start_preview()
     camera.vflip = True
     camera.hflip = True
-
 
 
 def change_zoom(camera, value):
@@ -31,12 +37,23 @@ def change_zoom(camera, value):
 
 def save_image(camera, picture_name, data_dir):
     create_folder(data_dir + "img/")
-    full_data_name = data_dir + "img/"  + picture_name + ".png"
+    full_data_name = data_dir + "img/"  + picture_name 
     save = Thread(target = save_img_thread, args=(camera, full_data_name))
     save.start()
 
+def awb_preset(camera, awb):
+    if awb == "Green Fluo":
+        camera.awb_mode = 'off'
+        camera.awb_gains = (awbR, awbB)
+        camera.contrast = 10
+    if awb == "auto":
+        camera.awb_mode = "auto"   
+
 def save_img_thread(camera, name):
-     camera.capture(name, format = 'png')
+    image = np.empty((camera_max_resolution[0] * camera_max_resolution[1] * 3,), dtype=np.uint8)
+    camera.capture(image, 'bgr')
+    image = image.reshape((camera_max_resolution[1], camera_max_resolution[0], 3))
+    cv2.imwrite(name + ".png", image, [cv2.IMWRITE_PNG_COMPRESSION, 5])
 
 class VideoRecorder(Thread):
     def __init__(self,camera, video_quality, video_name,event_rec_on):
@@ -103,6 +120,7 @@ def start_recording(camera, data_dir, video_quality=320, video_name="test"):
 def stop_video(off_event):
     off_event.set()
 
+
 if __name__ == "__main__":
     import picamera
     from RPi import GPIO
@@ -129,10 +147,13 @@ if __name__ == "__main__":
     previewPiCam(camera)
     sleep(1)
     camera.exposure_mode = 'off'
+    camera.awb_mode = 'off'
+    camera.drc_strength = 'off'
+    camera.awb_gains = (1, 0.35)
 
 
     while True:
-        print("1 AWB \n2 Shutter \n3 Brightness \n4 ISO")
+        print("1 AWB \n2 Shutter \n3 Brightness \n4 ISO \n5 Contrast \n6 Analog Gain")
         setting_choice = input("Seting:")
        
         if setting_choice == "1":
@@ -152,7 +173,17 @@ if __name__ == "__main__":
         if setting_choice == "4": 
             iso_input = input("Iso: ")
             camera.iso = int(iso_input)
-
+        
+        if setting_choice == "5": 
+            text_input = input("Contrast -100 to 100:")
+            camera.contrast = int(text_input)
+        
+        if setting_choice == "6": 
+            text_input = input("Analog Gain:")
+            print(camera.analog_gain)
+            camera.analog_gain = int(text_input)
+        
+        
 
 
 
