@@ -142,6 +142,7 @@ class Interface:
     _freemove_main = None
     _video_record = None
     _zoom_popup = None
+    _time_lapse = None
        
     def clear_frame(self):
         # destroy all widgets from frame

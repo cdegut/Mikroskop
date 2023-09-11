@@ -1,7 +1,6 @@
 from .super import Interface
 import tkinter as tk
-from ..cameracontrol import change_zoom
-from ..microscope_param import awbR, awbB
+from ..cameracontrol import change_zoom, awb_preset
 
 
 def led_focus_zoom_buttons(self, position=400):
@@ -77,15 +76,12 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
     def led_change(self, led):
         if led == 1:
             self.microscope.set_led_state(1)
-            self.camera.awb_mode = "auto"
-            self.awb_value = "auto"
+            awb_preset(self.camera, "auto")
             self.AWB_button.config(text="Normal mode")
 
         if led == 2:
             self.microscope.set_led_state(2)
-            self.camera.awb_mode = 'off'
-            self.awb_value = "off"
-            self.camera.awb_gains = (awbR, awbB)
+            awb_preset(self.camera, "Green Fluo")
             self.AWB_button.config(text="Green Fluo Mode")
 
     def auto_exp(self):
@@ -102,14 +98,13 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
     
     def awb(self):
         if self.awb_value == "auto":
-            self.camera.awb_mode = 'off'
             self.awb_value = "off"
-            self.camera.awb_gains = (awbR, awbB)
+            awb_preset(self.camera, "Green Fluo")
             self.AWB_button.config(text="Green Fluo Mode")
 
         elif self.awb_value == "off":
-            self.camera.awb_mode = "auto"
             self.awb_value = "auto"
+            awb_preset(self.camera, "auto")
             self.AWB_button.config(text="Normal mode")
    
     def save_led(self):
