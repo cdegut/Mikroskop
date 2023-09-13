@@ -86,13 +86,13 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
 
     def auto_exp(self):
         if self.auto_exp_value == "auto":
-            self.camera.exposure_mode = "off"
+            auto_exp_enable(camera, False)
             self.auto_exp_value = "off"
             self.AutoExp.config(text="AutoExp OFF")
         
         elif self.auto_exp_value == "off":
             self.camera.shutter_speed = 0
-            self.camera.exposure_mode = "auto"
+            auto_exp_enable(camera, True)
             self.auto_exp_value = "auto"
             self.AutoExp.config(text="AutoExp ON")
     

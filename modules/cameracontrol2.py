@@ -16,19 +16,17 @@ camera_full_resolution = (4056,3040)
 camera_max_resolution = (3000, 2248)
 h264_max_resolution = (1664,1248)
 
+def preview_picam(picam2, external=False):
+    camera_config = picam2.create_preview_configuration()
+    picam2.configure(camera_config)
+    if not external:
+        picam2.start_preview(Preview.QTGL, x=0 , y=25, width=800, height=625)
+    else:
+        picam2.start_preview(Preview.QT, width=250, height=250) 
 
-def previewPiCam(camera): #show preview directly as screen overlay
-    camera.preview_fullscreen=False
-    camera.preview_window=(0,25, 800, 625)
-    camera.resolution=(camera_max_resolution)
-    camera.video_stabilization=True
-    camera.iso = 200
-    camera.brightness = 50
-    camera.exposure_compensation = 0
-    camera.start_preview()
-    camera.vflip = True
-    camera.hflip = True
+    transform=Transform(hflip=1, vflip = 1)
 
+    picam2.start()
 
 def change_zoom(camera, value):
     ##Centered zoom
@@ -48,17 +46,26 @@ def save_image(camera, picture_name, data_dir):
     save = Thread(target = save_img_thread, args=(camera, full_data_name))
     save.start()
 
-def awb_preset(camera, awb):
+def awb_preset(picam2, awb):
     if awb == "Green Fluo":
-        camera.awb_mode = 'off'
-        camera.awb_gains = (awbR_fluo, awbB_fluo)
-        camera.contrast = 10
+        picam2.controls.AwbEnable = False
+        picam2.controls.ColourGains = awbR_fluo,  awbB_fluo
+        #camera.controls.Contrast = 10
     if awb == "auto":
-        camera.awb_mode = "auto"
+        picam2.controls.AwbEnable = True
     if awb == "white":
-        camera.awb_mode = 'off'
-        camera.awb_gains = (awbR_white, awbB_white)
-        camera.contrast = 10 
+        picam2.controls.AwbEnable = False
+        picam2.controls.ColourGains = awbR_white,  awbB_white
+        #camera.controls.Contrast = 10 
+
+def curent_exposure(picam2):
+    return picam2.controls.FrameDuration
+
+def auto_exp_enable(picam2, value):
+    picam2.controls.AeEnable = value
+
+def set_exposure(picam2, value):
+    picam2.controls.ExposureTime = value
 
 def save_img_thread(camera, name):
 
@@ -172,11 +179,10 @@ def stop_video(off_event):
 
 
 if __name__ == "__main__":
-    import picamera
+    from picamera2 import Picamera2
     from RPi import GPIO
     from os import environ
 
-    from modules.cameracontrol import previewPiCam
     from modules.microscope import Microscope
     from modules.position_grid import PositionsGrid
     from modules.physical_controller import encoder_read, controller_startup
@@ -190,48 +196,50 @@ if __name__ == "__main__":
     parameters = ParametersSets()
     microscope = Microscope(addr, ready_pin, parameters)
     grid = PositionsGrid(microscope, parameters)
-    camera = picamera.PiCamera()
+    camera = Picamera2()
 
     
     #start picamPreview
-    previewPiCam(camera)
+    preview_picam(camera, external=True)
     sleep(1)
     camera.exposure_mode = 'off'
     camera.awb_mode = 'off'
     camera.drc_strength = 'off'
     awb_preset(camera, "Green Fluo")
+    metadata = camera.capture_metadata()
+    print(metadata["ExposureTime"], metadata["AnalogueGain"])
 
 
     while True:
-        print("1 AWB \n2 Shutter \n3 Brightness \n4 ISO \n5 Contrast \n6 Analog Gain\n7 Save Image")
+        print("1 AWB \n2 Shutter \n3 Brightness \n4 none \n5 Contrast \n6 Analog Gain\n7 Save Image")
         setting_choice = input("Seting:")
        
         if setting_choice == "1":
             camera.awb_mode = 'off'
             blue_input = input("AWB_blue: ")
             red_input = input("AWB_red: ")
-            camera.awb_gains = (float(red_input), float(blue_input))
+            camera.controls.ColourGains = int(red_input), int(blue_input)
 
         if setting_choice == "2":        
-            shutter_input = input("Shutter_speed: ")
-            camera.shutter_speed = (int(shutter_input))
+            shutter_input = input("SExposure Time: ")
+            camera.controls.ExposureTime = (int(shutter_input))
+        
         
         if setting_choice == "3":     
             bright_input = input("Brightness: ")
-            camera.brightness = int(bright_input)
+            camera.controls.Brightness = int(bright_input)
 
         if setting_choice == "4": 
             iso_input = input("Iso: ")
-            camera.iso = int(iso_input)
+            #camera.controls.iso = int(iso_input)
         
         if setting_choice == "5": 
             text_input = input("Contrast -100 to 100:")
-            camera.contrast = int(text_input)
+            camera.controls.Contrast = int(text_input)
         
         if setting_choice == "6": 
             text_input = input("Analog Gain:")
-            print(camera.analog_gain)
-            camera.analog_gain = int(text_input)
+            camera.controls.AnalogueGain = float(text_input)
         
         if setting_choice == "7": 
             text_input = input("Save")
