@@ -76,7 +76,7 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
     def led_change(self, led):
         if led == 1:
             self.microscope.set_led_state(1)
-            awb_preset(self.camera, "auto")
+            awb_preset(self.camera, "white")
             self.AWB_button.config(text="Normal mode")
 
         if led == 2:
@@ -203,8 +203,8 @@ class Focus_popup(Interface, tk.Frame):
 
 class Zoom_popup(Interface, tk.Frame): #widget to fill popup window, show an stop button and a modifiable label
 
-    def __init__(self, Tk_root, last_window=None, microscope=None, camera=None):
-        Interface.__init__(self, Tk_root, microscope=microscope, camera=camera)
+    def __init__(self, Tk_root, last_window, microscope, parameters, camera):
+        Interface.__init__(self, Tk_root, last_window, microscope, parameters=parameters, camera=camera)
         self.init_window(last_window)
 
     ###########
@@ -236,4 +236,4 @@ class Zoom_popup(Interface, tk.Frame): #widget to fill popup window, show an sto
         if Interface._zoom_popup:
             Interface._zoom_popup.init_window(self)
         else:
-            Interface._zoom_popup = Zoom_popup(self.Tk_root, last_window=self, microscope=self.microscope, camera=self.camera)
+            Interface._zoom_popup = Zoom_popup(self.Tk_root, last_window=self, microscope=self.microscope, parameters=self.parameters, camera=self.camera)

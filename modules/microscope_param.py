@@ -1,7 +1,7 @@
 #Software Endstop (need to be =< to hardware set endstop)
 software_endstops = True
 Xmaxrange = 64000
-Ymaxrange = 930000
+Ymaxrange = 93000
 Fmaxrange = 22000
 
 #number of retry possible for motor command sent, 10 by default (normal error error rate should not exceed 2 in a row)
@@ -33,5 +33,7 @@ F_controller_pinB = 12
 F_controller_Switch = 5
 
 #fluorescent gain value
-awbR = 1
-awbB = 0.3
+awbR_fluo = 1
+awbB_fluo = 0.3
+awbR_white = 3.1
+awbB_white = 0.7

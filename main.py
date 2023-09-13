@@ -3,7 +3,7 @@ import tkinter as tk
 from RPi import GPIO
 from os import environ
 
-from modules.cameracontrol import previewPiCam
+from modules.cameracontrol import previewPiCam, awb_preset
 from modules.microscope import Microscope
 from modules.position_grid import PositionsGrid
 from modules.physical_controller import encoder_read, controller_startup
@@ -37,6 +37,11 @@ if __name__ == "__main__":
 
 
     encoder_X, encoder_Y, encoder_F = controller_startup()
+    
+    if microscope.positions[4] == 1:
+        awb_preset(camera, "white")
+    if microscope.positions[4] == 2:
+        awb_preset(camera, "Green Fluo")
 
     ## Microscope controller main loop
     while not Interface._exit:

@@ -1,24 +1,27 @@
 from .parametersIO import create_folder
 from time import sleep
 from threading import Thread, Event
-from .microscope_param import awbR, awbB
-from PIL import Image
-from os import remove
-from io import BytesIO
+from .microscope_param import awbR_fluo, awbB_fluo, awbR_white, awbB_white
+#import picamera
+import picamera.array
 import numpy as np
 import cv2
+from PIL import Image
+import io
 
 
 camera_full_resolution = (4056,3040)
-camera_max_resolution = (3040, 2240)
+camera_max_resolution = (3000, 2248)
 h264_max_resolution = (1664,1248)
 
 def previewPiCam(camera): #show preview directly as screen overlay
     camera.preview_fullscreen=False
     camera.preview_window=(0,25, 800, 625)
-    camera.resolution=(camera_max_resolution) #change picture resolution here
+    camera.resolution=(camera_max_resolution)
     camera.video_stabilization=True
     camera.iso = 200
+    camera.brightness = 50
+    camera.exposure_compensation = 0
     camera.start_preview()
     camera.vflip = True
     camera.hflip = True
@@ -37,6 +40,7 @@ def change_zoom(camera, value):
 
 def save_image(camera, picture_name, data_dir):
     create_folder(data_dir + "img/")
+
     full_data_name = data_dir + "img/"  + picture_name 
     save = Thread(target = save_img_thread, args=(camera, full_data_name))
     save.start()
@@ -44,16 +48,59 @@ def save_image(camera, picture_name, data_dir):
 def awb_preset(camera, awb):
     if awb == "Green Fluo":
         camera.awb_mode = 'off'
-        camera.awb_gains = (awbR, awbB)
+        camera.awb_gains = (awbR_fluo, awbB_fluo)
         camera.contrast = 10
     if awb == "auto":
-        camera.awb_mode = "auto"   
+        camera.awb_mode = "auto"
+    if awb == "white":
+        camera.awb_mode = 'off'
+        camera.awb_gains = (awbR_white, awbB_white)
+        camera.contrast = 10 
 
 def save_img_thread(camera, name):
-    image = np.empty((camera_max_resolution[0] * camera_max_resolution[1] * 3,), dtype=np.uint8)
-    camera.capture(image, 'bgr')
-    image = image.reshape((camera_max_resolution[1], camera_max_resolution[0], 3))
-    cv2.imwrite(name + ".png", image, [cv2.IMWRITE_PNG_COMPRESSION, 5])
+
+    ## get the size of the image rounded to 32x16
+    image_w = camera.resolution[0]
+    if image_w%32 != 0:
+        image_w = image_w + 32 - image_w%32
+    image_h = camera.resolution[1]
+    if image_h%16 != 0:
+        image_h = image_h + 16 - image_h%16 
+    
+    stream = io.BytesIO()
+    #start = time.time()
+    camera.capture(stream, format='bgr')
+    # I have got this code from picamera array.py :                                                                                                                                         
+    # class PiRGBArray(PiArrayOutput):                                                                                                                                          
+    # Produces a 3-dimensional RGB array from an RGB capture.                                                                                                                   
+    # Round a (width, height) tuple up to the nearest multiple of 32 horizontally                                                                                               
+    # and 16 vertically (as this is what the Pi's camera module does for                                                                                                        
+    # unencoded output).                                                                                                                                                        
+    width, height = camera.resolution
+    fwidth = (width + 31) // 32 * 32
+    fheight = (height + 15) // 16 * 16
+    #if len(stream.getvalue()) != (fwidth * fheight * 3):
+    #    raise PiCameraValueError('Incorrect buffer length for resolution %dx%d' % (width, height))
+    image= np.frombuffer(stream.getvalue(), dtype=np.uint8).\
+        reshape((fheight, fwidth, 3))[:height, :width, :]
+    cv2.imwrite(f'{name}.png',image)
+   
+    ###
+    #output = picamera.array.PiRGBArray(camera)
+    #camera.capture(output, 'rgb')
+    #print(output)
+    #print('Captured %dx%d image' % (output.array.shape[1], output.array.shape[0]))
+    #output.array.
+    ###
+    #output = output.reshape((image_h, image_w, 3))
+    #image = Image.fromarray(output)
+    #image.save(name + ".png",)
+    #cv2.imwrite(name + ".png", output)
+    
+    #image = np.empty((image_w * image_h * 3,), dtype=np.uint8)
+    #camera.capture(image, "bgr")
+    #image = image.reshape((image_h, image_w, 3))
+    #cv2.imwrite(name + ".png", image)
 
 class VideoRecorder(Thread):
     def __init__(self,camera, video_quality, video_name,event_rec_on):
@@ -149,11 +196,11 @@ if __name__ == "__main__":
     camera.exposure_mode = 'off'
     camera.awb_mode = 'off'
     camera.drc_strength = 'off'
-    camera.awb_gains = (1, 0.35)
+    awb_preset(camera, "Green Fluo")
 
 
     while True:
-        print("1 AWB \n2 Shutter \n3 Brightness \n4 ISO \n5 Contrast \n6 Analog Gain")
+        print("1 AWB \n2 Shutter \n3 Brightness \n4 ISO \n5 Contrast \n6 Analog Gain\n7 Save Image")
         setting_choice = input("Seting:")
        
         if setting_choice == "1":
@@ -183,6 +230,9 @@ if __name__ == "__main__":
             print(camera.analog_gain)
             camera.analog_gain = int(text_input)
         
+        if setting_choice == "7": 
+            text_input = input("Save")
+            save_img_thread(camera, "/home/pi/microscope_data/img/test_img" )
         
 
 

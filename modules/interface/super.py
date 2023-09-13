@@ -40,6 +40,7 @@ class Interface:
     #####################################################
     _coordinates_job = None
     _scale_job = None
+    _timelapse_job = None
     _blink = None
     _job1 = None
     _job2 = None
@@ -47,13 +48,14 @@ class Interface:
     _video_timer = None ## This is the timer object, it is started when recording video and stopped after it should not be cleared on window change
 
     def clear_jobs(self): ## Clear all tk job that have been put in the job list
-        jobs_list = [Interface._coordinates_job, Interface._scale_job, Interface._blink, Interface._job1, Interface._job2, Interface._job3]
+        jobs_list = [Interface._coordinates_job, Interface._scale_job, Interface._timelapse_job, Interface._blink, Interface._job1, Interface._job2, Interface._job3]
         for job in jobs_list:
             if job:
                 self.Tk_root.after_cancel(job)
     
         Interface._coordinates_job = None
         Interface._scale_job = None
+        Interface._timelapse_job = None
         Interface._job1 = None
         Interface._job2 = None
         Interface._job3 = None
