@@ -1,7 +1,7 @@
 from .super import Interface
 from .popup import led_focus_zoom_buttons
 from ..parametersIO import create_folder
-from ..cameracontrol import save_img_thread
+from ..cameracontrol2 import save_img_thread
 from threading import Thread
 from time import time, sleep
 from os.path import isfile

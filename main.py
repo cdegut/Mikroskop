@@ -10,18 +10,18 @@ from modules.position_grid import PositionsGrid
 from modules.physical_controller import encoder_read, controller_startup
 from modules.interface.main_menu import *
 from modules.microscope_param import *
-from modules.parametersIO import ParametersSets
+from modules.parametersIO import ParametersSets, create_folder
 
 #main loop
 if __name__ == "__main__": 
 
-
+    
+    encoder_X, encoder_Y, encoder_F = controller_startup()                
     ### Object for microscope to run
     parameters = ParametersSets()
     microscope = Microscope(addr, ready_pin, parameters)
     grid = PositionsGrid(microscope, parameters)
     picam2 = Picamera2()
-    #camera = picamera.PiCamera()
 
     #Tkinter object
     Tk_root = tk.Tk()
@@ -39,9 +39,6 @@ if __name__ == "__main__":
     else:
         preview_picam(picam2, external=True)
 
-
-
-    encoder_X, encoder_Y, encoder_F = controller_startup()
     
     if microscope.positions[4] == 1:
         awb_preset(picam2, "white")

@@ -1,6 +1,6 @@
 from .super import Interface
 import tkinter as tk
-from ..cameracontrol import change_zoom, awb_preset
+from ..cameracontrol2 import change_zoom, awb_preset, auto_exp_enable, curent_exposure, set_exposure
 
 
 def led_focus_zoom_buttons(self, position=400):
@@ -38,7 +38,7 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
         LedOff = tk.Button(self, text="Off", command= lambda: self.microscope.set_led_state(0))
 
         self.AutoExp = tk.Button(self, text="AutoExp ON", command=self.auto_exp)
-        self.Exp_scale = tk.Scale(self, from_=0, to=10000, length=200, width=60, orient=tk.HORIZONTAL)
+        self.Exp_scale = tk.Scale(self, from_=1, to=150, length=200, width=60, orient=tk.HORIZONTAL)
 
         self.AWB_button = tk.Button(self, text="Normal mode", command=self.awb)
 
@@ -58,7 +58,7 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
         self.AWB_button.place(x=20,y=420)
 
         self.Led_scale.set(self.microscope.positions[3])
-        self.Exp_scale.set(self.camera.exposure_speed)
+        self.Exp_scale.set(curent_exposure(self.camera))
 
 
         self.set_led()
@@ -86,13 +86,12 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
 
     def auto_exp(self):
         if self.auto_exp_value == "auto":
-            auto_exp_enable(camera, False)
+            auto_exp_enable(self.camera, False)
             self.auto_exp_value = "off"
             self.AutoExp.config(text="AutoExp OFF")
         
         elif self.auto_exp_value == "off":
-            self.camera.shutter_speed = 0
-            auto_exp_enable(camera, True)
+            auto_exp_enable(self.camera, True)
             self.auto_exp_value = "auto"
             self.AutoExp.config(text="AutoExp ON")
     
@@ -118,12 +117,13 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
         Interface._job1 = self.after(100, self.set_led)
     
     def set_exp(self): ## Read the scale and set the led at the proper power
-        exp = self.Exp_scale.get()
-        if exp != self.camera.exposure_speed:
+        exp_scale = self.Exp_scale.get() * 100
+        real_exp = curent_exposure(self.camera)
+        if exp_scale != real_exp: 
             if self.auto_exp_value == "off":
-                    self.camera.shutter_speed = exp
+                set_exposure(self.camera, exp_scale)
             elif self.auto_exp_value == "auto":
-                self.Exp_scale.set(self.camera.exposure_speed)
+                self.Exp_scale.set(real_exp/100)
         
         Interface._job2 = self.after(100, self.set_exp)
 

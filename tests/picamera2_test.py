@@ -1,16 +1,21 @@
-from picamera2 import Picamera2, Preview
-import time
-picam2 = Picamera2()
-camera_config = picam2.create_preview_configuration()
-picam2.configure(camera_config)
-picam2.start_preview(Preview.QT)
-print(picam2.camera_controls)
-picam2.start()
-#picam2.set_controls({"ExposureTime": 10000, "AnalogueGain": 1.0, 'ColourGains': })
-picam2.controls.ExposureTime = 10000
-picam2.controls.AwbEnable = False
-picam2.controls.ColourGains = 1.0, 0.3
+from time import time
 
-while True:
-    time.sleep(1)
-#picam2.capture_file("test.jpg")
+from picamera2 import Picamera2, Preview
+#import cv2
+
+picam2 = Picamera2()
+#picam2.start_preview(Preview.QT)
+
+preview_config = picam2.create_preview_configuration()
+capture_config = picam2.create_still_configuration()
+picam2.configure(preview_config)
+
+picam2.start()
+
+start = time()
+full_data_name = f"/home/clement/microscope_data/img/test.png"
+picam2.switch_mode(capture_config)
+array = picam2.capture_array("main")
+picam2.switch_mode(preview_config)  
+print(time() -start)
+

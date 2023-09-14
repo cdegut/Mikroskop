@@ -1,4 +1,4 @@
-from ..cameracontrol import save_image
+from ..cameracontrol2 import save_image
 import tkinter as tk
 from ..microscope import Microscope
 from ..position_grid import PositionsGrid

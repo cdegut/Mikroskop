@@ -1,6 +1,6 @@
 from .super import Interface
 import tkinter as tk
-from ..cameracontrol import start_recording
+from ..cameracontrol2 import start_recording
 from time import time
 from .popup import led_focus_zoom_buttons
 

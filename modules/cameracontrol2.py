@@ -10,6 +10,7 @@ import numpy as np
 #import cv2
 from PIL import Image
 import io
+from time import time
 
 
 camera_full_resolution = (4056,3040)
@@ -18,33 +19,56 @@ h264_max_resolution = (1664,1248)
 
 def preview_picam(picam2, external=False):
     camera_config = picam2.create_preview_configuration()
+    camera_config = picam2.create_preview_configuration()
+    #camera_config = picam2.create_preview_configuration(main={"size": camera_max_resolution})
+    #camera_config.align
     picam2.configure(camera_config)
     if not external:
         picam2.start_preview(Preview.QTGL, x=0 , y=25, width=800, height=625)
     else:
-        picam2.start_preview(Preview.QT, width=250, height=250) 
+        picam2.start_preview(Preview.QT, width=80, height=60) 
 
-    transform=Transform(hflip=1, vflip = 1)
+    Transform(hflip=1, vflip = 1)
 
     picam2.start()
 
-def change_zoom(camera, value):
-    ##Centered zoom
-    position_scale = (1 - value)/2
+def change_zoom(picam2, crop_factor, animation = True):
+    ### zoom value is a crop factor
+    full_res = picam2.camera_properties['PixelArraySize']
+    
+    if not animation:
+        crop = [int(crop_factor*full_res[0]),int(crop_factor*full_res[1])]
+        offset = [(full_res[0] - crop[0]) // 2 , (full_res[1] - crop[1]) // 2 , ]
+        picam2.set_controls({"ScalerCrop": offset  + crop})
+        return
 
-    ###Scale the resolution according to the zoom
-    new_resolution = (int(value*camera_full_resolution[0]),int(value*camera_full_resolution[1]))
+    old_crop_factor = picam2.capture_metadata()['ScalerCrop'][2] / full_res[0]
+    zoom_step = (crop_factor - old_crop_factor) / 20 
 
-    camera.resolution=(new_resolution)
-    camera.zoom=(position_scale,position_scale, value, value)
+    for i in range(20):
+        picam2.capture_metadata()
+        value = old_crop_factor + (i * zoom_step)
+        crop = [int(value*full_res[0]),int(value*full_res[1])]
+        offset = [(full_res[0] - crop[0]) // 2 , (full_res[1] - crop[1]) // 2 , ]
+        picam2.set_controls({"ScalerCrop": offset  + crop})
+        
+    crop = [int(crop_factor*full_res[0]),int(crop_factor*full_res[1])]
+    offset = [(full_res[0] - crop[0]) // 2 , (full_res[1] - crop[1]) // 2 , ]
+    picam2.set_controls({"ScalerCrop": offset  + crop})
 
 
-def save_image(camera, picture_name, data_dir):
+def save_image(picam2, picture_name, data_dir):
+    start = time()
     create_folder(data_dir + "img/")
-
-    full_data_name = data_dir + "img/"  + picture_name 
-    save = Thread(target = save_img_thread, args=(camera, full_data_name))
-    save.start()
+    full_data_name = f"{data_dir}img/{picture_name}.png"
+    capture_config = picam2.create_still_configuration()
+    preview_config = picam2.create_preview_configuration()
+    picam2.switch_mode(capture_config)
+    array = picam2.capture_array("main")
+    picam2.switch_mode(preview_config)  
+    #save = Thread(target = save_img_thread, args=(picam2, full_data_name))
+    #save.start()
+    print(time() -start)
 
 def awb_preset(picam2, awb):
     if awb == "Green Fluo":
@@ -59,15 +83,33 @@ def awb_preset(picam2, awb):
         #camera.controls.Contrast = 10 
 
 def curent_exposure(picam2):
-    return picam2.controls.FrameDuration
+    metadata = picam2.capture_metadata()
+    return metadata['ExposureTime']
 
 def auto_exp_enable(picam2, value):
     picam2.controls.AeEnable = value
+    metadata = picam2.capture_metadata()
+    if not value:
+        picam2.controls.AnalogueGain = metadata['AnalogueGain']
+        picam2.controls.ExposureTime = metadata['ExposureTime']
+    if value:
+        picam2.controls.AnalogueGain = 0
+        picam2.controls.ExposureTime = 0
+    
+
 
 def set_exposure(picam2, value):
     picam2.controls.ExposureTime = value
 
-def save_img_thread(camera, name):
+def save_img_thread(picam2, name):
+
+    capture_config = picam2.create_still_configuration()
+    preview_config = picam2.create_preview_configuration()
+    picam2.switch_mode(capture_config)
+    array = picam2.capture_array("main")
+    picam2.switch_mode(preview_config)
+
+    #cv2.imwrite(f'{name}.png', )
 
     ## get the size of the image rounded to 32x16
     image_w = camera.resolution[0]
@@ -77,23 +119,13 @@ def save_img_thread(camera, name):
     if image_h%16 != 0:
         image_h = image_h + 16 - image_h%16 
     
-    stream = io.BytesIO()
-    #start = time.time()
-    camera.capture(stream, format='bgr')
-    # I have got this code from picamera array.py :                                                                                                                                         
-    # class PiRGBArray(PiArrayOutput):                                                                                                                                          
-    # Produces a 3-dimensional RGB array from an RGB capture.                                                                                                                   
-    # Round a (width, height) tuple up to the nearest multiple of 32 horizontally                                                                                               
-    # and 16 vertically (as this is what the Pi's camera module does for                                                                                                        
-    # unencoded output).                                                                                                                                                        
-    width, height = camera.resolution
-    fwidth = (width + 31) // 32 * 32
-    fheight = (height + 15) // 16 * 16
+
+                                                                                                                                                
     #if len(stream.getvalue()) != (fwidth * fheight * 3):
     #    raise PiCameraValueError('Incorrect buffer length for resolution %dx%d' % (width, height))
-    image= np.frombuffer(stream.getvalue(), dtype=np.uint8).\
-        reshape((fheight, fwidth, 3))[:height, :width, :]
-    cv2.imwrite(f'{name}.png',image)
+    #image= np.frombuffer(stream.getvalue(), dtype=np.uint8).\
+    #    reshape((fheight, fwidth, 3))[:height, :width, :]
+    #cv2.imwrite(f'{name}.png',image)
    
     ###
     #output = picamera.array.PiRGBArray(camera)
@@ -193,9 +225,9 @@ if __name__ == "__main__":
 
 
     ### Object for microscope to run
-    parameters = ParametersSets()
-    microscope = Microscope(addr, ready_pin, parameters)
-    grid = PositionsGrid(microscope, parameters)
+    #parameters = ParametersSets()
+    #microscope = Microscope(addr, ready_pin, parameters)
+    #grid = PositionsGrid(microscope, parameters)
     camera = Picamera2()
 
     
@@ -205,12 +237,13 @@ if __name__ == "__main__":
     camera.exposure_mode = 'off'
     camera.awb_mode = 'off'
     camera.drc_strength = 'off'
-    awb_preset(camera, "Green Fluo")
-    metadata = camera.capture_metadata()
-    print(metadata["ExposureTime"], metadata["AnalogueGain"])
+    awb_preset(camera, "auto")
+    
 
 
     while True:
+        metadata = camera.capture_metadata()
+        print(f"ExposureTime: {metadata['ExposureTime']}, Gain: {metadata['AnalogueGain']}")
         print("1 AWB \n2 Shutter \n3 Brightness \n4 none \n5 Contrast \n6 Analog Gain\n7 Save Image")
         setting_choice = input("Seting:")
        
@@ -218,7 +251,7 @@ if __name__ == "__main__":
             camera.awb_mode = 'off'
             blue_input = input("AWB_blue: ")
             red_input = input("AWB_red: ")
-            camera.controls.ColourGains = int(red_input), int(blue_input)
+            camera.controls.ColourGains = float(red_input), float(blue_input)
 
         if setting_choice == "2":        
             shutter_input = input("SExposure Time: ")

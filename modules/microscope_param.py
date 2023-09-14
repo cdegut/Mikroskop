@@ -35,5 +35,5 @@ F_controller_Switch = 5
 #fluorescent gain value
 awbR_fluo = 1
 awbB_fluo = 0.3
-awbR_white = 3.1
-awbB_white = 0.7
+awbR_white = 4.5
+awbB_white = 0.8
