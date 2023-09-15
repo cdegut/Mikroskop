@@ -1,4 +1,4 @@
-from tinker import Frame, Button, BOTH, Label
+from tkinter import Frame, Button, BOTH, Label
 from .super import Interface
 from .freemove import FreeMovementInterface 
 from .grid_navigation import MainGridInterface 

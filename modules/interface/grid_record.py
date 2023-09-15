@@ -1,4 +1,4 @@
-from tinker import Frame, Button, BOTH, Label, StringVar, OptionMenu, Toplevel
+from tkinter import Frame, Button, BOTH, Label, StringVar, OptionMenu, Toplevel
 from .super import Interface
 from ..parametersIO import create_folder
 import time

@@ -1,5 +1,5 @@
 from ..cameracontrol2 import save_image
-from tinker import Frame, Button, Label
+from tkinter import Frame, Button, Label
 from ..microscope import Microscope
 from ..position_grid import PositionsGrid
 from time import localtime
@@ -202,7 +202,7 @@ if __name__ == "__main__":
     import picamera
     from ..microscope import *
     from ..position_grid import *
-    from tinker import Tk
+    from tkinter import Tk
 
     microscope = Microscope(addr, ready_pin)
     grid = PositionsGrid(microscope)

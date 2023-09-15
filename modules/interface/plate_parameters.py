@@ -1,4 +1,4 @@
-from tinker import Frame, Button, BOTH, Label, StringVar, OptionMenu
+from tkinter import Frame, Button, BOTH, Label, StringVar, OptionMenu
 from .super import Interface
 from .freemove import FreeMovementInterface
 
@@ -260,7 +260,7 @@ if __name__ == "__main__":
     from ..microscope import Microscope
     from ..position_grid import PositionsGrid
     from ..microscope_param import *
-    from tinker import Tk
+    from tkinter import Tk
 
     ### Object for microscope to run
     microscope = Microscope(addr, ready_pin)

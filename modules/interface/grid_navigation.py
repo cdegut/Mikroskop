@@ -1,4 +1,4 @@
-from tinker import Frame, Button, BOTH, Label
+from tkinter import Frame, Button, BOTH, Label
 from .super import Interface
 from .popup import led_focus_zoom_buttons
 
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     import picamera
     from ..microscope_param import *
     from ..cameracontrol import previewPiCam
-    from tinker import Tk
+    from tkinter import Tk
 
     ### Object for microscope to run
     microscope = Microscope(addr, ready_pin)

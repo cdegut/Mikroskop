@@ -5,7 +5,7 @@ from ..cameracontrol2 import save_img_thread
 from threading import Thread
 from time import time, sleep
 from os.path import isfile
-from tinker import Frame, Button, BOTH, Label, StringVar, OptionMenu
+from tkinter import Frame, Button, BOTH, Label, StringVar, OptionMenu
 
 
 class Time_lapse_window(Interface, Frame):
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     from ..microscope_param import *
     from ..cameracontrol import previewPiCam
     from ..parametersIO import ParametersSets
-    from tinker import Tk
+    from tkinter import Tk
     ### Object for microscope to run
     parameters = ParametersSets()
     microscope = Microscope(addr, ready_pin)

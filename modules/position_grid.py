@@ -1,9 +1,6 @@
 #generate a list of named absolute position as dictionary
-import tkinter as tk
 from .parametersIO import *
 from .microscope import *
-from .cameracontrol import *
-
 
 class PositionsGrid:
 
@@ -101,21 +98,4 @@ class PositionsGrid:
 
 
         return positions
-
-
-#main loop
-if __name__ == "__main__":
-    from .cameracontrol import *
-    import picamera
-
-    microscope = Microscope(addr, ready_pin)
-
-    #start picamPreview
-    camera = picamera.PiCamera()
-    #previewPiCam(camera)
-    Tk_root = tk.Tk()
-    grid = PositionsGrid(microscope)
-    #interface = Grid_popup(microscope, grid, camera, Tk_root)
-    #microscope.set_ledpwr(200)
-    #Tk_root.mainloop()
 

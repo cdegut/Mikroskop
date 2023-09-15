@@ -1,5 +1,5 @@
 from .super import Interface
-from tinker import Frame, Button, BOTH, Label, Scale, HORIZONTAL
+from tkinter import Frame, Button, BOTH, Label, Scale, HORIZONTAL
 from ..cameracontrol2 import change_zoom, awb_preset, auto_exp_enable, curent_exposure, set_exposure
 
 
