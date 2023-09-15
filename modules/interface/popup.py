@@ -1,17 +1,17 @@
 from .super import Interface
-import tkinter as tk
+from tinker import Frame, Button, BOTH, Label, Scale, HORIZONTAL
 from ..cameracontrol2 import change_zoom, awb_preset, auto_exp_enable, curent_exposure, set_exposure
 
 
 def led_focus_zoom_buttons(self, position=400):
-    Focus = tk.Button(self, width=4, text="Focus", command=lambda: Focus_popup.open(self))     
-    Ledbutton = tk.Button(self, width=4, text="Light", command=lambda: Led_popup.open(self))
-    ZoomButton = tk.Button(self, width=4, text="Zoom", command=lambda: Zoom_popup.open(self))
+    Focus = Button(self, width=4, text="Focus", command=lambda: Focus_popup.open(self))     
+    Ledbutton = Button(self, width=4, text="Light", command=lambda: Led_popup.open(self))
+    ZoomButton = Button(self, width=4, text="Zoom", command=lambda: Zoom_popup.open(self))
     Focus.place(x=80, y=position)
     Ledbutton.place(x=10, y=position)
     ZoomButton.place(x=150, y=position)
 
-class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop button and a modifiable label
+class Led_popup(Interface, Frame): #widget to fill popup window, show an stop button and a modifiable label
 
     def __init__(self, Tk_root, last_window, microscope, parameters, camera):
         Interface.__init__(self, Tk_root, last_window, microscope, parameters=parameters, camera=camera)
@@ -25,22 +25,22 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
         self.last_window = last_window
         
         self.Tk_root.title("Led") 
-        self.pack(fill=tk.BOTH, expand=1)
+        self.pack(fill=BOTH, expand=1)
 
-        self.Led_scale = tk.Scale(self, from_=0, to=255, length=200, width=60, orient=tk.HORIZONTAL)
-        #Default = tk.Button(self, text="Default LED 1 pwr = 200", command=self.set_default)
-        Save =  tk.Button(self, text="Save", command=self.save_led)
+        self.Led_scale = Scale(self, from_=0, to=255, length=200, width=60, orient=HORIZONTAL)
+        #Default = Button(self, text="Default LED 1 pwr = 200", command=self.set_default)
+        Save =  Button(self, text="Save", command=self.save_led)
 
-        Led1 = tk.Button(self, text="Led 1", command= lambda: self.led_change(1))
-        Led2 = tk.Button(self, text="Led 2", command= lambda:  self.led_change(2))
-        Led12 = tk.Button(self, text="Led 1+2", command= lambda: self.microscope.set_led_state(3))
-        Led12Low = tk.Button(self, text="Led 1Low+2", command= lambda: self.microscope.set_led_state(4))
-        LedOff = tk.Button(self, text="Off", command= lambda: self.microscope.set_led_state(0))
+        Led1 = Button(self, text="Led 1", command= lambda: self.led_change(1))
+        Led2 = Button(self, text="Led 2", command= lambda:  self.led_change(2))
+        Led12 = Button(self, text="Led 1+2", command= lambda: self.microscope.set_led_state(3))
+        Led12Low = Button(self, text="Led 1Low+2", command= lambda: self.microscope.set_led_state(4))
+        LedOff = Button(self, text="Off", command= lambda: self.microscope.set_led_state(0))
 
-        self.AutoExp = tk.Button(self, text="AutoExp ON", command=self.auto_exp)
-        self.Exp_scale = tk.Scale(self, from_=1, to=150, length=200, width=60, orient=tk.HORIZONTAL)
+        self.AutoExp = Button(self, text="AutoExp ON", command=self.auto_exp)
+        self.Exp_scale = Scale(self, from_=1, to=150, length=200, width=60, orient=HORIZONTAL)
 
-        self.AWB_button = tk.Button(self, text="Normal mode", command=self.awb)
+        self.AWB_button = Button(self, text="Normal mode", command=self.awb)
 
 
         #Default.place(x=20,y=30)
@@ -143,7 +143,7 @@ class Led_popup(Interface, tk.Frame): #widget to fill popup window, show an stop
             Interface._led_popup = Led_popup(self.Tk_root, last_window=self, microscope=self.microscope, parameters=self.parameters, camera=self.camera)
 
 
-class Focus_popup(Interface, tk.Frame):
+class Focus_popup(Interface, Frame):
 
     def __init__(self, Tk_root, last_window, microscope,  grid, parameters):
         Interface.__init__(self, Tk_root, last_window=self, microscope=microscope, grid=grid, parameters=parameters)    
@@ -155,23 +155,23 @@ class Focus_popup(Interface, tk.Frame):
         self.last_window = last_window
         
         self.Tk_root.title("Focus") 
-        self.pack(fill=tk.BOTH, expand=1)
+        self.pack(fill=BOTH, expand=1)
         self.show_record_label()
 
-        Fp100 = tk.Button(self, text="Fcs +200", command=lambda: self.microscope.move_1axis(3,200))
-        Fm100 = tk.Button(self, text="Fcs -200", command=lambda: self.microscope.move_1axis(3,-200))
+        Fp100 = Button(self, text="Fcs +200", command=lambda: self.microscope.move_1axis(3,200))
+        Fm100 = Button(self, text="Fcs -200", command=lambda: self.microscope.move_1axis(3,-200))
 
-        Fp25 = tk.Button(self, text="Fcs +25 ", command=lambda: self.microscope.move_1axis(3,25))
-        Fm25 = tk.Button(self, text="Fcs -25 ", command=lambda: self.microscope.move_1axis(3,-25))
+        Fp25 = Button(self, text="Fcs +25 ", command=lambda: self.microscope.move_1axis(3,25))
+        Fm25 = Button(self, text="Fcs -25 ", command=lambda: self.microscope.move_1axis(3,-25))
 
-        Fp5 = tk.Button(self, text="Fcs +5  ", command=lambda: self.microscope.move_1axis(3,5))
-        Fm5 = tk.Button(self, text="Fcs -5  ", command=lambda: self.microscope.move_1axis(3,-5))
+        Fp5 = Button(self, text="Fcs +5  ", command=lambda: self.microscope.move_1axis(3,5))
+        Fm5 = Button(self, text="Fcs -5  ", command=lambda: self.microscope.move_1axis(3,-5))
 
-        save = tk.Button(self, fg='green',text="Save", command=self.save_focus)
-        Reset = tk.Button(self, fg='red', text="Reset", command=lambda: self.microscope.move_focus(self.parameters.get()["start"][2]))
+        save = Button(self, fg='green',text="Save", command=self.save_focus)
+        Reset = Button(self, fg='red', text="Reset", command=lambda: self.microscope.move_focus(self.parameters.get()["start"][2]))
         
-        ObjOn = tk.Button(self, text="ObjOn", command=lambda:  self.microscope.move_focus(self.parameters.get()["start"][2] - 600 ))
-        ObjOff = tk.Button(self, text="ObjOff", command=lambda: self.microscope.move_focus(0))
+        ObjOn = Button(self, text="ObjOn", command=lambda:  self.microscope.move_focus(self.parameters.get()["start"][2] - 600 ))
+        ObjOff = Button(self, text="ObjOff", command=lambda: self.microscope.move_focus(0))
         
         Fp100.place(x=10, y=200)
         Fm100.place(x=100, y=200)
@@ -201,7 +201,7 @@ class Focus_popup(Interface, tk.Frame):
         else:
             Interface._focus_popup = Focus_popup(self.Tk_root, last_window=self, microscope=self.microscope, grid=self.grid, parameters=self.parameters)
 
-class Zoom_popup(Interface, tk.Frame): #widget to fill popup window, show an stop button and a modifiable label
+class Zoom_popup(Interface, Frame): #widget to fill popup window, show an stop button and a modifiable label
 
     def __init__(self, Tk_root, last_window, microscope, parameters, camera):
         Interface.__init__(self, Tk_root, last_window, microscope, parameters=parameters, camera=camera)
@@ -212,18 +212,18 @@ class Zoom_popup(Interface, tk.Frame): #widget to fill popup window, show an sto
     def init_window(self, last_window):
         self.last_window = last_window 
         self.Tk_root.title("Zoom") 
-        self.pack(fill=tk.BOTH, expand=1)
+        self.pack(fill=BOTH, expand=1)
         self.show_record_label()
 
         if not Interface._video_timer: ## Deactivate zoom button if filming
             zoom_buttons = [(" 1x", 1),("1.5x", 0.75),(" 2x", 0.5),(" 4x", 0.25),(" 8x", 0.125)]
             y_p = 30
             for button in zoom_buttons:
-                b = tk.Button(self, text=button[0], width=10, heigh=2, command=lambda value = button[1]: change_zoom(self.camera, value))
+                b = Button(self, text=button[0], width=10, heigh=2, command=lambda value = button[1]: change_zoom(self.camera, value))
                 b.place(x=60, y=y_p)
                 y_p = y_p+60
         else:
-            warning = tk.Label(self, text="Can't change zoom \n whilerecording video")
+            warning = Label(self, text="Can't change zoom \n whilerecording video")
             warning.place(x=10, y=30)
 
         self.back_button()

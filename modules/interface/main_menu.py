@@ -1,4 +1,4 @@
-import tkinter as tk
+from tinker import Frame, Button, BOTH, Label
 from .super import Interface
 from .freemove import FreeMovementInterface 
 from .grid_navigation import MainGridInterface 
@@ -10,7 +10,7 @@ from .timelapse import Time_lapse_window
 from ..microscope_param import Xmaxrange, Ymaxrange
 
 
-class MainMenu(Interface, tk.Frame):
+class MainMenu(Interface, Frame):
 
     def __init__(self, Tk_root, microscope, grid, camera, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera, parameters=parameters)
@@ -33,7 +33,7 @@ class MainMenu(Interface, tk.Frame):
         #Geometry and title of the root  
         self.Tk_root.title("Control Panel")
 
-        self.pack(fill=tk.BOTH, expand=1)
+        self.pack(fill=BOTH, expand=1)
 
         #self.show_record_label()
         self.show_record_label()
@@ -41,14 +41,14 @@ class MainMenu(Interface, tk.Frame):
         ######## Maine Menu buttons
         self.menu_button_w = 20
         self.menu_button_x = 20
-        FreeMoveInterface = tk.Button(self, width=self.menu_button_w, text="Free Navigation", command=lambda: FreeMovementInterface.open(self))         
-        GridNavigation = tk.Button(self, width=self.menu_button_w, text="Grid Navigation", command=lambda: MainGridInterface.open(self))
-        GridRec = tk.Button(self, width=self.menu_button_w, text="Grid Record", command=lambda: GridRecord.open(self))
-        VideoRecord = tk.Button(self, width=self.menu_button_w, text="Video", command=lambda: Video_record_window.open(self))
-        TimeLapse = tk.Button(self, width=self.menu_button_w, text="Time lapse", command=lambda: Time_lapse_window.open(self))    
+        FreeMoveInterface = Button(self, width=self.menu_button_w, text="Free Navigation", command=lambda: FreeMovementInterface.open(self))         
+        GridNavigation = Button(self, width=self.menu_button_w, text="Grid Navigation", command=lambda: MainGridInterface.open(self))
+        GridRec = Button(self, width=self.menu_button_w, text="Grid Record", command=lambda: GridRecord.open(self))
+        VideoRecord = Button(self, width=self.menu_button_w, text="Video", command=lambda: Video_record_window.open(self))
+        TimeLapse = Button(self, width=self.menu_button_w, text="Time lapse", command=lambda: Time_lapse_window.open(self))    
 
-        Current_parameters_set = tk.Label(self, text = f"Selected parameter set: \n {self.parameters.selected}")
-        GridParameters = tk.Button(self, width=self.menu_button_w, text="Change Parameters", command=lambda:  Plate_parameters.open(self))
+        Current_parameters_set = Label(self, text = f"Selected parameter set: \n {self.parameters.selected}")
+        GridParameters = Button(self, width=self.menu_button_w, text="Change Parameters", command=lambda:  Plate_parameters.open(self))
 
         FreeMoveInterface.place(x=self.menu_button_x, y=50)
         GridNavigation.place(x=self.menu_button_x, y=100)
@@ -61,9 +61,9 @@ class MainMenu(Interface, tk.Frame):
         GridParameters.place(x=self.menu_button_x, y=350)
 
 
-        Quit = tk.Button(self, width=self.menu_button_w, fg='Red', text="Quit", command=self.exit)
+        Quit = Button(self, width=self.menu_button_w, fg='Red', text="Quit", command=self.exit)
         Quit.place(x=self.menu_button_x, y=450)
-        ParknQuit = tk.Button(self, width=self.menu_button_w, fg='Red', text="Park and Quit", command=self.parknquit)
+        ParknQuit = Button(self, width=self.menu_button_w, fg='Red', text="Park and Quit", command=self.parknquit)
         ParknQuit.place(x=self.menu_button_x, y=500)
     
     def objective_change(self):

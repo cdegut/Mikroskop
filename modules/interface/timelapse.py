@@ -5,10 +5,10 @@ from ..cameracontrol2 import save_img_thread
 from threading import Thread
 from time import time, sleep
 from os.path import isfile
-import tkinter as tk
+from tinker import Frame, Button, BOTH, Label, StringVar, OptionMenu
 
 
-class Time_lapse_window(Interface, tk.Frame):
+class Time_lapse_window(Interface, Frame):
         
     def __init__(self, Tk_root, microscope, camera, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, camera=camera, parameters=parameters)
@@ -33,7 +33,7 @@ class Time_lapse_window(Interface, tk.Frame):
             Interface._time_lapse = Time_lapse_window(self.Tk_root, self.microscope, self.camera, self.parameters)
     
     def init_window(self):
-        self.pack(fill=tk.BOTH, expand=1)
+        self.pack(fill=BOTH, expand=1)
 
         #generic buttons
         self.back_to_main_button()
@@ -42,12 +42,12 @@ class Time_lapse_window(Interface, tk.Frame):
         self.record_button_place((60,50))
         
     def menu(self, x_p=20, y_p=10):
-        self.timer_selector = tk.StringVar()
-        self.total_time = tk.StringVar()
-        TimerLabel = tk.Label(self, text="Delay (s)")
-        TimerMenu = tk.OptionMenu(self, self.timer_selector, *[2,5,10,20])
-        TotalTimeLabel = tk.Label(self, text="Duration (min):")
-        TotalTimeMenu = tk.OptionMenu(self, self.total_time, *[1,2,5,10,20,30,60])
+        self.timer_selector = StringVar()
+        self.total_time = StringVar()
+        TimerLabel = Label(self, text="Delay (s)")
+        TimerMenu = OptionMenu(self, self.timer_selector, *[2,5,10,20])
+        TotalTimeLabel = Label(self, text="Duration (min):")
+        TotalTimeMenu = OptionMenu(self, self.total_time, *[1,2,5,10,20,30,60])
         self.timer_selector.set(5)
         self.total_time.set(5)
         TimerLabel.place(x=x_p+5, y=y_p)
@@ -59,8 +59,8 @@ class Time_lapse_window(Interface, tk.Frame):
 
 
     def record_button_place(self, rec_position):
-        self.Rec = tk.Button(self, text="Start Recording", command= self.start_time_lapse)
-        self.Stop = tk.Button(self, fg='Red', text="Stop Recording", command= self.stop_time_lapse)
+        self.Rec = Button(self, text="Start Recording", command= self.start_time_lapse)
+        self.Stop = Button(self, fg='Red', text="Stop Recording", command= self.stop_time_lapse)
 
         if not self.is_recording:
             self.Rec.place(x=rec_position[0], y=rec_position[1])
@@ -69,7 +69,7 @@ class Time_lapse_window(Interface, tk.Frame):
             led_focus_zoom_buttons(self,position=300)
         else:
             self.Stop.place(x=rec_position[0], y=rec_position[1])
-            self.FrameLabel = tk.Label(self, text=f"Frame Number: {self.frame_index + 1} \nof total: {self.max_frame }")
+            self.FrameLabel = Label(self, text=f"Frame Number: {self.frame_index + 1} \nof total: {self.max_frame }")
             self.FrameLabel.place(x=rec_position[0], y=rec_position[1]+40)
 
 
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     from ..microscope_param import *
     from ..cameracontrol import previewPiCam
     from ..parametersIO import ParametersSets
-
+    from tinker import Tk
     ### Object for microscope to run
     parameters = ParametersSets()
     microscope = Microscope(addr, ready_pin)
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     camera = picamera.PiCamera()
 
     #Tkinter object
-    Tk_root = tk.Tk()
+    Tk_root = Tk()
     Tk_root.geometry("230x560+800+35")   
     
     ### Don't display border if on the RPi display

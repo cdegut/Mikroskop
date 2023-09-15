@@ -1,9 +1,9 @@
-import tkinter as tk
+from tinker import Frame, Button, BOTH, Label, StringVar, OptionMenu
 from .super import Interface
 from .freemove import FreeMovementInterface
 
 
-class Plate_parameters(Interface,tk.Frame):
+class Plate_parameters(Interface,Frame):
     def __init__(self, Tk_root, microscope, grid, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, parameters=parameters)
         self._param_config = None
@@ -24,7 +24,7 @@ class Plate_parameters(Interface,tk.Frame):
     def init_window(self):
  
         self.Tk_root.title("Grid") 
-        self.pack(fill=tk.BOTH, expand=1)
+        self.pack(fill=BOTH, expand=1)
 
         self.Xsteps = self.parameters.get()["Xsteps"]
         self.Ysteps = self.parameters.get()["Ysteps"]
@@ -37,10 +37,10 @@ class Plate_parameters(Interface,tk.Frame):
 
     def XYstep_config_buttons(self, x_p=20, y_p=220):
 
-        TopLabel = tk.Label(self, text="Grid distances:")
-        XstepsLabel = tk.Label(self, text="X steps:\n" + str(self.Xsteps))
-        YstepsLabel = tk.Label(self, text="Y steps:\n" + str(self.Ysteps))
-        Configure_XY =  tk.Button(self, text="Configure X and Y step", command=self.set_steps)
+        TopLabel = Label(self, text="Grid distances:")
+        XstepsLabel = Label(self, text="X steps:\n" + str(self.Xsteps))
+        YstepsLabel = Label(self, text="Y steps:\n" + str(self.Ysteps))
+        Configure_XY =  Button(self, text="Configure X and Y step", command=self.set_steps)
 
         TopLabel.place(x=x_p, y=y_p)
         XstepsLabel.place(x=x_p+20, y=y_p+20)
@@ -49,8 +49,8 @@ class Plate_parameters(Interface,tk.Frame):
 
         A1X = self.parameters.get()["start"][0]
         A1Y = self.parameters.get()["start"][1]
-        A1Label = tk.Label(self, text=f"A1 position X: {A1X} Y: {A1Y}")
-        A1position =  tk.Button(self, text="Change A1 position", command=self.set_A1_position)
+        A1Label = Label(self, text=f"A1 position X: {A1X} Y: {A1Y}")
+        A1position =  Button(self, text="Change A1 position", command=self.set_A1_position)
         A1Label.place(x=x_p, y=y_p+110)
         A1position.place(x=x_p, y=y_p+130)
     
@@ -58,23 +58,23 @@ class Plate_parameters(Interface,tk.Frame):
     
     def lines_columns_subwels(self, x_p=10, y_p=10):
         
-        self.lines = tk.StringVar()
-        self.columns = tk.StringVar()
-        self.subwells = tk.StringVar()
+        self.lines = StringVar()
+        self.columns = StringVar()
+        self.subwells = StringVar()
 
         self.lines.set(self.parameters.get()["lines"])
         self.columns.set(self.parameters.get()["columns"])
         self.subwells.set(self.parameters.get()["subwells"])
 
-        TopLabel = tk.Label(self, text="Grid characteristics:")
-        LinesLabel = tk.Label(self, text="Lines:")
-        LinesMenu = tk.OptionMenu(self, self.lines, *[4,8,16])
-        ColumnsLabel = tk.Label(self, text="Columns:")
-        ColumnsMenu = tk.OptionMenu(self, self.columns, *[6,12,24])
-        SubWellsLabel = tk.Label(self, text="Subwells:")
-        SubWellsMenu = tk.OptionMenu(self, self.subwells, *[1,2,3,4])
+        TopLabel = Label(self, text="Grid characteristics:")
+        LinesLabel = Label(self, text="Lines:")
+        LinesMenu = OptionMenu(self, self.lines, *[4,8,16])
+        ColumnsLabel = Label(self, text="Columns:")
+        ColumnsMenu = OptionMenu(self, self.columns, *[6,12,24])
+        SubWellsLabel = Label(self, text="Subwells:")
+        SubWellsMenu = OptionMenu(self, self.subwells, *[1,2,3,4])
 
-        Save = tk.Button(self, text="Save grid", command=self.save_grid_param)
+        Save = Button(self, text="Save grid", command=self.save_grid_param)
         
         w=3
         LinesMenu.config(width=w)
@@ -92,13 +92,13 @@ class Plate_parameters(Interface,tk.Frame):
         Save.place(x=x_p, y=y_p+60)
 
     def parameter_menu(self, x_p, y_p):
-        self.parameters_selector = tk.StringVar()
+        self.parameters_selector = StringVar()
         self.parameters_selector.set(self.parameters.selected)
         parameters_set_list = self.parameters.list_all()
 
-        ParametersSet = tk.OptionMenu(self, self.parameters_selector, *parameters_set_list,  command=self.parameter_set_changed)
+        ParametersSet = OptionMenu(self, self.parameters_selector, *parameters_set_list,  command=self.parameter_set_changed)
         ParametersSet.config(width=15)
-        ParametersSet_label =  tk.Label(self, text="Parameters set:")
+        ParametersSet_label =  Label(self, text="Parameters set:")
         ParametersSet_label.place(x=x_p, y=y_p)
         ParametersSet.place(x=x_p, y=y_p+20)
     
@@ -143,7 +143,7 @@ class Plate_parameters(Interface,tk.Frame):
             self._param_config = ParametersConfig(self.Tk_root, self.microscope, self.grid, self.Xsteps, self.Ysteps, self.parameters)
             self._param_config.init_window(dyn=True)        
 
-class ParametersConfig(Interface, tk.Frame):
+class ParametersConfig(Interface, Frame):
 
     def __init__(self, Tk_root, microscope, grid, Xsteps, Ysteps, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, parameters=parameters)               
@@ -155,13 +155,13 @@ class ParametersConfig(Interface, tk.Frame):
     def init_window(self, A1=False, step=False, dyn=False):
 
         self.Tk_window.title("Steps") 
-        self.pack(fill=tk.BOTH, expand=1)
+        self.pack(fill=BOTH, expand=1)
         self.show_record_label()
         self.start = self.parameters.get()["start"]   
             
         FreeMovementInterface.XYsliders(self,l=200)
 
-        Cancel =  tk.Button(self, text="Back", command=self.close_xy)
+        Cancel =  Button(self, text="Back", command=self.close_xy)
         Cancel.place(x=10,y=530)
 
         if step:
@@ -171,11 +171,11 @@ class ParametersConfig(Interface, tk.Frame):
             self.save_A1_button()
     
     def grid_go_pad(self, pad_position):
-        A1 = tk.Button(self, width=3, heigh=2, text="A1", command=lambda: self.grid.go("A1"))        
-        B2 = tk.Button(self, width=3, heigh=2, text="B2", command=lambda: self.go_and_change_divisor("B2", (1,1)))
-        H1 = tk.Button(self, width=3, heigh=2, text="H1", command=lambda: self.go_and_change_divisor("H1", (7,1)))
-        A12 = tk.Button(self, width=3, heigh=2, text="A12", command=lambda: self.go_and_change_divisor("A12", (1,11)))
-        H12 = tk.Button(self, width=3, heigh=2, text="H12", command=lambda: self.go_and_change_divisor("H12", (7,11)))
+        A1 = Button(self, width=3, heigh=2, text="A1", command=lambda: self.grid.go("A1"))        
+        B2 = Button(self, width=3, heigh=2, text="B2", command=lambda: self.go_and_change_divisor("B2", (1,1)))
+        H1 = Button(self, width=3, heigh=2, text="H1", command=lambda: self.go_and_change_divisor("H1", (7,1)))
+        A12 = Button(self, width=3, heigh=2, text="A12", command=lambda: self.go_and_change_divisor("A12", (1,11)))
+        H12 = Button(self, width=3, heigh=2, text="H12", command=lambda: self.go_and_change_divisor("H12", (7,11)))
 
         A1.place(x=pad_position[0]-90, y=pad_position[1]-50)
         A12.place(x=pad_position[0]+70, y=pad_position[1]-50)
@@ -190,22 +190,22 @@ class ParametersConfig(Interface, tk.Frame):
        
     ### Panel only for setting up X Y steps
     def save_XY_buttons(self, menus_position):
-        self.divisorX = tk.StringVar()
-        self.divisorY = tk.StringVar()
+        self.divisorX = StringVar()
+        self.divisorY = StringVar()
         self.divisorX.set(7)
         self.divisorY.set(11)
  
-        DivisorXLabel = tk.Label(self, text="Divisor X")
-        DivisorXMenu = tk.OptionMenu(self,  self.divisorX, *["      1   ","      2   ","      5   ","      7    "])
+        DivisorXLabel = Label(self, text="Divisor X")
+        DivisorXMenu = OptionMenu(self,  self.divisorX, *["      1   ","      2   ","      5   ","      7    "])
         DivisorXMenu.config(width=4)
-        DivisorYLabel = tk.Label(self, text="Divisor Y")
-        DivisorYMenu = tk.OptionMenu(self,  self.divisorY, *["      1   ","      2   ","      5   ","      11   "])
+        DivisorYLabel = Label(self, text="Divisor Y")
+        DivisorYMenu = OptionMenu(self,  self.divisorY, *["      1   ","      2   ","      5   ","      11   "])
         DivisorYMenu.config(width=4)
         
-        self.XSteps_label = tk.Label(self, text="test")
-        self.YSteps_label = tk.Label(self, text="test")
-        SaveX =  tk.Button(self, text="Save X ", command=lambda:  self.save_measure(x=True))
-        SaveY =  tk.Button(self, text="Save Y", command=lambda: self.save_measure(y=True))
+        self.XSteps_label = Label(self, text="test")
+        self.YSteps_label = Label(self, text="test")
+        SaveX =  Button(self, text="Save X ", command=lambda:  self.save_measure(x=True))
+        SaveY =  Button(self, text="Save Y", command=lambda: self.save_measure(y=True))
 
         DivisorXLabel.place(x=menus_position[0], y=menus_position[1])
         DivisorXMenu.place(x=menus_position[0], y=menus_position[1]+20)
@@ -220,7 +220,7 @@ class ParametersConfig(Interface, tk.Frame):
 
     ### Panel only for setting up A1 position
     def save_A1_button(self, x_p=10, y_p=410):
-        SaveA1 = tk.Button(self, text="Save A1 center", command=self.save_A1)
+        SaveA1 = Button(self, text="Save A1 center", command=self.save_A1)
         SaveA1.place(x=10,y=410)
 
     def save_A1(self):
@@ -260,13 +260,14 @@ if __name__ == "__main__":
     from ..microscope import Microscope
     from ..position_grid import PositionsGrid
     from ..microscope_param import *
+    from tinker import Tk
 
     ### Object for microscope to run
     microscope = Microscope(addr, ready_pin)
     grid = PositionsGrid(microscope)
 
     #Tkinter object
-    Tk_root = tk.Tk()
+    Tk_root = Tk()
     Tk_root.geometry("230x560+800+35")   
     
     ### Don't display border if on the RPi display

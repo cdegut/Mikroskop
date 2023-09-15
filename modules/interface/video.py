@@ -1,18 +1,18 @@
 from .super import Interface
-import tkinter as tk
+from tinker import Frame, Button, BOTH, Label, StringVar, OptionMenu
 from ..cameracontrol2 import start_recording
 from time import time
 from .popup import led_focus_zoom_buttons
 
 
-class Video_record_window(Interface, tk.Frame):
+class Video_record_window(Interface, Frame):
         
     def __init__(self, Tk_root, microscope, camera, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, camera=camera, parameters=parameters)
         
         self.rec_off_event = None
         self.recorder = None
-        self.quality = tk.StringVar()  
+        self.quality = StringVar()  
         self.quality.set(720)      
 
         self.init_window() 
@@ -30,7 +30,7 @@ class Video_record_window(Interface, tk.Frame):
     ###########
     ### Generate the window content, called every time window is (re)opened 
     def init_window(self):
-        self.pack(fill=tk.BOTH, expand=1)
+        self.pack(fill=BOTH, expand=1)
 
         #generic buttons
         self.back_to_main_button()
@@ -39,9 +39,9 @@ class Video_record_window(Interface, tk.Frame):
         led_focus_zoom_buttons(self)
 
         
-        self.timer = tk.Label(self, text="0 min 0 sec")
-        QualityLabel = tk.Label(self, text="Video Quality:")
-        QualityMenu = tk.OptionMenu(self, self.quality, *[1600,1200,720,480])        
+        self.timer = Label(self, text="0 min 0 sec")
+        QualityLabel = Label(self, text="Video Quality:")
+        QualityMenu = OptionMenu(self, self.quality, *[1600,1200,720,480])        
      
         self.record_button_place((60,50))
         self.timer.place(x=80, y=100)
@@ -53,8 +53,8 @@ class Video_record_window(Interface, tk.Frame):
         self.snap_button()
         
     def record_button_place(self, rec_position):
-        self.Rec = tk.Button(self, text="Start Recording", command=lambda: self.start_recording_action(rec_position))
-        self.Stop = tk.Button(self, fg='Red', text="Stop Recording", command=lambda: self.stop_recording_action(rec_position))
+        self.Rec = Button(self, text="Start Recording", command=lambda: self.start_recording_action(rec_position))
+        self.Stop = Button(self, fg='Red', text="Stop Recording", command=lambda: self.stop_recording_action(rec_position))
 
         if not self.recorder:
             self.Rec.place(x=rec_position[0], y=rec_position[1])
@@ -115,6 +115,7 @@ if __name__ == "__main__":
     import picamera
     from ..microscope_param import *
     from ..cameracontrol import previewPiCam
+    from tinker import Tk
 
     ### Object for microscope to run
     microscope = Microscope(addr, ready_pin)
@@ -122,7 +123,7 @@ if __name__ == "__main__":
     camera = picamera.PiCamera()
 
     #Tkinter object
-    Tk_root = tk.Tk()
+    Tk_root = Tk()
     Tk_root.geometry("230x560+800+35")   
     
     ### Don't display border if on the RPi display

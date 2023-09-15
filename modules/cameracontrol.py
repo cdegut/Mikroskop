@@ -1,13 +1,14 @@
+'''
+Deprecated file, using the old Picamera instead of picamera 2
+'''
 from .parametersIO import create_folder
 from time import sleep
 from threading import Thread, Event
 from .microscope_param import awbR_fluo, awbB_fluo, awbR_white, awbB_white
-from picamera2 import Preview
-from libcamera import Transform
 #import picamera
 import picamera.array
 import numpy as np
-#import cv2
+import cv2
 from PIL import Image
 import io
 

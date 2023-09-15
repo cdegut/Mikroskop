@@ -1,5 +1,5 @@
 from ..cameracontrol2 import save_image
-import tkinter as tk
+from tinker import Frame, Button, Label
 from ..microscope import Microscope
 from ..position_grid import PositionsGrid
 from time import localtime
@@ -14,7 +14,7 @@ plate_name = "Plate" ##is a place holder to later add a plate type selector, may
 class Interface: 
 
     def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None, parameters=None):
-        tk.Frame.__init__(self, Tk_root)
+        Frame.__init__(self, Tk_root)
         self.Tk_root = Tk_root
         self.microscope = microscope
         self.grid = grid
@@ -121,7 +121,7 @@ class Interface:
     
     def show_record_label(self):
         if Interface._video_timer:
-            self.RecordingLabel = tk.Label(self, fg = "red4", font=("Arial", 25), text = "◉")
+            self.RecordingLabel = Label(self, fg = "red4", font=("Arial", 25), text = "◉")
             self.RecordingLabel.place(x=200, y=520)
             Interface._blink = self.after(1000, self.hide_record_label)
     
@@ -171,24 +171,24 @@ class Interface:
     ###Generic buttons
 
     def back_to_main_button(self, position=[10,450]):
-        Main = tk.Button(self, fg='Red', text="Main", command=self.back_to_main)
+        Main = Button(self, fg='Red', text="Main", command=self.back_to_main)
         Main.place(x=position[0],y=position[1])
     
     def coordinate_place(self, x_p=10, y_p=500):
-        self.Coordinates = tk.Label(self, text="test")
+        self.Coordinates = Label(self, text="test")
         self.Coordinates.place(x=x_p, y=y_p)
         self.update_coordinates_label()
     
     def snap_button(self, position=(10,350)):
         if not Interface._video_timer:
-            Snap = tk.Button(self, text="Snap!", command=self.snap_timestamp)
+            Snap = Button(self, text="Snap!", command=self.snap_timestamp)
             Snap.place(x=position[0], y=position[1])
         else:
-            Snap = tk.Button(self, text="Snap!", fg="Red")
+            Snap = Button(self, text="Snap!", fg="Red")
             Snap.place(x=position[0], y=position[1])    
         
     def back_button(self, position=(10,450)):
-        Back =  tk.Button(self, text="Back", command=self.close)
+        Back =  Button(self, text="Back", command=self.close)
         Back.place(x=position[0], y=position[1])
 
     
@@ -202,6 +202,7 @@ if __name__ == "__main__":
     import picamera
     from ..microscope import *
     from ..position_grid import *
+    from tinker import Tk
 
     microscope = Microscope(addr, ready_pin)
     grid = PositionsGrid(microscope)
@@ -210,7 +211,7 @@ if __name__ == "__main__":
     #previewPiCam(camera)
 
     #create tkinter objects
-    Tk_root = tk.Tk()
+    Tk_root = Tk()
     #interface = MainWindow(Tk_root, microscope=microscope, grid=grid, camera=camera)
     #initialise interface
 

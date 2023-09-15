@@ -1,10 +1,10 @@
-import tkinter as tk
+from tinker import Frame, Button, BOTH, Scale
 from .super import Interface
 from ..microscope_param import Xmaxrange, Ymaxrange
 from .popup import led_focus_zoom_buttons
 
 
-class FreeMovementInterface(Interface, tk.Frame):
+class FreeMovementInterface(Interface, Frame):
 
     def __init__(self, Tk_root, microscope, grid, camera, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera, parameters=parameters)
@@ -29,7 +29,7 @@ class FreeMovementInterface(Interface, tk.Frame):
         #Title of the root
         self.Tk_root.title("Control Panel")
         # allowing the widget to take the full space of the root window
-        self.pack(fill=tk.BOTH, expand=1)
+        self.pack(fill=BOTH, expand=1)
         self.show_record_label()
 
         ##Generic buttons
@@ -39,9 +39,9 @@ class FreeMovementInterface(Interface, tk.Frame):
         self.XYsliders()
 
         ######### creating buttons instances      
-        Start = tk.Button(self, fg='Green', text="Go Start", command=self.go_start)
-        XY_center = tk.Button(self, fg='Green', text="CentXY", command=self.go_centerXY)
-        Save = tk.Button(self, fg='Green', text="Save Start",command=lambda: self.save_positions(None))
+        Start = Button(self, fg='Green', text="Go Start", command=self.go_start)
+        XY_center = Button(self, fg='Green', text="CentXY", command=self.go_centerXY)
+        Save = Button(self, fg='Green', text="Save Start",command=lambda: self.save_positions(None))
         
         self.snap_button()
         
@@ -55,10 +55,10 @@ class FreeMovementInterface(Interface, tk.Frame):
         Save.place(x=80,y=450)
 
     def XYsliders(self, position=(0,10), l=220): #### Place the two navigation sliders
-        GoX =  tk.Button(self, width=5, height=2, text="Go X", command=lambda: self.microscope.move_single_axis(1, self.Xaxis.get()*1000 ))
-        GoY =  tk.Button(self, width=5, height=2,  text="Go Y", command=lambda: self.microscope.move_single_axis(2, self.Yaxis.get()*1000 ))
-        self.Xaxis = tk.Scale(self, from_=0, to=Xmaxrange/1000, length=l, width=60)  
-        self.Yaxis = tk.Scale(self, from_=0, to=Ymaxrange/1000, length=l, width=60)
+        GoX =  Button(self, width=5, height=2, text="Go X", command=lambda: self.microscope.move_single_axis(1, self.Xaxis.get()*1000 ))
+        GoY =  Button(self, width=5, height=2,  text="Go Y", command=lambda: self.microscope.move_single_axis(2, self.Yaxis.get()*1000 ))
+        self.Xaxis = Scale(self, from_=0, to=Xmaxrange/1000, length=l, width=60)  
+        self.Yaxis = Scale(self, from_=0, to=Ymaxrange/1000, length=l, width=60)
     
         self.Xaxis.place(x=position[0], y=position[1])
         self.Yaxis.place(x=position[0]+115, y=position[1])
@@ -82,6 +82,7 @@ if __name__ == "__main__":
     from ..position_grid import PositionsGrid
     from ..microscope_param import *
     from ..cameracontrol import previewPiCam
+    from tinker import TK
 
     ### Object for microscope to run
     microscope = Microscope(addr, ready_pin)
@@ -89,7 +90,7 @@ if __name__ == "__main__":
     #camera = picamera.PiCamera()
 
     #Tkinter object
-    Tk_root = tk.Tk()
+    Tk_root = Tk()
     Tk_root.geometry("230x560+800+35")   
     
     ### Don't display border if on the RPi display

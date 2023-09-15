@@ -1,23 +1,23 @@
-import tkinter as tk
+from tinker import Frame, Button, BOTH, Label, StringVar, OptionMenu, Toplevel
 from .super import Interface
 from ..parametersIO import create_folder
 import time
 
 plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
 
-class GridRecord(Interface, tk.Frame):
+class GridRecord(Interface, Frame):
 
     def __init__(self, Tk_root, microscope, grid, camera, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera, parameters=parameters)
 
 
-        self.repeat = tk.StringVar()
-        self.delay = tk.StringVar()
-        self.startcolumn = tk.StringVar()
-        self.startline = tk.StringVar() 
-        self.finishcolumn = tk.StringVar()
-        self.finishline = tk.StringVar()
-        self.grid_subwells = tk.StringVar()
+        self.repeat = StringVar()
+        self.delay = StringVar()
+        self.startcolumn = StringVar()
+        self.startline = StringVar() 
+        self.finishcolumn = StringVar()
+        self.finishline = StringVar()
+        self.grid_subwells = StringVar()
 
 
         self.init_window()
@@ -37,7 +37,7 @@ class GridRecord(Interface, tk.Frame):
     ### Generate the window content, called every time window is (re)opened 
     def init_window(self):
 
-        self.pack(fill=tk.BOTH, expand=1)
+        self.pack(fill=BOTH, expand=1)
         self.parameters = self.parameters.get()
 
         #Set all menus on default options
@@ -55,25 +55,25 @@ class GridRecord(Interface, tk.Frame):
             line_list.append(self.grid.line_namespace[i])
         SubwellsList = range(1, self.grid.nb_of_subwells+1)
 
-        RepeatLabel = tk.Label(self, text="Repeat")
-        RepeatMenu = tk.OptionMenu(self, self.repeat, *[1,2,5,10,20,30,40,60,80,100,140,180,360])
+        RepeatLabel = Label(self, text="Repeat")
+        RepeatMenu = OptionMenu(self, self.repeat, *[1,2,5,10,20,30,40,60,80,100,140,180,360])
 
-        DelayLabel = tk.Label(self, text="Delay Sec")
-        DelayMenu = tk.OptionMenu(self, self.delay, *[0,1,2,5,10,15,30,60,120,600])
+        DelayLabel = Label(self, text="Delay Sec")
+        DelayMenu = OptionMenu(self, self.delay, *[0,1,2,5,10,15,30,60,120,600])
 
-        StartWellLabell = tk.Label(self, text ="Start Well")
-        StartColumnMenu = tk.OptionMenu(self, self.startcolumn, *column_list)
-        StartLineMenu = tk.OptionMenu(self, self.startline, *line_list)
+        StartWellLabell = Label(self, text ="Start Well")
+        StartColumnMenu = OptionMenu(self, self.startcolumn, *column_list)
+        StartLineMenu = OptionMenu(self, self.startline, *line_list)
 
-        FinishWellLabell = tk.Label(self, text ="Finish Well")
-        FinishColumnMenu = tk.OptionMenu(self, self.finishcolumn, *column_list)
-        FinishLineMenu = tk.OptionMenu(self, self.finishline, *line_list)
+        FinishWellLabell = Label(self, text ="Finish Well")
+        FinishColumnMenu = OptionMenu(self, self.finishcolumn, *column_list)
+        FinishLineMenu = OptionMenu(self, self.finishline, *line_list)
 
-        SubwellLabel = tk.Label(self, text ="N# of subwell")
-        SubwellMenu = tk.OptionMenu(self, self.grid_subwells, *SubwellsList)
+        SubwellLabel = Label(self, text ="N# of subwell")
+        SubwellMenu = OptionMenu(self, self.grid_subwells, *SubwellsList)
 
-        Save = tk.Button(self, text="Save", command=self.save_grid_parameters)
-        Start = tk.Button(self, text="Image grid", command=self.start_grid)
+        Save = Button(self, text="Save", command=self.save_grid_parameters)
+        Start = Button(self, text="Image grid", command=self.start_grid)
 
         self.back_to_main_button()
 
@@ -127,7 +127,7 @@ class GridRecord(Interface, tk.Frame):
         repeat = int(self.repeat.get())
         
         #make an abort button
-        popup = tk.Toplevel()
+        popup = Toplevel()
         abort = Stop_popup(popup)
 
         current_time = time.localtime()        
@@ -175,11 +175,11 @@ class GridRecord(Interface, tk.Frame):
     
 
 
-class Stop_popup(tk.Frame): #widget to fill popup window, show a stop button and a modifiable label
+class Stop_popup(Frame): #widget to fill popup window, show a stop button and a modifiable label
 
     stop = False
     def __init__(self, Tk_window):
-        tk.Frame.__init__(self, Tk_window)                 
+        Frame.__init__(self, Tk_window)                 
         self.Tk_window = Tk_window
         self.init_window()
 
@@ -190,10 +190,10 @@ class Stop_popup(tk.Frame): #widget to fill popup window, show a stop button and
 
         self.Tk_window.geometry("220x540+800+35")      
         self.Tk_window.title("Stop") 
-        self.pack(fill=tk.BOTH, expand=1)
-        Stop = tk.Button(self, fg='Red', text="Stop", command=self.stop_switch)
+        self.pack(fill=BOTH, expand=1)
+        Stop = Button(self, fg='Red', text="Stop", command=self.stop_switch)
 
-        self.well_info = tk.Label(self, text="## - #")
+        self.well_info = Label(self, text="## - #")
 
         self.well_info.place(x=75, y=40)
         Stop.place(x=75,y=80)
