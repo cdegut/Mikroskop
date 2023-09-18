@@ -1,4 +1,3 @@
-from ..cameracontrol2 import save_image
 from tkinter import Frame, Button, Label
 from ..microscope import Microscope
 from ..position_grid import PositionsGrid
@@ -108,16 +107,16 @@ class Interface:
         
         return date
 
-    def snap_grid(self):
+    def snap_grid(self,full_res=False):
         timestamp = self.timestamp()
         picture_name = timestamp + "_" + str(self.grid.current_grid_position[0]) + "-" + str(self.grid.current_grid_position[1])
         data_dir = self.parameters.get()["data_dir"]
-        save_image(self.camera, picture_name, data_dir)
+        self.camera.capture_and_save(picture_name, data_dir, full_res)
     
-    def snap_timestamp(self):
+    def snap_timestamp(self, full_res=False):
         picture_name = self.timestamp()
         data_dir = self.parameters.get()["data_dir"]
-        save_image(self.camera, picture_name, data_dir)
+        self.camera.capture_and_save(picture_name, f"{data_dir}/img", full_res)
     
     def show_record_label(self):
         if Interface._video_timer:
@@ -179,13 +178,17 @@ class Interface:
         self.Coordinates.place(x=x_p, y=y_p)
         self.update_coordinates_label()
     
-    def snap_button(self, position=(10,350)):
+    def snap_button(self, position=(10,350) , full_res_button = True):
         if not Interface._video_timer:
             Snap = Button(self, text="Snap!", command=self.snap_timestamp)
+            SnapFR = Button(self, text="Full Res Picture", command=lambda: self.snap_timestamp(full_res=True))
             Snap.place(x=position[0], y=position[1])
+            SnapFR.place(x=position[0] + 70 , y=position[1])
         else:
             Snap = Button(self, text="Snap!", fg="Red")
-            Snap.place(x=position[0], y=position[1])    
+            SnapFR = Button(self, text="Full Res Picture", fg="Red")
+            Snap.place(x=position[0], y=position[1])
+            SnapFR.place(x=position[0] + 70 , y=position[1])    
         
     def back_button(self, position=(10,450)):
         Back =  Button(self, text="Back", command=self.close)

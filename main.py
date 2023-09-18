@@ -3,14 +3,14 @@ import tkinter as tk
 from RPi import GPIO
 from os import environ
 
-from picamera2 import Picamera2
-from modules.cameracontrol2 import preview_picam, awb_preset
+from modules.cameracontrol3 import Microscope_camera
 from modules.microscope import Microscope
 from modules.position_grid import PositionsGrid
 from modules.physical_controller import encoder_read, controller_startup
 from modules.interface.main_menu import *
 from modules.microscope_param import *
 from modules.parametersIO import ParametersSets, create_folder
+
 
 #main loop
 if __name__ == "__main__": 
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     parameters = ParametersSets()
     microscope = Microscope(addr, ready_pin, parameters)
     grid = PositionsGrid(microscope, parameters)
-    picam2 = Picamera2()
+    micro_cam = Microscope_camera()
 
     #Tkinter object
     Tk_root = tk.Tk()
@@ -31,19 +31,19 @@ if __name__ == "__main__":
     display = environ.get('DISPLAY')
     if display == ":0.0" or display == ":0": ## :0.0 in terminal and :0 without terminal
         Tk_root.overrideredirect(1) ### not working with remote display !!
-    Interface._main_menu = MainMenu(Tk_root, microscope=microscope, grid=grid, camera=picam2,  parameters=parameters)
+    Interface._main_menu = MainMenu(Tk_root, microscope=microscope, grid=grid, camera=micro_cam,  parameters=parameters)
 
 
     if display == ":0.0" or display == ":0": ## :0.0 in terminal and :0 without terminal
-        preview_picam(picam2)    
+        micro_cam.initialise()   
     else:
-        preview_picam(picam2, external=True)
+        micro_cam.initialise(QT=True)   
 
     
     if microscope.positions[4] == 1:
-        awb_preset(picam2, "white")
+        micro_cam.awb_preset("white")
     if microscope.positions[4] == 2:
-        awb_preset(picam2, "Green Fluo")
+        micro_cam.awb_preset("Green Fluo")
 
     ## Microscope controller main loop
     while not Interface._exit:

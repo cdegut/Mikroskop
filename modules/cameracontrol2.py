@@ -1,13 +1,11 @@
 from .parametersIO import create_folder
-from time import sleep
+from time import sleep, time
 from threading import Thread, Event
 from .microscope_param import awbR_fluo, awbB_fluo, awbR_white, awbB_white
 from picamera2 import Preview
 from libcamera import Transform
-#import picamera
 import picamera.array
 import numpy as np
-#import cv2
 from PIL import Image
 import io
 from time import time
@@ -17,12 +15,16 @@ camera_full_resolution = (4056,3040)
 camera_max_resolution = (3000, 2248)
 h264_max_resolution = (1664,1248)
 
-def preview_picam(picam2, external=False):
-    camera_config = picam2.create_preview_configuration()
-    camera_config = picam2.create_preview_configuration()
-    #camera_config = picam2.create_preview_configuration(main={"size": camera_max_resolution})
-    #camera_config.align
-    picam2.configure(camera_config)
+def camera_get_config(picam2, value = "general"):
+    if value == "general":
+        camera_config = picam2.create_preview_configuration(main={"size":  (1400, 1080)}, lores={"size": (800, 620), "format": "YUV420"}, display= "lores", buffer_count=4)
+    if value == "full":
+        camera_config = picam2.create_preview_configuration(main={"size":  (4056,3040)}, lores={"size": (400, 310), "format": "YUV420"}, display= "lores", buffer_count=1)
+    return camera_config
+
+
+def preview_picam(picam2, external=False): 
+    picam2.configure(camera_get_config(picam2, "general"))
     if not external:
         picam2.start_preview(Preview.QTGL, x=0 , y=25, width=800, height=625)
     else:
@@ -31,6 +33,7 @@ def preview_picam(picam2, external=False):
     Transform(hflip=1, vflip = 1)
 
     picam2.start()
+    picam2.title_fields = ['FocusFoM']
 
 def change_zoom(picam2, crop_factor, animation = True):
     ### zoom value is a crop factor
@@ -57,18 +60,57 @@ def change_zoom(picam2, crop_factor, animation = True):
     picam2.set_controls({"ScalerCrop": offset  + crop})
 
 
-def save_image(picam2, picture_name, data_dir):
-    start = time()
+def save_image(picam2, picture_name, data_dir, full_res = False):
     create_folder(data_dir + "img/")
-    full_data_name = f"{data_dir}img/{picture_name}.png"
+    full_data_name = f"{data_dir}/{picture_name}.png"
+    
+    if full_res:
+        picam2.switch_mode(camera_get_config(picam2, "full"))
+
+    capture = picam2.capture_image("main")
+
+    if full_res:
+        picam2.switch_mode(camera_get_config(picam2, "general"))
+    
+    save = Thread(target = save_img_thread, args=(capture, full_data_name))
+    save.start()
+
+def save_image_time_lapse(picam2, picture_name, data_dir, microscope, led, ledpwr, flash = True):
+    
+    create_folder(data_dir + "img/")
+    full_data_name = f"{data_dir}/{picture_name}.png"
+    
+    capture = picam2.capture_image("main")
+    
+    save = Thread(target = save_img_thread, args=(capture, full_data_name))
+    save.start()
+
+def save_image_back(picam2, picture_name, data_dir, full_res = False, microscope = None, led = None, ledpwr = None):
+    create_folder(data_dir + "img/")
+    full_data_name = f"{data_dir}/{picture_name}.png"
     capture_config = picam2.create_still_configuration()
-    preview_config = picam2.create_preview_configuration()
-    picam2.switch_mode(capture_config)
-    array = picam2.capture_array("main")
-    picam2.switch_mode(preview_config)  
-    #save = Thread(target = save_img_thread, args=(picam2, full_data_name))
-    #save.start()
-    print(time() -start)
+    
+    if full_res:
+        picam2.switch_mode(picam2, capture_config("full"))
+    
+    if microscope and led and ledpwr:
+        microscope.set_led_state(led)
+        microscope.set_ledpwr(ledpwr)
+
+    capture = picam2.capture_image("main")
+    
+    if microscope and led and ledpwr:
+        microscope.set_led_state(0)
+        
+    if full_res:
+        picam2.switch_mode(picam2, capture_config("general"))
+    
+    save = Thread(target = save_img_thread, args=(capture, full_data_name))
+    save.start()
+
+def save_img_thread(capture, full_data_name):
+
+    capture.save(full_data_name, format = "png" )
 
 def awb_preset(picam2, awb):
     if awb == "Green Fluo":
@@ -78,71 +120,38 @@ def awb_preset(picam2, awb):
     if awb == "auto":
         picam2.controls.AwbEnable = True
     if awb == "white":
-        picam2.controls.AwbEnable = False
-        picam2.controls.ColourGains = awbR_white,  awbB_white
+        picam2.controls.AwbEnable = True
+        #picam2.controls.AwbEnable = False
+        #picam2.controls.ColourGains = awbR_white,  awbB_white
         #camera.controls.Contrast = 10 
 
 def curent_exposure(picam2):
     metadata = picam2.capture_metadata()
-    return metadata['ExposureTime']
+    return (metadata['ExposureTime'], metadata['AnalogueGain'])
 
 def auto_exp_enable(picam2, value):
-    picam2.controls.AeEnable = value
     metadata = picam2.capture_metadata()
-    if not value:
-        picam2.controls.AnalogueGain = metadata['AnalogueGain']
-        picam2.controls.ExposureTime = metadata['ExposureTime']
-    if value:
-        picam2.controls.AnalogueGain = 0
-        picam2.controls.ExposureTime = 0
+    if value == False:
+        with picam2.controls as controls:
+            controls.AeEnable = False
+            controls.AnalogueGain = metadata['AnalogueGain']
+            controls.ExposureTime = metadata['ExposureTime']
+
+    elif value == True:
+        with picam2.controls as controls:
+            controls.AeEnable = True
+            controls.AnalogueGain = 0
+            controls.ExposureTime = 0
     
 
+def set_exposure(picam2, shutter = None, gain= None):
+    if shutter:
+        picam2.controls.ExposureTime = shutter
+    if gain:
+        with picam2.controls as controls:
+            controls.AeEnable = False
+            controls.AnalogueGain = gain 
 
-def set_exposure(picam2, value):
-    picam2.controls.ExposureTime = value
-
-def save_img_thread(picam2, name):
-
-    capture_config = picam2.create_still_configuration()
-    preview_config = picam2.create_preview_configuration()
-    picam2.switch_mode(capture_config)
-    array = picam2.capture_array("main")
-    picam2.switch_mode(preview_config)
-
-    #cv2.imwrite(f'{name}.png', )
-
-    ## get the size of the image rounded to 32x16
-    image_w = camera.resolution[0]
-    if image_w%32 != 0:
-        image_w = image_w + 32 - image_w%32
-    image_h = camera.resolution[1]
-    if image_h%16 != 0:
-        image_h = image_h + 16 - image_h%16 
-    
-
-                                                                                                                                                
-    #if len(stream.getvalue()) != (fwidth * fheight * 3):
-    #    raise PiCameraValueError('Incorrect buffer length for resolution %dx%d' % (width, height))
-    #image= np.frombuffer(stream.getvalue(), dtype=np.uint8).\
-    #    reshape((fheight, fwidth, 3))[:height, :width, :]
-    #cv2.imwrite(f'{name}.png',image)
-   
-    ###
-    #output = picamera.array.PiRGBArray(camera)
-    #camera.capture(output, 'rgb')
-    #print(output)
-    #print('Captured %dx%d image' % (output.array.shape[1], output.array.shape[0]))
-    #output.array.
-    ###
-    #output = output.reshape((image_h, image_w, 3))
-    #image = Image.fromarray(output)
-    #image.save(name + ".png",)
-    #cv2.imwrite(name + ".png", output)
-    
-    #image = np.empty((image_w * image_h * 3,), dtype=np.uint8)
-    #camera.capture(image, "bgr")
-    #image = image.reshape((image_h, image_w, 3))
-    #cv2.imwrite(name + ".png", image)
 
 class VideoRecorder(Thread):
     def __init__(self,camera, video_quality, video_name,event_rec_on):
@@ -222,6 +231,7 @@ if __name__ == "__main__":
     from modules.microscope_param import *
     from modules.parametersIO import ParametersSets
     from time import sleep
+    from os import environ
 
 
     ### Object for microscope to run
@@ -232,11 +242,13 @@ if __name__ == "__main__":
 
     
     #start picamPreview
-    preview_picam(camera, external=True)
+    display = environ.get('DISPLAY')
+    if display == ":0.0" or display == ":0": ## :0.0 in terminal and :0 without terminal
+        preview_picam(camera)    
+    else:
+        preview_picam(camera, external=True)
+
     sleep(1)
-    camera.exposure_mode = 'off'
-    camera.awb_mode = 'off'
-    camera.drc_strength = 'off'
     awb_preset(camera, "auto")
     
 
@@ -272,6 +284,7 @@ if __name__ == "__main__":
         
         if setting_choice == "6": 
             text_input = input("Analog Gain:")
+            camera.controls.AeEnable = False
             camera.controls.AnalogueGain = float(text_input)
         
         if setting_choice == "7": 

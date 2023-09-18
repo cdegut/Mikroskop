@@ -8,7 +8,6 @@ from .microscope_param import awbR_fluo, awbB_fluo, awbR_white, awbB_white
 #import picamera
 import picamera.array
 import numpy as np
-import cv2
 from PIL import Image
 import io
 

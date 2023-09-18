@@ -1,6 +1,5 @@
 from .super import Interface
 from tkinter import Frame, Button, BOTH, Label, Scale, HORIZONTAL
-from ..cameracontrol2 import change_zoom, awb_preset, auto_exp_enable, curent_exposure, set_exposure
 
 
 def led_focus_zoom_buttons(self, position=400):
@@ -27,42 +26,48 @@ class Led_popup(Interface, Frame): #widget to fill popup window, show an stop bu
         self.Tk_root.title("Led") 
         self.pack(fill=BOTH, expand=1)
 
+        Power_label = Label(self, text = "LED power:")
         self.Led_scale = Scale(self, from_=0, to=255, length=200, width=60, orient=HORIZONTAL)
-        #Default = Button(self, text="Default LED 1 pwr = 200", command=self.set_default)
         Save =  Button(self, text="Save", command=self.save_led)
 
-        Led1 = Button(self, text="Led 1", command= lambda: self.led_change(1))
-        Led2 = Button(self, text="Led 2", command= lambda:  self.led_change(2))
-        Led12 = Button(self, text="Led 1+2", command= lambda: self.microscope.set_led_state(3))
-        Led12Low = Button(self, text="Led 1Low+2", command= lambda: self.microscope.set_led_state(4))
+        Led1 = Button(self, text="LED 1", command= lambda: self.led_change(1))
+        Led2 = Button(self, text="LED 2", command= lambda:  self.led_change(2))
+        #Led12 = Button(self, text="Led 1+2", command= lambda: self.microscope.set_led_state(3))
+        #Led12Low = Button(self, text="Led 1Low+2", command= lambda: self.microscope.set_led_state(4))
         LedOff = Button(self, text="Off", command= lambda: self.microscope.set_led_state(0))
 
         self.AutoExp = Button(self, text="AutoExp ON", command=self.auto_exp)
-        self.Exp_scale = Scale(self, from_=1, to=150, length=200, width=60, orient=HORIZONTAL)
-
+        Shutter_label = Label(self, text = "Shutter speed (μs);")
+        self.Exp_scale = Scale(self, from_=100, to=15000, length=200, width=60, resolution=100, orient=HORIZONTAL)
+        Gain_label = Label(self, text = "Analogue Gain:")
+        self.Gain_scale = Scale(self, from_=1.0, to=10.5, length=200, width=60, resolution=0.5, orient=HORIZONTAL)
         self.AWB_button = Button(self, text="Normal mode", command=self.awb)
 
-
-        #Default.place(x=20,y=30)
-        self.Led_scale.place(x=10,y=60)
+        #Led12.place(x=20,y=170)
+        #Led12Low.place(x=110,y=170)
+        Power_label.place(x=10, y= 55)  
+        self.Led_scale.place(x=10,y=70)
         
         Led1.place(x=20,y=30)
         Led2.place(x=90,y=30)
         LedOff.place(x=160,y=30)
-        Led12.place(x=20,y=170)
-        Led12Low.place(x=110,y=170)   
-                
-        self.AutoExp.place(x=20,y=230) 
+        self.AWB_button.place(x=20,y=170)
+           
+        self.AutoExp.place(x=20,y=210) 
+        
+        Shutter_label.place(x=10, y= 245)  
         self.Exp_scale.place(x=10,y=260)
+        Gain_label.place(x=10, y= 355)  
+        self.Gain_scale.place(x=10,y=370)
 
-        self.AWB_button.place(x=20,y=420)
+
 
         self.Led_scale.set(self.microscope.positions[3])
-        self.Exp_scale.set(curent_exposure(self.camera))
 
 
         self.set_led()
         self.set_exp()
+        self.set_analog_gain()
         Save.place(x=20, y=490)
         self.back_button(position=(90,490))
 
@@ -76,34 +81,34 @@ class Led_popup(Interface, Frame): #widget to fill popup window, show an stop bu
     def led_change(self, led):
         if led == 1:
             self.microscope.set_led_state(1)
-            awb_preset(self.camera, "white")
+            self.camera.awb_preset("white")
             self.AWB_button.config(text="Normal mode")
 
         if led == 2:
             self.microscope.set_led_state(2)
-            awb_preset(self.camera, "Green Fluo")
+            self.camera.awb_preset("Green Fluo")
             self.AWB_button.config(text="Green Fluo Mode")
 
     def auto_exp(self):
         if self.auto_exp_value == "auto":
-            auto_exp_enable(self.camera, False)
+            self.camera.auto_exp_enable(False)
             self.auto_exp_value = "off"
             self.AutoExp.config(text="AutoExp OFF")
         
         elif self.auto_exp_value == "off":
-            auto_exp_enable(self.camera, True)
+            self.camera.auto_exp_enable(True)
             self.auto_exp_value = "auto"
             self.AutoExp.config(text="AutoExp ON")
     
     def awb(self):
         if self.awb_value == "auto":
             self.awb_value = "off"
-            awb_preset(self.camera, "Green Fluo")
+            self.camera.awb_preset("Green Fluo")
             self.AWB_button.config(text="Green Fluo Mode")
 
         elif self.awb_value == "off":
             self.awb_value = "auto"
-            awb_preset(self.camera, "auto")
+            self.camera.awb_preset( "auto")
             self.AWB_button.config(text="Normal mode")
    
     def save_led(self):
@@ -117,15 +122,27 @@ class Led_popup(Interface, Frame): #widget to fill popup window, show an stop bu
         Interface._job1 = self.after(100, self.set_led)
     
     def set_exp(self): ## Read the scale and set the led at the proper power
-        exp_scale = self.Exp_scale.get() * 100
-        real_exp = curent_exposure(self.camera)
+        exp_scale = self.Exp_scale.get()
+        real_exp = self.camera.curent_exposure()[0]
         if exp_scale != real_exp: 
             if self.auto_exp_value == "off":
-                set_exposure(self.camera, exp_scale)
+                self.camera.set_exposure( exp_scale)
             elif self.auto_exp_value == "auto":
-                self.Exp_scale.set(real_exp/100)
+                self.Exp_scale.set(real_exp)
         
         Interface._job2 = self.after(100, self.set_exp)
+    
+    def set_analog_gain(self):
+        gain_scale = self.Gain_scale.get()
+        real_gain = self.camera.curent_exposure()[1]
+        if gain_scale != real_gain: 
+            if self.auto_exp_value == "off":
+                self.camera.set_exposure( gain=gain_scale)
+            elif self.auto_exp_value == "auto":
+                self.Gain_scale.set(real_gain)
+        
+        Interface._job3 = self.after(100, self.set_analog_gain)
+         
 
     def set_default(self): ## Read led power from Default parameter set
         led = self.parameters.get("Default")["led"]
@@ -219,7 +236,7 @@ class Zoom_popup(Interface, Frame): #widget to fill popup window, show an stop b
             zoom_buttons = [(" 1x", 1),("1.5x", 0.75),(" 2x", 0.5),(" 4x", 0.25),(" 8x", 0.125)]
             y_p = 30
             for button in zoom_buttons:
-                b = Button(self, text=button[0], width=10, heigh=2, command=lambda value = button[1]: change_zoom(self.camera, value))
+                b = Button(self, text=button[0], width=10, heigh=2, command=lambda value = button[1]: self.camera.change_zoom(value))
                 b.place(x=60, y=y_p)
                 y_p = y_p+60
         else:

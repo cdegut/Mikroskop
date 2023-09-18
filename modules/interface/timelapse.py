@@ -1,7 +1,6 @@
 from .super import Interface
 from .popup import led_focus_zoom_buttons
 from ..parametersIO import create_folder
-from ..cameracontrol2 import save_img_thread
 from threading import Thread
 from time import time, sleep
 from os.path import isfile
@@ -84,9 +83,11 @@ class Time_lapse_window(Interface, Frame):
         #full_data_path = f"{data_dir}time-lapse/{date}/"
         self.full_data_path = f"{data_dir}time-lapse/"
         create_folder(self.full_data_path)
+        self.camera.switch_mode_keep_zoom("full_res")
         self.start_timer = time()
-        self.frame_index = 0
-        self.single_frame()
+
+        self.camera.capture_with_flash("0", self.full_data_path, self.microscope, self.led, self.ledpwr )
+        
         self.frame_index = 1
         self.is_recording = True
         Interface._timelapse_job = self.after(100, self.run_time_lapse)
@@ -99,7 +100,9 @@ class Time_lapse_window(Interface, Frame):
 
             if (time() - self.start_timer) > self.timer:
                 self.start_timer = time()
-                self.single_frame()
+                
+                self.camera.capture_with_flash(self.frame_index, self.full_data_path, self.microscope, self.led, self.ledpwr )
+                
                 self.FrameLabel.configure(text=f"Frame Number: {self.frame_index + 1} \nof total: {self.max_frame}")
                 self.frame_index += 1
                
@@ -108,18 +111,10 @@ class Time_lapse_window(Interface, Frame):
         
             Interface._timelapse_job = self.after(100, self.run_time_lapse)
 
-    def single_frame(self):
-        
-        full_data_name = f"{self.full_data_path}{self.frame_index}"
-        self.microscope.set_ledpwr(self.ledpwr)
-        save = Thread(target = save_img_thread, args=(self.camera, full_data_name))
-        save.start()
-        while not isfile(full_data_name + ".png"):
-            sleep(0.01)
-        self.microscope.set_ledpwr(0)
     
     def stop_time_lapse(self):
         self.is_recording = False
+        self.camera.switch_mode_keep_zoom("general")
         self.open()
 
 
