@@ -1,4 +1,3 @@
-import picamera
 import tkinter as tk
 from RPi import GPIO
 from os import environ

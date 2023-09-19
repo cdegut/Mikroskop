@@ -63,11 +63,15 @@ class Led_popup(Interface, Frame): #widget to fill popup window, show an stop bu
 
 
         self.Led_scale.set(self.microscope.positions[3])
+        current_exp, current_gain = self.camera.curent_exposure()
+        self.Exp_scale .set(current_exp)
+        self.Gain_scale.set(current_gain)
 
 
         self.set_led()
         self.set_exp()
         self.set_analog_gain()
+        
         Save.place(x=20, y=490)
         self.back_button(position=(90,490))
 
