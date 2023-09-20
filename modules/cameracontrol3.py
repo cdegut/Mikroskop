@@ -2,7 +2,7 @@ from picamera2 import Picamera2,Preview
 from .parametersIO import create_folder
 from threading import Thread, Event
 from .microscope_param import awbR_fluo, awbB_fluo, awbR_white, awbB_white
-import time
+from time import sleep
 camera_full_resolution = (4056,3040)
 h264_max_resolution = (1664,1248)
 
@@ -14,7 +14,7 @@ class Microscope_camera(Picamera2):
     def initialise(self, QT=False):
         self.general_config = self.create_preview_configuration(main={"size":  (1610, 1200)}, lores={"size": (804, 600), "format": "YUV420"}, raw={"size": (2028, 1520)}, display= "lores", buffer_count=1)
         self.align_configuration(self.general_config)
-        self.full_res_config = self.create_still_configuration(main={"size":  (400,300)},lores={"size": (402, 300), "format": "YUV420"}, raw={"size":  (4056,3040)}, display= "lores",)
+        self.full_res_config = self.create_still_configuration(main={"size":  (400,300)},lores={"size": (402, 300), "format": "YUV420"}, raw={"size":  (4056,3040)}, display= "lores")
         self.align_configuration(self.full_res_config)
         self.running_config = self.create_preview_configuration(main={"size":  (1610, 1200)}, lores={"size": (804, 600), "format": "YUV420"},raw={"size": (2028, 1520)}, display= "lores", buffer_count=1)
         self.align_configuration(self.running_config)
@@ -196,7 +196,7 @@ class VideoRecorder(Thread):
 
     def run(self):
         ## Save the current preview settings
-        preview_resolution = self.camera.resolution
+        preview_resolution = self.camera.running_config["main"]["size"]
 
         ## If the video quality demanded is higher than the preview, get back to the preview (avoided useless oversampling of zoomed in video)
         if preview_resolution[0] < self.video_quality:          
@@ -205,7 +205,7 @@ class VideoRecorder(Thread):
         ## else set the camera to the new resolution
         else:
             record_resolution = (self.video_quality, 
-                int((self.video_quality)*(camera_full_resolution[1]/camera_full_resolution[0])))
+                int((self.video_quality)*(self.camera_properties['PixelArraySize'][1]/self.camera_properties['PixelArraySize'][0])))
 
         #### Change resolution if incompatible with the video
         if record_resolution[0] > h264_max_resolution[0]:
