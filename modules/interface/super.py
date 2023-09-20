@@ -116,7 +116,10 @@ class Interface:
     def snap_timestamp(self, full_res=False):
         picture_name = self.timestamp()
         data_dir = self.parameters.get()["data_dir"]
-        self.camera.capture_and_save(picture_name, f"{data_dir}/img", full_res)
+        if full_res:
+            self.camera.capture_and_save(picture_name, f"{data_dir}/img")
+        else:
+            self.camera.capture_full_res(picture_name, f"{data_dir}/img")
     
     def show_record_label(self):
         if Interface._video_timer:

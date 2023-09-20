@@ -12,12 +12,16 @@ class Microscope_camera(Picamera2):
         self.crop_value = 1
     
     def initialise(self, QT=False):
-        self.general_config = self.create_preview_configuration(main={"size":  (1610, 1200)}, lores={"size": (804, 600), "format": "YUV420"}, raw={"size": (2028, 1520)}, display= "lores", buffer_count=1)
+        self.general_config = self.create_preview_configuration(main={"size":  (1610, 1200)}, 
+                                                                lores={"size": (804, 600), "format": "YUV420"}, 
+                                                                raw={"size": (2028, 1520)}, display= "lores", buffer_count=1)
         self.align_configuration(self.general_config)
-        self.full_res_config = self.create_still_configuration(main={"size":  (400,300)},lores={"size": (402, 300), "format": "YUV420"}, raw={"size":  (4056,3040)}, display= "lores")
+        self.full_res_config = self.create_still_configuration(main={"size":  (400,300)},
+                                                               lores={"size": (402, 300), "format": "YUV420"}, 
+                                                               raw={"size":  (4056,3040)}, display= "lores")
         self.align_configuration(self.full_res_config)
-        self.running_config = self.create_preview_configuration(main={"size":  (1610, 1200)}, lores={"size": (804, 600), "format": "YUV420"},raw={"size": (2028, 1520)}, display= "lores", buffer_count=1)
-        self.align_configuration(self.running_config)
+
+        self.make_running_config()
 
         self.configure(self.running_config)
         if not QT:
@@ -27,6 +31,14 @@ class Microscope_camera(Picamera2):
 
         self.start()
         self.title_fields = ['FocusFoM']
+    
+    def make_runing_config(self):
+        ## make a copy of general_config (copy and deep copy do not work well)
+        main = self.general_config["main"]["size"]
+        lores = self.general_config["lores"]["size"]
+        raw = self.general_config["raw"]["size"]
+        buffer =  self.general_config["buffer"]
+        self.running_config = self.create_preview_configuration(main=main, lores=lores, raw=raw, display= "lores", buffer_count=buffer)
     
     def change_zoom(self, crop_factor, animation = True):
         full_res = self.camera_properties['PixelArraySize']
@@ -112,40 +124,35 @@ class Microscope_camera(Picamera2):
             self.set_controls({"ScalerCrop": offset  + crop})
             self.capture_metadata() ## need to wait an image before giving the feed back
 
-    def capture_and_save(self, picture_name, data_dir, full_res = False):
+    def capture_and_save(self, picture_name, data_dir):
         create_folder(data_dir)
         full_data_name = f"{data_dir}/{picture_name}.png"
-        
-        if full_res:
-            self.switch_mode_keep_zoom("full_res")
-
-        capture = self.capture_image("main")
-
-        if full_res:
-             self.switch_mode_keep_zoom("general")
-        
-        save = Thread(target = self.save_caputre, args=(capture, full_data_name))
+        capture = self.capture_array("main")       
+        save = Thread(target = self.save_capture, args=(capture, full_data_name))
         save.start()
-    
+
+    def capture_full_res(self,  picture_name, data_dir):
+        self.switch_mode_keep_zoom("full_res")
+        self.capture_and_save(self, picture_name, data_dir)
+        self.switch_mode_keep_zoom("general")
+
     def capture_with_flash(self, picture_name, data_dir, microscope, led, ledpwr):
-        full_data_name = f"{data_dir}/{picture_name}.png"
         
         microscope.set_led_state(led)
         microscope.set_ledpwr(ledpwr)
 
-        for _ in range(2):
-            self.capture_metadata()
-
-        capture = self.capture_image("main")
+        self.capture_and_save(self, picture_name, data_dir)
 
         microscope.set_led_state(0)
         microscope.set_ledpwr(0)
-        
-        save = Thread(target = self.save_caputre, args=(capture, full_data_name))
-        save.start()
-    
-    def save_caputre(self, capture, full_data_name):
-        capture.save(full_data_name, format = "png" )
+            
+    def save_capture(self, capture, full_data_name): ##run as a separate thread
+        from io import BytesIO
+        stream = BytesIO()
+
+    #def save_capture(self, capture, full_data_name): ##run as a separate thread
+    #    capture.save(full_data_name, format = "png" )
+
 
     def awb_preset(self, awb):
         if awb == "Green Fluo":
@@ -186,6 +193,8 @@ class Microscope_camera(Picamera2):
                 controls.AeEnable = False
                 controls.AnalogueGain = gain 
 
+from picamera2.encoders import H264Encoder, Quality
+
 class VideoRecorder(Thread):
     def __init__(self,camera, video_quality, video_name,event_rec_on):
         Thread.__init__(self)
@@ -212,10 +221,20 @@ class VideoRecorder(Thread):
             record_resolution = h264_max_resolution
         
         #### Set the resolution
-        self.camera.resolution = record_resolution
+        if record_resolution[0] < self.camera.general_config["lores"]["size"][0]:
+            self.video_config = self.create_video_configuration(main={"size":  (record_resolution[0],record_resolution[1]), "format": "YUV420" },
+                                                                raw={"size": (2028, 1520)}, 
+                                                                display= "main", encode = "main", buffer_count=6)
+        else:
+            self.video_config = self.create_video_configuration(main={"size":  (record_resolution[0],record_resolution[1]), "format": "YUV420"}, 
+                                                                lores={"size": (804, 600), "format": "YUV420"},
+                                                                raw={"size": (2028, 1520)}, 
+                                                                display= "lores", encode = "main", buffer_count=6)
+        self.align_configuration(self.video_config)
 
         ### Start recording and wait for stop button
-        self.camera.start_recording(self.video_name)
+        encoder = H264Encoder()
+        self.camera.start_recording(encoder, self.video_name, Quality.HIGH)
         while not self.event.is_set():
             sleep(0.1)
 
