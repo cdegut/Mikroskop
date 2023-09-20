@@ -12,8 +12,12 @@ gpu_mem=256
 ```
 
 # Package needed
-
+upgrade pip and install the needed packages:
+```
+pip install --upgrade pip setuptools wheel
 pip install smbus2
+pip install opencv-python
+```
 
 # Misc
 Strongly suggest to increase the size of the Swap file
