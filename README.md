@@ -16,7 +16,7 @@ upgrade pip and install the needed packages:
 ```
 pip install --upgrade pip setuptools wheel
 pip install smbus2
-pip install opencv-python
+pip install opencv-python==4.5.3.56
 ```
 
 # Misc
