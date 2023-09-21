@@ -85,6 +85,7 @@ class Time_lapse_window(Interface, Frame):
         create_folder(self.full_data_path)
         self.camera.switch_mode_keep_zoom("full_res")
         self.start_timer = time()
+        self.camera.auto_exp_enable(False)
 
         self.camera.capture_with_flash("0", self.full_data_path, self.microscope, self.led, self.ledpwr )
         
@@ -115,6 +116,8 @@ class Time_lapse_window(Interface, Frame):
     def stop_time_lapse(self):
         self.is_recording = False
         self.camera.switch_mode_keep_zoom("general")
+        self.microscope.set_ledpwr(self.ledpwr)
+        self.microcope.set_led_state(self.led)
         self.open()
 
 

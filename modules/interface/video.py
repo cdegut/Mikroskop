@@ -1,6 +1,6 @@
 from .super import Interface
 from tkinter import Frame, Button, BOTH, Label, StringVar, OptionMenu
-from ..cameracontrol2 import start_recording
+from ..cameracontrol3 import start_recording
 from time import time
 from .popup import led_focus_zoom_buttons
 

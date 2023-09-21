@@ -38,19 +38,19 @@ class Led_popup(Interface, Frame): #widget to fill popup window, show an stop bu
 
         self.AutoExp = Button(self, text="AutoExp ON", command=self.auto_exp)
         Shutter_label = Label(self, text = "Shutter speed (μs);")
-        self.Exp_scale = Scale(self, from_=100, to=15000, length=200, width=60, resolution=100, orient=HORIZONTAL)
+        self.Exp_scale = Scale(self, from_=100, to=20000, length=200, width=60, resolution=100, orient=HORIZONTAL)
         Gain_label = Label(self, text = "Analogue Gain:")
         self.Gain_scale = Scale(self, from_=1.0, to=10.5, length=200, width=60, resolution=0.5, orient=HORIZONTAL)
         self.AWB_button = Button(self, text="Normal mode", command=self.awb)
 
-        #Led12.place(x=20,y=170)
+        #Led12.place(x=160,y=170)
         #Led12Low.place(x=110,y=170)
         Power_label.place(x=10, y= 55)  
         self.Led_scale.place(x=10,y=70)
         
-        Led1.place(x=20,y=30)
-        Led2.place(x=90,y=30)
-        LedOff.place(x=160,y=30)
+        Led1.place(x=20,y=20)
+        Led2.place(x=90,y=20)
+        LedOff.place(x=160,y=20)
         self.AWB_button.place(x=20,y=170)
            
         self.AutoExp.place(x=20,y=210) 
@@ -132,6 +132,8 @@ class Led_popup(Interface, Frame): #widget to fill popup window, show an stop bu
             if self.auto_exp_value == "off":
                 self.camera.set_exposure( exp_scale)
             elif self.auto_exp_value == "auto":
+                if real_exp > 20000:
+                    real_exp = 20000
                 self.Exp_scale.set(real_exp)
         
         Interface._job2 = self.after(100, self.set_exp)

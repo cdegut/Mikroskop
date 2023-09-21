@@ -111,12 +111,12 @@ class Interface:
         timestamp = self.timestamp()
         picture_name = timestamp + "_" + str(self.grid.current_grid_position[0]) + "-" + str(self.grid.current_grid_position[1])
         data_dir = self.parameters.get()["data_dir"]
-        self.camera.capture_and_save(picture_name, data_dir, full_res)
+        self.camera.capture_and_save(picture_name, data_dir)
     
     def snap_timestamp(self, full_res=False):
         picture_name = self.timestamp()
         data_dir = self.parameters.get()["data_dir"]
-        if full_res:
+        if not full_res:
             self.camera.capture_and_save(picture_name, f"{data_dir}/img")
         else:
             self.camera.capture_full_res(picture_name, f"{data_dir}/img")

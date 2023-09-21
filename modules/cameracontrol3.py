@@ -32,12 +32,13 @@ class Microscope_camera(Picamera2):
         self.start()
         self.title_fields = ['FocusFoM']
     
-    def make_runing_config(self):
+    def make_running_config(self):
         ## make a copy of general_config (copy and deep copy do not work well)
-        main = self.general_config["main"]["size"]
-        lores = self.general_config["lores"]["size"]
-        raw = self.general_config["raw"]["size"]
-        buffer =  self.general_config["buffer"]
+        main = self.general_config["main"]
+        lores = self.general_config["lores"]
+        raw = self.general_config["raw"]
+        buffer =  self.general_config["buffer_count"]
+        print(f"main{main}, lores {lores}, raw {raw}, buffers {buffer}")
         self.running_config = self.create_preview_configuration(main=main, lores=lores, raw=raw, display= "lores", buffer_count=buffer)
     
     def change_zoom(self, crop_factor, animation = True):
@@ -68,8 +69,6 @@ class Microscope_camera(Picamera2):
         
         self.correct_resolution((crop[0], crop[1]))
         self.set_controls({"ScalerCrop": offset  + crop})
-        
-
 
     def correct_resolution(self, new_field = (1400, 1080)):
         new_main_config = None
@@ -123,35 +122,37 @@ class Microscope_camera(Picamera2):
             self.switch_mode(self.full_res_config)
             self.set_controls({"ScalerCrop": offset  + crop})
             self.capture_metadata() ## need to wait an image before giving the feed back
+        if mode == "video":
+            self.switch_mode(self.video_config)
+            self.change_zoom(self.crop_value, animation =False)
+             
 
     def capture_and_save(self, picture_name, data_dir):
         create_folder(data_dir)
         full_data_name = f"{data_dir}/{picture_name}.png"
-        capture = self.capture_array("main")       
+        capture = self.capture_image("main")       
         save = Thread(target = self.save_capture, args=(capture, full_data_name))
         save.start()
 
     def capture_full_res(self,  picture_name, data_dir):
         self.switch_mode_keep_zoom("full_res")
-        self.capture_and_save(self, picture_name, data_dir)
+        self.capture_and_save(picture_name, data_dir)
         self.switch_mode_keep_zoom("general")
 
     def capture_with_flash(self, picture_name, data_dir, microscope, led, ledpwr):
         
         microscope.set_led_state(led)
         microscope.set_ledpwr(ledpwr)
-
-        self.capture_and_save(self, picture_name, data_dir)
+        
+        self.capture_metadata()
+        #self.capture_metadata()
+        self.capture_and_save(picture_name, data_dir)
 
         microscope.set_led_state(0)
         microscope.set_ledpwr(0)
             
     def save_capture(self, capture, full_data_name): ##run as a separate thread
-        from io import BytesIO
-        stream = BytesIO()
-
-    #def save_capture(self, capture, full_data_name): ##run as a separate thread
-    #    capture.save(full_data_name, format = "png" )
+        capture.save(full_data_name, format = "png" )
 
 
     def awb_preset(self, awb):
@@ -214,7 +215,7 @@ class VideoRecorder(Thread):
         ## else set the camera to the new resolution
         else:
             record_resolution = (self.video_quality, 
-                int((self.video_quality)*(self.camera_properties['PixelArraySize'][1]/self.camera_properties['PixelArraySize'][0])))
+                int((self.video_quality)*(self.camera.camera_properties['PixelArraySize'][1]/self.camera.camera_properties['PixelArraySize'][0])))
 
         #### Change resolution if incompatible with the video
         if record_resolution[0] > h264_max_resolution[0]:
@@ -222,35 +223,34 @@ class VideoRecorder(Thread):
         
         #### Set the resolution
         if record_resolution[0] < self.camera.general_config["lores"]["size"][0]:
-            self.video_config = self.create_video_configuration(main={"size":  (record_resolution[0],record_resolution[1]), "format": "YUV420" },
+            self.camera.video_config = self.camera.create_video_configuration(main={"size":  (record_resolution[0],record_resolution[1]), "format": "YUV420" },
                                                                 raw={"size": (2028, 1520)}, 
                                                                 display= "main", encode = "main", buffer_count=6)
         else:
-            self.video_config = self.create_video_configuration(main={"size":  (record_resolution[0],record_resolution[1]), "format": "YUV420"}, 
+            self.camera.video_config = self.camera.create_video_configuration(main={"size":  (record_resolution[0],record_resolution[1]), "format": "YUV420"}, 
                                                                 lores={"size": (804, 600), "format": "YUV420"},
                                                                 raw={"size": (2028, 1520)}, 
                                                                 display= "lores", encode = "main", buffer_count=6)
-        self.align_configuration(self.video_config)
+        self.camera.align_configuration(self.camera.video_config)
 
         ### Start recording and wait for stop button
         encoder = H264Encoder()
-        self.camera.start_recording(encoder, self.video_name, Quality.HIGH)
+        self.camera.switch_mode_keep_zoom("video")
+        self.camera.start_encoder(encoder, self.video_name)
         while not self.event.is_set():
             sleep(0.1)
 
         ### Stop recording
-        self.camera.stop_recording()
+        self.camera.stop_encoder()
 
-        ### put back the former resolution setting
-        if preview_resolution != self.camera.resolution:
-            self.camera.resolution=preview_resolution
+        self.camera.switch_mode_keep_zoom("general")
 
 
 ##### Function that generate the worker and pass the information to it
 def start_recording(camera, data_dir, video_quality=320, video_name="test"):
 
-    create_folder(data_dir + "rec/")
-    data_name = data_dir + "rec/" + video_name + ".h264"
+    create_folder(data_dir + "/rec/")
+    data_name = data_dir + "/rec/" + video_name + ".h264"
     rec_off = Event()
     rec = VideoRecorder(camera, video_quality, data_name, rec_off)
     rec.start()
@@ -260,13 +260,14 @@ def start_recording(camera, data_dir, video_quality=320, video_name="test"):
 def stop_video(off_event):
     off_event.set()
     
-if __name__ == "__main__": 
+if __name__ == "__main__":
+    import time
     m = Microscope_camera()
     m.initialise()
-    import time
-    time.sleep(10)
-    print(f"array: {m.capture_array().shape}")
-    time.sleep(20)
+    time.sleep(1)
+    m.capture_and_save("test", "/home/clement/microscope_data/img")
+    
+
     
     
 

@@ -1,6 +1,6 @@
 #Software Endstop (need to be =< to hardware set endstop)
 software_endstops = True
-Xmaxrange = 64000
+Xmaxrange = 63000
 Ymaxrange = 93000
 Fmaxrange = 22000
 

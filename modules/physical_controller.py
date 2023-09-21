@@ -10,11 +10,6 @@ def encoder_read(microscope, encoder, axis, short_steps, long_steps):
         steps = short_steps * value
     else:
         steps = long_steps * value
-    
-    if steps > 256:
-        steps = 256
-    if steps < -256:
-        steps = -256
 
     microscope.push_axis(axis , steps)
     encoder.internal_counter = 0

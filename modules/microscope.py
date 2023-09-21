@@ -78,8 +78,8 @@ class Microscope:
                 cmd =  motor + 0x10
             else:
                 cmd =  motor + 0x20
-            if steps > 256:
-                steps = 256
+            if steps > 255:
+                steps = 255
             data = bytes([steps, steps])
             bus.write_i2c_block_data(self.addr, cmd, data)
             
