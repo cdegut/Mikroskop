@@ -1,13 +1,11 @@
 from .super import Interface
 from .popup import led_focus_zoom_buttons
 from ..parametersIO import create_folder
-from threading import Thread
-from time import time, sleep
-from os.path import isfile
-from tkinter import Frame, Button, BOTH, Label, StringVar, OptionMenu
+from time import time
+from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N
 
 
-class Time_lapse_window(Interface, Frame):
+class Time_lapse_window(Interface, CTkFrame):
         
     def __init__(self, Tk_root, microscope, camera, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, camera=camera, parameters=parameters)
@@ -38,37 +36,33 @@ class Time_lapse_window(Interface, Frame):
         self.back_to_main_button()
         self.coordinate_place()
         self.show_record_label()
-        self.record_button_place((60,50))
+        self.record_button_place((0.5,50))
         
     def menu(self, x_p=20, y_p=10):
-        self.timer_selector = StringVar()
-        self.total_time = StringVar()
-        TimerLabel = Label(self, text="Delay (s)")
-        TimerMenu = OptionMenu(self, self.timer_selector, *[2,5,10,20])
-        TotalTimeLabel = Label(self, text="Duration (min):")
-        TotalTimeMenu = OptionMenu(self, self.total_time, *[1,2,5,10,20,30,60])
-        self.timer_selector.set(5)
-        self.total_time.set(5)
+        TimerLabel = CTkLabel(self, text="Delay (s)")
+        self.TimerMenu = CTkOptionMenu(self, values=["2","5","10","20"], width=80)
+        TotalTimeLabel = CTkLabel(self, text="Duration (min):")
+        self.TotalTimeMenu = CTkOptionMenu(self,  values=["1","2","5","10","20","30","60"], width=80)
+        self.TimerMenu.set("5")
+        self.TotalTimeMenu.set("5")
         TimerLabel.place(x=x_p+5, y=y_p)
-        TimerMenu.place(x=x_p, y=y_p+20)
+        self.TimerMenu.place(x=x_p, y=y_p+20)
         TotalTimeLabel.place(x=x_p+90, y=y_p)
-        TotalTimeMenu.place(x=x_p+100, y=y_p+20)
-        TotalTimeMenu.config(width=3)
-        TimerMenu.config(width=3)
+        self.TotalTimeMenu.place(x=x_p+100, y=y_p+20)
 
 
     def record_button_place(self, rec_position):
-        self.Rec = Button(self, text="Start Recording", command= self.start_time_lapse)
-        self.Stop = Button(self, fg='Red', text="Stop Recording", command= self.stop_time_lapse)
+        self.Rec = CTkButton(self, text="Start Recording", command= self.start_time_lapse)
+        self.Stop = CTkButton(self, fg_color='Red', text="Stop Recording", command= self.stop_time_lapse)
 
         if not self.is_recording:
-            self.Rec.place(x=rec_position[0], y=rec_position[1])
+            self.Rec.place(relx=rec_position[0], y=rec_position[1], anchor=N)
             self.back_to_main_button()
-            self.menu(x_p=10, y_p=120)
+            self.menu(x_p=20, y_p=120)
             led_focus_zoom_buttons(self,position=300)
         else:
             self.Stop.place(x=rec_position[0], y=rec_position[1])
-            self.FrameLabel = Label(self, text=f"Frame Number: {self.frame_index + 1} \nof total: {self.max_frame }")
+            self.FrameLabel = CTkLabel(self, text=f"Frame Number: {self.frame_index + 1} \nof total: {self.max_frame }")
             self.FrameLabel.place(x=rec_position[0], y=rec_position[1]+40)
 
 
@@ -76,8 +70,8 @@ class Time_lapse_window(Interface, Frame):
         data_dir = self.parameters.get()["data_dir"]
         self.led = self.microscope.positions[4]
         self.ledpwr = self.microscope.positions[3]
-        self.timer = int(self.timer_selector.get())
-        self.max_frame = int(60 / self.timer *  int(self.total_time.get()))
+        self.timer = int(self.TimerMenu.get())
+        self.max_frame = int(60 / self.timer *  int(self.TotalTimeMenu.get()))
         date = self.timestamp()
         create_folder(f"{data_dir}time-lapse/")
         #full_data_path = f"{data_dir}time-lapse/{date}/"
@@ -124,27 +118,28 @@ class Time_lapse_window(Interface, Frame):
 
 #main loop
 if __name__ == "__main__": 
-    from ..microscope import Microscope
-    from ..position_grid import PositionsGrid
-    import picamera
-    from ..microscope_param import *
-    from ..cameracontrol import previewPiCam
-    from ..parametersIO import ParametersSets
-    from tkinter import Tk
+    from modules.cameracontrol3 import Microscope_camera
+    from modules.microscope import Microscope
+    from modules.position_grid import PositionsGrid
+    from modules.physical_controller import encoder_read, controller_startup
+    from modules.interface.main_menu import *
+    from modules.microscope_param import *
+    from modules.parametersIO import ParametersSets, create_folder
+    import customtkinter
     ### Object for microscope to run
-    parameters = ParametersSets()
-    microscope = Microscope(addr, ready_pin)
-    grid = PositionsGrid(microscope, parameters=parameters)
-    camera = picamera.PiCamera()
 
     #Tkinter object
-    Tk_root = Tk()
+    parameters = ParametersSets()
+    microscope = Microscope(addr, ready_pin, parameters)
+    grid = PositionsGrid(microscope, parameters)
+    micro_cam = None
+
+    #Tkinter object
+    customtkinter.set_appearance_mode("dark")
+    Tk_root = customtkinter.CTk()
     Tk_root.geometry("230x560+800+35")   
     
     ### Don't display border if on the RPi display
-    Interface._time_lapse = Time_lapse_window(Tk_root, microscope=microscope,camera=camera, parameters=parameters)
-
-    #start picamPreview
-    previewPiCam(camera)
+    Interface._time_lapse = Time_lapse_window(Tk_root, microscope=microscope,camera=micro_cam, parameters=parameters)
 
     Tk_root.mainloop()

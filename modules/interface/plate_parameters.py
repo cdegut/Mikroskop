@@ -1,9 +1,8 @@
-from tkinter import Frame, Button, BOTH, Label, StringVar, OptionMenu
+from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N, StringVar
 from .super import Interface
-from .freemove import FreeMovementInterface
 
 
-class Plate_parameters(Interface,Frame):
+class Plate_parameters(Interface,CTkFrame):
     def __init__(self, Tk_root, microscope, grid, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, parameters=parameters)
         self._param_config = None
@@ -37,10 +36,10 @@ class Plate_parameters(Interface,Frame):
 
     def XYstep_config_buttons(self, x_p=20, y_p=220):
 
-        TopLabel = Label(self, text="Grid distances:")
-        XstepsLabel = Label(self, text="X steps:\n" + str(self.Xsteps))
-        YstepsLabel = Label(self, text="Y steps:\n" + str(self.Ysteps))
-        Configure_XY =  Button(self, text="Configure X and Y step", command=self.set_steps)
+        TopLabel = CTkLabel(self, text="Grid distances:")
+        XstepsLabel = CTkLabel(self, text="X steps:\n" + str(self.Xsteps))
+        YstepsLabel = CTkLabel(self, text="Y steps:\n" + str(self.Ysteps))
+        Configure_XY =  CTkButton(self, text="Configure X and Y step", command=self.set_steps)
 
         TopLabel.place(x=x_p, y=y_p)
         XstepsLabel.place(x=x_p+20, y=y_p+20)
@@ -49,8 +48,8 @@ class Plate_parameters(Interface,Frame):
 
         A1X = self.parameters.get()["start"][0]
         A1Y = self.parameters.get()["start"][1]
-        A1Label = Label(self, text=f"A1 position X: {A1X} Y: {A1Y}")
-        A1position =  Button(self, text="Change A1 position", command=self.set_A1_position)
+        A1Label = CTkLabel(self, text=f"A1 position X: {A1X} Y: {A1Y}")
+        A1position =  CTkButton(self, text="Change A1 position", command=self.set_A1_position)
         A1Label.place(x=x_p, y=y_p+110)
         A1position.place(x=x_p, y=y_p+130)
     
@@ -66,20 +65,19 @@ class Plate_parameters(Interface,Frame):
         self.columns.set(self.parameters.get()["columns"])
         self.subwells.set(self.parameters.get()["subwells"])
 
-        TopLabel = Label(self, text="Grid characteristics:")
-        LinesLabel = Label(self, text="Lines:")
-        LinesMenu = OptionMenu(self, self.lines, *[4,8,16])
-        ColumnsLabel = Label(self, text="Columns:")
-        ColumnsMenu = OptionMenu(self, self.columns, *[6,12,24])
-        SubWellsLabel = Label(self, text="Subwells:")
-        SubWellsMenu = OptionMenu(self, self.subwells, *[1,2,3,4])
+        TopLabel = CTkLabel(self, text="Grid characteristics:")
+        LinesLabel = CTkLabel(self, text="Lines:")
 
-        Save = Button(self, text="Save grid", command=self.save_grid_param)
+        w=40
+        LinesMenu = CTkOptionMenu(self, width=w, variable=self.lines, values=["4","8","16"])
+        ColumnsLabel = CTkLabel(self, text="Columns:")
+        ColumnsMenu = CTkOptionMenu(self, width=w, variable=self.columns, values=["6","12","24"])
+        SubWellsLabel = CTkLabel(self, text="Subwells:")
+        SubWellsMenu = CTkOptionMenu(self, width=w, variable=self.subwells, values=["1","2","3","4"])
+
+        Save = CTkButton(self, text="Save grid", command=self.save_grid_param)
         
-        w=3
-        LinesMenu.config(width=w)
-        ColumnsMenu.config(width=w)
-        SubWellsMenu.config(width=w)
+
 
         TopLabel.place(x=x_p, y=y_p)
         y_p = y_p +20
@@ -96,9 +94,8 @@ class Plate_parameters(Interface,Frame):
         self.parameters_selector.set(self.parameters.selected)
         parameters_set_list = self.parameters.list_all()
 
-        ParametersSet = OptionMenu(self, self.parameters_selector, *parameters_set_list,  command=self.parameter_set_changed)
-        ParametersSet.config(width=15)
-        ParametersSet_label =  Label(self, text="Parameters set:")
+        ParametersSet = CTkOptionMenu(self, width=100, variable=self.parameters_selector, values=parameters_set_list,  command=self.parameter_set_changed)
+        ParametersSet_label =  CTkLabel(self, text="Parameters set:")
         ParametersSet_label.place(x=x_p, y=y_p)
         ParametersSet.place(x=x_p, y=y_p+20)
     
@@ -143,7 +140,7 @@ class Plate_parameters(Interface,Frame):
             self._param_config = ParametersConfig(self.Tk_root, self.microscope, self.grid, self.Xsteps, self.Ysteps, self.parameters)
             self._param_config.init_window(dyn=True)        
 
-class ParametersConfig(Interface, Frame):
+class ParametersConfig(Interface, CTkFrame):
 
     def __init__(self, Tk_root, microscope, grid, Xsteps, Ysteps, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, parameters=parameters)               
@@ -159,9 +156,9 @@ class ParametersConfig(Interface, Frame):
         self.show_record_label()
         self.start = self.parameters.get()["start"]   
             
-        FreeMovementInterface.XYsliders(self,l=200)
+        self.XYsliders(l=200)
 
-        Cancel =  Button(self, text="Back", command=self.close_xy)
+        Cancel =  CTkButton(self, text="Back", command=self.close_xy)
         Cancel.place(x=10,y=530)
 
         if step:
@@ -171,11 +168,13 @@ class ParametersConfig(Interface, Frame):
             self.save_A1_button()
     
     def grid_go_pad(self, pad_position):
-        A1 = Button(self, width=3, heigh=2, text="A1", command=lambda: self.grid.go("A1"))        
-        B2 = Button(self, width=3, heigh=2, text="B2", command=lambda: self.go_and_change_divisor("B2", (1,1)))
-        H1 = Button(self, width=3, heigh=2, text="H1", command=lambda: self.go_and_change_divisor("H1", (7,1)))
-        A12 = Button(self, width=3, heigh=2, text="A12", command=lambda: self.go_and_change_divisor("A12", (1,11)))
-        H12 = Button(self, width=3, heigh=2, text="H12", command=lambda: self.go_and_change_divisor("H12", (7,11)))
+        w = 65
+        h = 30
+        A1 = CTkButton(self, width=w,text="A1", command=lambda: self.grid.go("A1"))        
+        B2 = CTkButton(self, width=w, text="B2", command=lambda: self.go_and_change_divisor("B2", (1,1)))
+        H1 = CTkButton(self, width=w, text="H1", command=lambda: self.go_and_change_divisor("H1", (7,1)))
+        A12 = CTkButton(self, width=w, text="A12", command=lambda: self.go_and_change_divisor("A12", (1,11)))
+        H12 = CTkButton(self, width=w, text="H12", command=lambda: self.go_and_change_divisor("H12", (7,11)))
 
         A1.place(x=pad_position[0]-90, y=pad_position[1]-50)
         A12.place(x=pad_position[0]+70, y=pad_position[1]-50)
@@ -195,17 +194,15 @@ class ParametersConfig(Interface, Frame):
         self.divisorX.set(7)
         self.divisorY.set(11)
  
-        DivisorXLabel = Label(self, text="Divisor X")
-        DivisorXMenu = OptionMenu(self,  self.divisorX, *["      1   ","      2   ","      5   ","      7    "])
-        DivisorXMenu.config(width=4)
-        DivisorYLabel = Label(self, text="Divisor Y")
-        DivisorYMenu = OptionMenu(self,  self.divisorY, *["      1   ","      2   ","      5   ","      11   "])
-        DivisorYMenu.config(width=4)
+        DivisorXLabel = CTkLabel(self, text="Divisor X")
+        DivisorXMenu = CTkOptionMenu(self, width=40,  variable=self.divisorX, values=["      1   ","      2   ","      5   ","      7    "])
+        DivisorYLabel = CTkLabel(self, text="Divisor Y")
+        DivisorYMenu = CTkOptionMenu(self,  width=40, variable=self.divisorY, values=["      1   ","      2   ","      5   ","      11   "])
         
-        self.XSteps_label = Label(self, text="test")
-        self.YSteps_label = Label(self, text="test")
-        SaveX =  Button(self, text="Save X ", command=lambda:  self.save_measure(x=True))
-        SaveY =  Button(self, text="Save Y", command=lambda: self.save_measure(y=True))
+        self.XSteps_label = CTkLabel(self, text="test")
+        self.YSteps_label = CTkLabel(self, text="test")
+        SaveX =  CTkButton(self, text="Save X ", command=lambda:  self.save_measure(x=True))
+        SaveY =  CTkButton(self, text="Save Y", command=lambda: self.save_measure(y=True))
 
         DivisorXLabel.place(x=menus_position[0], y=menus_position[1])
         DivisorXMenu.place(x=menus_position[0], y=menus_position[1]+20)
@@ -220,7 +217,7 @@ class ParametersConfig(Interface, Frame):
 
     ### Panel only for setting up A1 position
     def save_A1_button(self, x_p=10, y_p=410):
-        SaveA1 = Button(self, text="Save A1 center", command=self.save_A1)
+        SaveA1 = CTkButton(self, text="Save A1 center", command=self.save_A1)
         SaveA1.place(x=10,y=410)
 
     def save_A1(self):
@@ -256,21 +253,30 @@ class ParametersConfig(Interface, Frame):
         Interface._plate_parameters.init_window()
 
 #main loop for testing only
+#main loop
 if __name__ == "__main__": 
-    from ..microscope import Microscope
-    from ..position_grid import PositionsGrid
-    from ..microscope_param import *
-    from tkinter import Tk
-
+    from modules.cameracontrol3 import Microscope_camera
+    from modules.microscope import Microscope
+    from modules.position_grid import PositionsGrid
+    from modules.physical_controller import encoder_read, controller_startup
+    from modules.interface.main_menu import *
+    from modules.microscope_param import *
+    from modules.parametersIO import ParametersSets, create_folder
+    import customtkinter
     ### Object for microscope to run
-    microscope = Microscope(addr, ready_pin)
-    grid = PositionsGrid(microscope)
 
     #Tkinter object
-    Tk_root = Tk()
+    parameters = ParametersSets()
+    microscope = Microscope(addr, ready_pin, parameters)
+    grid = PositionsGrid(microscope, parameters)
+    micro_cam = None
+
+    #Tkinter object
+    customtkinter.set_appearance_mode("dark")
+    Tk_root = customtkinter.CTk()
     Tk_root.geometry("230x560+800+35")   
     
     ### Don't display border if on the RPi display
-    Interface._plate_parameters = Plate_parameters(Tk_root, last_window=None, microscope=microscope, grid=grid)
-
+    Interface._plate_parameters = Plate_parameters(Tk_root, microscope=microscope, grid=grid, parameters=parameters)
     Tk_root.mainloop()
+

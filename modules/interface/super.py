@@ -1,6 +1,7 @@
-from tkinter import Frame, Button, Label
+from customtkinter import CTkFrame, CTkButton, CTkLabel, N, CTkSlider, IntVar, CENTER
 from ..microscope import Microscope
 from ..position_grid import PositionsGrid
+from ..microscope_param import Xmaxrange, Ymaxrange
 from time import localtime
 
 
@@ -13,7 +14,7 @@ plate_name = "Plate" ##is a place holder to later add a plate type selector, may
 class Interface: 
 
     def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None, parameters=None):
-        Frame.__init__(self, Tk_root)
+        CTkFrame.__init__(self, Tk_root)
         self.Tk_root = Tk_root
         self.microscope = microscope
         self.grid = grid
@@ -75,15 +76,6 @@ class Interface:
         
         Interface._coordinates_job = self.after(500, self.update_coordinates_label)
 
-    ########## Handel the scale that allow large movements
-    def set_scale(self):
-        positions = self.microscope.positions
-        if positions != self.last_positions:       
-            self.Xaxis.set(positions[0]/1000)
-            self.Yaxis.set(positions[1]/1000)
-
-        self.last_positions = positions
-        Interface._scale_job = self.after(500, self.set_scale)
     
     def save_positions(self,parameter_subset): 
         self.parameters.update_start(self.microscope.positions[0],self.microscope.positions[1], self.microscope.positions[2],parameter_subset)
@@ -123,7 +115,7 @@ class Interface:
     
     def show_record_label(self):
         if Interface._video_timer:
-            self.RecordingLabel = Label(self, fg = "red4", font=("Arial", 25), text = "◉")
+            self.RecordingLabel = CTkLabel(self, font=("Arial", 25), text = "◉")
             self.RecordingLabel.place(x=200, y=520)
             Interface._blink = self.after(1000, self.hide_record_label)
     
@@ -173,29 +165,70 @@ class Interface:
     ###Generic buttons
 
     def back_to_main_button(self, position=[10,450]):
-        Main = Button(self, fg='Red', text="Main", command=self.back_to_main)
+        Main = CTkButton(self, width=80, text="Main", fg_color = "firebrick", command=self.back_to_main, )
         Main.place(x=position[0],y=position[1])
     
-    def coordinate_place(self, x_p=10, y_p=500):
-        self.Coordinates = Label(self, text="test")
-        self.Coordinates.place(x=x_p, y=y_p)
+    def coordinate_place(self, x_p=0.5, y_p=500):
+        self.Coordinates = CTkLabel(self, text="test", font=("arial", 16))
+        self.Coordinates.place(relx=x_p, y=y_p, anchor=N)
         self.update_coordinates_label()
     
     def snap_button(self, position=(10,350) , full_res_button = True):
         if not Interface._video_timer:
-            Snap = Button(self, text="Snap!", command=self.snap_timestamp)
-            SnapFR = Button(self, text="Full Res Picture", command=lambda: self.snap_timestamp(full_res=True))
+            Snap = CTkButton(self, width=80,text="Snap!", command=self.snap_timestamp)
+            SnapFR = CTkButton(self,width=80, text="Full Res Picture", command=lambda: self.snap_timestamp(full_res=True))
             Snap.place(x=position[0], y=position[1])
-            SnapFR.place(x=position[0] + 70 , y=position[1])
+            SnapFR.place(x=position[0] + 100 , y=position[1])
         else:
-            Snap = Button(self, text="Snap!", fg="Red")
-            SnapFR = Button(self, text="Full Res Picture", fg="Red")
+            Snap = CTkButton(self,width=80, text="Snap!", state="disabled")
+            SnapFR = CTkButton(self,width=80, text="Full Res Picture", state="disabled")
             Snap.place(x=position[0], y=position[1])
-            SnapFR.place(x=position[0] + 70 , y=position[1])    
+            SnapFR.place(x=position[0] + 100 , y=position[1])    
         
     def back_button(self, position=(10,450)):
-        Back =  Button(self, text="Back", command=self.close)
+        Back =  CTkButton(self,width=80,  text="Back", fg_color = "firebrick", command=self.close)
         Back.place(x=position[0], y=position[1])
+    #### XY slider ###
+
+    def XYsliders(self, position=(60,20), l=220): #### Place the two navigation sliders
+        self.Xvar = IntVar()
+        self.Yvar = IntVar()
+        Xaxis = CTkSlider(self, from_=0, to=Xmaxrange/1000, height=l, width=60, progress_color="transparent", orientation="vertical", variable=self.Xvar)  
+        Yaxis = CTkSlider(self, from_=0, to=Ymaxrange/1000, height=l, width=60, progress_color="transparent", orientation="vertical", variable=self.Yvar)
+        self.Xlabel = CTkLabel(self, text="##", font=("arial", 22))
+        self.Ylabel = CTkLabel(self, text="##", font=("arial", 22))
+
+        GoX =  CTkButton(self, text="Go X", width=80, height=40, command=lambda: self.microscope.move_single_axis(1, self.Xvar.get()*1000))
+        GoY =  CTkButton(self, text="Go Y", width=80, height=40, command=lambda: self.microscope.move_single_axis(2, self.Yvar.get()*1000))
+    
+        Xaxis.place(x=position[0], y=position[1], anchor=N)
+        Yaxis.place(x=position[0]+120, y=position[1], anchor=N)
+
+        GoX.place(x=position[0], y=position[1]+l+15, anchor=N)       
+        GoY.place(x=position[0]+120, y=position[1]+l+15, anchor=N)
+        
+        self.Xlabel.place(x=position[0], y=position[1], anchor=N)       
+        self.Ylabel.place(x=position[0]+120, y=position[1], anchor=N)
+
+        self.last_positions = None ##For scale updates
+        self.set_scale(position, l) ##Continuously update scales, if positions are changed
+    
+    def set_scale(self, position=(60,20), l=220):
+        positions = self.microscope.positions
+        Xvar = self.Xvar.get()
+        Yvar = self.Yvar.get()
+        Xlabel_scale = (position[1]+(l-30)-Xvar*((l-60)/(Xmaxrange/1000)))
+        Ylabel_scale = (position[1]+(l-30)-Yvar*((l-60)/(Ymaxrange/1000)))
+        if positions != self.last_positions:  #update the scale only if microscope is moving
+            self.Xvar.set(positions[0]/1000)
+            self.Yvar.set(positions[1]/1000)
+        self.Xlabel.configure(text = Xvar)
+        self.Ylabel.configure(text = Yvar)
+        self.Xlabel.place(x=position[0]+45, y=Xlabel_scale, anchor=CENTER)       
+        self.Ylabel.place(x=position[0]+75, y=Ylabel_scale, anchor=CENTER)
+        self.last_positions = positions
+        Interface._scale_job = self.after(100,lambda: self.set_scale(position, l))
+
 
     
 

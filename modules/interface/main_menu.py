@@ -1,4 +1,4 @@
-from tkinter import Frame, Button, BOTH, Label
+from customtkinter import CTkFrame, CTkButton, CTkLabel, CENTER, BOTH
 from .super import Interface
 from .freemove import FreeMovementInterface 
 from .grid_navigation import MainGridInterface 
@@ -10,7 +10,7 @@ from .timelapse import Time_lapse_window
 from ..microscope_param import Xmaxrange, Ymaxrange
 
 
-class MainMenu(Interface, Frame):
+class MainMenu(Interface, CTkFrame):
 
     def __init__(self, Tk_root, microscope, grid, camera, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera, parameters=parameters)
@@ -39,32 +39,32 @@ class MainMenu(Interface, Frame):
         self.show_record_label()
 
         ######## Maine Menu buttons
-        self.menu_button_w = 20
-        self.menu_button_x = 20
-        FreeMoveInterface = Button(self, width=self.menu_button_w, text="Free Navigation", command=lambda: FreeMovementInterface.open(self))         
-        GridNavigation = Button(self, width=self.menu_button_w, text="Grid Navigation", command=lambda: MainGridInterface.open(self))
-        GridRec = Button(self, width=self.menu_button_w, text="Grid Record", command=lambda: GridRecord.open(self))
-        VideoRecord = Button(self, width=self.menu_button_w, text="Video", command=lambda: Video_record_window.open(self))
-        TimeLapse = Button(self, width=self.menu_button_w, text="Time lapse", command=lambda: Time_lapse_window.open(self))    
+        self.menu_button_w = 200
+        self.menu_button_x = 0.5
+        FreeMoveInterface = CTkButton(self, width=self.menu_button_w, text="Free Navigation", command=lambda: FreeMovementInterface.open(self))         
+        GridNavigation = CTkButton(self, width=self.menu_button_w, text="Grid Navigation", command=lambda: MainGridInterface.open(self))
+        GridRec = CTkButton(self, width=self.menu_button_w, text="Grid Record", command=lambda: GridRecord.open(self))
+        VideoRecord = CTkButton(self, width=self.menu_button_w, text="Video", command=lambda: Video_record_window.open(self))
+        TimeLapse = CTkButton(self, width=self.menu_button_w, text="Time lapse", command=lambda: Time_lapse_window.open(self))    
 
-        Current_parameters_set = Label(self, text = f"Selected parameter set: \n {self.parameters.selected}")
-        GridParameters = Button(self, width=self.menu_button_w, text="Change Parameters", command=lambda:  Plate_parameters.open(self))
+        Current_parameters_set = CTkLabel(self, text = f"Selected parameter set: \n {self.parameters.selected}")
+        GridParameters = CTkButton(self, width=self.menu_button_w, text="Change Parameters", command=lambda:  Plate_parameters.open(self))
 
-        FreeMoveInterface.place(x=self.menu_button_x, y=50)
-        GridNavigation.place(x=self.menu_button_x, y=100)
-        GridRec.place(x=self.menu_button_x, y=150)
-        VideoRecord.place(x=self.menu_button_x, y=200)
-        TimeLapse.place(x=self.menu_button_x, y=250)
-
-
-        Current_parameters_set.place(x=self.menu_button_x+15, y=300)
-        GridParameters.place(x=self.menu_button_x, y=350)
+        FreeMoveInterface.place(relx=self.menu_button_x, y=50, anchor=CENTER)
+        GridNavigation.place(relx=self.menu_button_x, y=100, anchor=CENTER)
+        GridRec.place(relx=self.menu_button_x, y=150, anchor=CENTER)
+        VideoRecord.place(relx=self.menu_button_x, y=200, anchor=CENTER)
+        TimeLapse.place(relx=self.menu_button_x, y=250, anchor=CENTER)
 
 
-        Quit = Button(self, width=self.menu_button_w, fg='Red', text="Quit", command=self.exit)
-        Quit.place(x=self.menu_button_x, y=450)
-        ParknQuit = Button(self, width=self.menu_button_w, fg='Red', text="Park and Quit", command=self.parknquit)
-        ParknQuit.place(x=self.menu_button_x, y=500)
+        Current_parameters_set.place(relx=self.menu_button_x, y=300, anchor=CENTER)
+        GridParameters.place(relx=self.menu_button_x, y=350, anchor=CENTER)
+
+
+        Quit = CTkButton(self, width=self.menu_button_w, text="Quit", command=self.exit)
+        Quit.place(relx=self.menu_button_x, y=450, anchor=CENTER)
+        ParknQuit = CTkButton(self, width=self.menu_button_w, text="Park and Quit", command=self.parknquit)
+        ParknQuit.place(relx=self.menu_button_x, y=500, anchor=CENTER)
     
     def objective_change(self):
         self.microscope.go_absolute([Xmaxrange, Ymaxrange, 0])

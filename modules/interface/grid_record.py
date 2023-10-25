@@ -1,11 +1,13 @@
 from tkinter import Frame, Button, BOTH, Label, StringVar, OptionMenu, Toplevel
+from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N, StringVar, CTkToplevel
+
 from .super import Interface
 from ..parametersIO import create_folder
 import time
 
 plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
 
-class GridRecord(Interface, Frame):
+class GridRecord(Interface, CTkFrame):
 
     def __init__(self, Tk_root, microscope, grid, camera, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera, parameters=parameters)
@@ -49,46 +51,46 @@ class GridRecord(Interface, Frame):
         self.finishline.set(self.parameters["finish_well"][0])
         self.grid_subwells.set(self.parameters["grid_subwells"])
 
-        column_list = range(1, self.parameters["columns"]+1)
+        column_list = [str(x) for x in range(1, self.parameters["columns"]+1) ]
         line_list = []
         for i in range(0, self.parameters["lines"]):
             line_list.append(self.grid.line_namespace[i])
-        SubwellsList = range(1, self.grid.nb_of_subwells+1)
+        SubwellsList = [str(x) for x in range(1, self.grid.nb_of_subwells+1)]
 
-        RepeatLabel = Label(self, text="Repeat")
-        RepeatMenu = OptionMenu(self, self.repeat, *[1,2,5,10,20,30,40,60,80,100,140,180,360])
+        RepeatLabel = CTkLabel(self, text="Repeat")
+        RepeatMenu = CTkOptionMenu(self, width = 80, variable=self.repeat, values=["1","2","5","10","20","30","40","60","80","100","140","180","360"])
 
-        DelayLabel = Label(self, text="Delay Sec")
-        DelayMenu = OptionMenu(self, self.delay, *[0,1,2,5,10,15,30,60,120,600])
+        DelayLabel = CTkLabel(self, text="Delay Sec")
+        DelayMenu = CTkOptionMenu(self, width = 80,variable=self.delay, values=["0","1","2","5","10","15","30","60","120","600"])
 
-        StartWellLabell = Label(self, text ="Start Well")
-        StartColumnMenu = OptionMenu(self, self.startcolumn, *column_list)
-        StartLineMenu = OptionMenu(self, self.startline, *line_list)
+        StartWellLabell = CTkLabel(self, text ="Start Well")
+        StartColumnMenu = CTkOptionMenu(self, width = 80, variable=self.startcolumn, values=column_list)
+        StartLineMenu = CTkOptionMenu(self, width = 80, variable=self.startline, values=line_list)
 
-        FinishWellLabell = Label(self, text ="Finish Well")
-        FinishColumnMenu = OptionMenu(self, self.finishcolumn, *column_list)
-        FinishLineMenu = OptionMenu(self, self.finishline, *line_list)
+        FinishWellLabell = CTkLabel(self, text ="Finish Well")
+        FinishColumnMenu = CTkOptionMenu(self, width = 80, variable=self.finishcolumn, values=column_list)
+        FinishLineMenu = CTkOptionMenu(self, width = 80, variable=self.finishline, values=line_list)
 
-        SubwellLabel = Label(self, text ="N# of subwell")
-        SubwellMenu = OptionMenu(self, self.grid_subwells, *SubwellsList)
+        SubwellLabel = CTkLabel(self, text ="N# of subwell")
+        SubwellMenu = CTkOptionMenu(self,width = 80, variable=self.grid_subwells, values=SubwellsList)
 
-        Save = Button(self, text="Save", command=self.save_grid_parameters)
-        Start = Button(self, text="Image grid", command=self.start_grid)
+        Save = CTkButton(self, text="Save", command=self.save_grid_parameters)
+        Start = CTkButton(self, text="Image grid", command=self.start_grid)
 
         self.back_to_main_button()
 
         RepeatLabel.place(x=10,y=10)
         RepeatMenu.place(x=10,y=30)
 
-        DelayLabel.place(x=80,y=10)
-        DelayMenu.place(x=80,y=30)
+        DelayLabel.place(x=100,y=10)
+        DelayMenu.place(x=100,y=30)
 
         StartWellLabell.place(x=10, y =80)
-        StartColumnMenu.place(x=80, y =100)
+        StartColumnMenu.place(x=100, y =100)
         StartLineMenu.place(x=10, y=100)
 
         FinishWellLabell.place(x=10, y =140)
-        FinishColumnMenu.place(x=80, y =160)
+        FinishColumnMenu.place(x=100, y =160)
         FinishLineMenu.place(x=10, y=160)
 
         SubwellLabel.place(x=10, y =200)
@@ -127,7 +129,7 @@ class GridRecord(Interface, Frame):
         repeat = int(self.repeat.get())
         
         #make an abort button
-        popup = Toplevel()
+        popup = CTkToplevel()
         abort = Stop_popup(popup)
 
         current_time = time.localtime()        
@@ -175,11 +177,11 @@ class GridRecord(Interface, Frame):
     
 
 
-class Stop_popup(Frame): #widget to fill popup window, show a stop button and a modifiable label
+class Stop_popup(CTkFrame): #widget to fill popup window, show a stop button and a modifiable label
 
     stop = False
     def __init__(self, Tk_window):
-        Frame.__init__(self, Tk_window)                 
+        CTkFrame.__init__(self, Tk_window)                 
         self.Tk_window = Tk_window
         self.init_window()
 
@@ -191,9 +193,9 @@ class Stop_popup(Frame): #widget to fill popup window, show a stop button and a 
         self.Tk_window.geometry("220x540+800+35")      
         self.Tk_window.title("Stop") 
         self.pack(fill=BOTH, expand=1)
-        Stop = Button(self, fg='Red', text="Stop", command=self.stop_switch)
+        Stop = CTkButton(self, fg='Red', text="Stop", command=self.stop_switch)
 
-        self.well_info = Label(self, text="## - #")
+        self.well_info = CTkLabel(self, text="## - #")
 
         self.well_info.place(x=75, y=40)
         Stop.place(x=75,y=80)

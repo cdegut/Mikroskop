@@ -1,11 +1,12 @@
 from .super import Interface
-from tkinter import Frame, Button, BOTH, Label, StringVar, OptionMenu
+from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N, StringVar
+
 from ..cameracontrol3 import start_recording
 from time import time
 from .popup import led_focus_zoom_buttons
 
 
-class Video_record_window(Interface, Frame):
+class Video_record_window(Interface, CTkFrame):
         
     def __init__(self, Tk_root, microscope, camera, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, camera=camera, parameters=parameters)
@@ -39,22 +40,22 @@ class Video_record_window(Interface, Frame):
         led_focus_zoom_buttons(self)
 
         
-        self.timer = Label(self, text="0 min 0 sec")
-        QualityLabel = Label(self, text="Video Quality:")
-        QualityMenu = OptionMenu(self, self.quality, *[1600,1200,720,480])        
+        self.timer = CTkLabel(self, text="0 min 0 sec")
+        QualityLabel = CTkLabel(self, text="Video Quality:")
+        self.QualityMenu = CTkOptionMenu(self, values=["1600","1200","720","480"], variable=self.quality)        
      
         self.record_button_place((60,50))
         self.timer.place(x=80, y=100)
         QualityLabel.place(x=10, y=150)      
-        QualityMenu.place(x=20, y=170)
+        self.QualityMenu.place(x=20, y=180)
 
         self.show_record_label()
         self.timer_update()
         self.snap_button()
         
     def record_button_place(self, rec_position):
-        self.Rec = Button(self, text="Start Recording", command=lambda: self.start_recording_action(rec_position))
-        self.Stop = Button(self, fg='Red', text="Stop Recording", command=lambda: self.stop_recording_action(rec_position))
+        self.Rec = CTkButton(self, text="Start Recording", command=lambda: self.start_recording_action(rec_position))
+        self.Stop = CTkButton(self, fg_color='Red', text="Stop Recording", command=lambda: self.stop_recording_action(rec_position))
 
         if not self.recorder:
             self.Rec.place(x=rec_position[0], y=rec_position[1])
@@ -108,29 +109,31 @@ class VideoTimer(): ## callable timer for measuring video lengh
         self.text_output = f"{minutes} min {secondes} sec"
     
 
+
 #main loop
 if __name__ == "__main__": 
-    from ..microscope import Microscope
-    from ..position_grid import PositionsGrid
-    import picamera
-    from ..microscope_param import *
-    from ..cameracontrol import previewPiCam
-    from tkinter import Tk
-
+    from modules.cameracontrol3 import Microscope_camera
+    from modules.microscope import Microscope
+    from modules.position_grid import PositionsGrid
+    from modules.physical_controller import encoder_read, controller_startup
+    from modules.interface.main_menu import *
+    from modules.microscope_param import *
+    from modules.parametersIO import ParametersSets, create_folder
+    import customtkinter
     ### Object for microscope to run
-    microscope = Microscope(addr, ready_pin)
-    grid = PositionsGrid(microscope)
-    camera = picamera.PiCamera()
 
     #Tkinter object
-    Tk_root = Tk()
+    parameters = ParametersSets()
+    microscope = Microscope(addr, ready_pin, parameters)
+    grid = PositionsGrid(microscope, parameters)
+    micro_cam = None
+
+    #Tkinter object
+    customtkinter.set_appearance_mode("dark")
+    Tk_root = customtkinter.CTk()
     Tk_root.geometry("230x560+800+35")   
     
     ### Don't display border if on the RPi display
-    Interface._video_record = Video_record_window(Tk_root, last_window=None, microscope=microscope, grid=grid, camera=camera)
-
-    #start picamPreview
-    previewPiCam(camera)
+    Interface._video_record = Video_record_window(Tk_root, microscope=microscope, camera=None, parameters=parameters)
 
     Tk_root.mainloop()
-

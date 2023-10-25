@@ -1,10 +1,10 @@
-from tkinter import Frame, Button, BOTH, Label
+from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N
 from .super import Interface
 from .popup import led_focus_zoom_buttons
 
 plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
 
-class MainGridInterface(Interface, Frame): #main GUI window
+class MainGridInterface(Interface, CTkFrame): #main GUI window
     
     def __init__(self, Tk_root, microscope, grid, camera, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera, parameters=parameters)
@@ -37,8 +37,8 @@ class MainGridInterface(Interface, Frame): #main GUI window
         led_focus_zoom_buttons(self)
 
         ##Navigation pads as function
-        self.grid_position_pad((100,60))
-        self.grid_navigation_pad((100,220))
+        self.grid_position_pad((20,20))
+        self.grid_navigation_pad((20,160))
         self.coordinate_place()
 
         # creating buttons instances          
@@ -48,32 +48,37 @@ class MainGridInterface(Interface, Frame): #main GUI window
 
     
     def grid_position_pad(self, pad_position):
-        A1 = Button(self, width=3, heigh=2,  fg='Green', text="A1", command=lambda: self.grid.go("A1"))
-        A12 = Button(self, width=3, heigh=2, text="A12", command=lambda: self.grid.go("A12"))
-        H1 = Button(self, width=3, heigh=2, text="H1", command=lambda: self.grid.go("H1"))
-        H12 = Button(self, width=3, heigh=2, text="H12", command=lambda: self.grid.go("H12"))
-        C6 = Button(self, width=3, heigh=2, text="C6", command=lambda: self.grid.go("C6"))
+        w = 65
+        h = 30
+        A1 = CTkButton(self, width=w, fg_color='Green', text="A1", command=lambda: self.grid.go("A1"))
+        A12 = CTkButton(self, width=w, text="A12", command=lambda: self.grid.go("A12"))
+        H1 = CTkButton(self, width=w, text="H1", command=lambda: self.grid.go("H1"))
+        H12 = CTkButton(self, width=w, text="H12", command=lambda: self.grid.go("H12"))
+        C6 = CTkButton(self, width=w, text="C6", command=lambda: self.grid.go("C6"))
         ### Pad as relative position to pad_position       
-        A1.place(x=pad_position[0]-90, y=pad_position[1]-50)
-        A12.place(x=pad_position[0]+70, y=pad_position[1]-50)
-        H1.place(x=pad_position[0]-90, y=pad_position[1])
-        H12.place(x=pad_position[0]+70, y=pad_position[1])
-        C6.place(x=pad_position[0]-10, y=pad_position[1]-25)
+        A1.place(x=pad_position[0], y=pad_position[1])
+        A12.place(x=pad_position[0]+w*2, y=pad_position[1])
+        C6.place(x=pad_position[0]+w, y=pad_position[1]+h)
+        H1.place(x=pad_position[0], y=pad_position[1]+h*2)
+        H12.place(x=pad_position[0]+w*2, y=pad_position[1]+h*2)
+
     
     def grid_navigation_pad(self, pad_position):
-        NextC = Button(self, text="Col +",  width=5, heigh=2, command=lambda: self.grid.go_next_well("column", 1))
-        NextL = Button(self, text="Line +", width=5, heigh=2, command=lambda:self.grid.go_next_well("line", 1))
-        PrevC = Button(self, text="Col -",  width=5, heigh=2, command=lambda: self.grid.go_next_well("column", -1))
-        PrevL = Button(self, text="Line -", width=5, heigh=2, command=lambda:self.grid.go_next_well("line", -1))
-        SubW = Button(self, text="Sub", command=lambda:self.grid.switch_subwell())
-        self.well_info = Label(self, text="## - #")
+        w = 65
+        h = 40
+        NextC = CTkButton(self, text="Col +",  width=w, command=lambda: self.grid.go_next_well("column", 1))
+        NextL = CTkButton(self, text="Line +", width=w, command=lambda:self.grid.go_next_well("line", 1))
+        PrevC = CTkButton(self, text="Col -",  width=w, command=lambda: self.grid.go_next_well("column", -1))
+        PrevL = CTkButton(self, text="Line -", width=w, command=lambda:self.grid.go_next_well("line", -1))
+        SubW = CTkButton(self, text="Sub", width=w, command=lambda:self.grid.switch_subwell())
+        self.well_info = CTkLabel(self, text="## - #", font=("arial", 15))
 
-        PrevC.place(x=pad_position[0]-90, y=pad_position[1])
-        NextC.place(x=pad_position[0]+60, y=pad_position[1])
-        NextL.place(x=pad_position[0]-15, y=pad_position[1]+50)
-        PrevL.place(x=pad_position[0]-15, y=pad_position[1]-50)
-        self.well_info.place(x=pad_position[0], y=pad_position[1]+10)
-        SubW.place(x=pad_position[0]+70, y=pad_position[1]+60)
+        PrevL.place(x=pad_position[0]+w, y=pad_position[1])
+        PrevC.place(x=pad_position[0], y=pad_position[1]+h)
+        NextC.place(x=pad_position[0]+w*2, y=pad_position[1]+h)
+        NextL.place(x=pad_position[0]+w, y=pad_position[1]+h*2)
+        self.well_info.place(x=pad_position[0]+w+w/2, y=pad_position[1]+h, anchor=N)
+        SubW.place(x=pad_position[0]+w*2, y=pad_position[1]+h*2)
 
 
     def go_start(self):
@@ -84,28 +89,30 @@ class MainGridInterface(Interface, Frame): #main GUI window
         self.microscope.set_led_state(led[1])
 
 
-#main loop for testing only
+#main loop
 if __name__ == "__main__": 
-    from ..microscope import Microscope
-    from ..position_grid import PositionsGrid
-    import picamera
-    from ..microscope_param import *
-    from ..cameracontrol import previewPiCam
-    from tkinter import Tk
-
+    from modules.cameracontrol3 import Microscope_camera
+    from modules.microscope import Microscope
+    from modules.position_grid import PositionsGrid
+    from modules.physical_controller import encoder_read, controller_startup
+    from modules.interface.main_menu import *
+    from modules.microscope_param import *
+    from modules.parametersIO import ParametersSets, create_folder
+    import customtkinter
     ### Object for microscope to run
-    microscope = Microscope(addr, ready_pin)
-    grid = PositionsGrid(microscope)
-    camera = picamera.PiCamera()
 
     #Tkinter object
-    Tk_root = Tk()
+    parameters = ParametersSets()
+    microscope = Microscope(addr, ready_pin, parameters)
+    grid = PositionsGrid(microscope, parameters)
+    micro_cam = None
+
+    #Tkinter object
+    customtkinter.set_appearance_mode("dark")
+    Tk_root = customtkinter.CTk()
     Tk_root.geometry("230x560+800+35")   
     
     ### Don't display border if on the RPi display
-    Interface._grid_main = MainGridInterface(Tk_root, last_window=None, microscope=microscope, grid=grid, camera=camera)
-
-    #start picamPreview
-    #previewPiCam(camera)
+    Interface._grid_main = MainGridInterface(Tk_root, microscope=microscope, grid=grid, camera=None, parameters=parameters)
 
     Tk_root.mainloop()

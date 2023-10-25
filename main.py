@@ -1,4 +1,3 @@
-import tkinter as tk
 from RPi import GPIO
 from os import environ
 
@@ -9,12 +8,13 @@ from modules.physical_controller import encoder_read, controller_startup
 from modules.interface.main_menu import *
 from modules.microscope_param import *
 from modules.parametersIO import ParametersSets, create_folder
+import customtkinter
 
 
 #main loop
 if __name__ == "__main__": 
 
-    
+
     encoder_X, encoder_Y, encoder_F = controller_startup()                
     ### Object for microscope to run
     parameters = ParametersSets()
@@ -23,7 +23,8 @@ if __name__ == "__main__":
     micro_cam = Microscope_camera()
 
     #Tkinter object
-    Tk_root = tk.Tk()
+    customtkinter.set_appearance_mode("dark")
+    Tk_root = customtkinter.CTk()
     Tk_root.geometry("230x560+800+35")   
     
     ### Don't display border if on the RPi display
@@ -35,8 +36,9 @@ if __name__ == "__main__":
 
     if display == ":0.0" or display == ":0": ## :0.0 in terminal and :0 without terminal
         micro_cam.initialise()   
-    else:
-        micro_cam.initialise(QT=True)   
+    #else:
+    #    micro_cam.initialise(QT=True)
+
 
     
     if microscope.positions[4] == 1:

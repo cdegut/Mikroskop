@@ -1,10 +1,9 @@
-from tkinter import Frame, Button, BOTH, Scale
+from customtkinter import CTkFrame, CTkButton, CTkSlider, BOTH, N, CENTER, IntVar, CTkLabel
 from .super import Interface
-from ..microscope_param import Xmaxrange, Ymaxrange
 from .popup import led_focus_zoom_buttons
 
 
-class FreeMovementInterface(Interface, Frame):
+class FreeMovementInterface(Interface, CTkFrame):
 
     def __init__(self, Tk_root, microscope, grid, camera, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera, parameters=parameters)
@@ -39,13 +38,12 @@ class FreeMovementInterface(Interface, Frame):
         self.XYsliders()
 
         ######### creating buttons instances      
-        Start = Button(self, fg='Green', text="Go Start", command=self.go_start)
-        XY_center = Button(self, fg='Green', text="CentXY", command=self.go_centerXY)
-        Save = Button(self, fg='Green', text="Save Start",command=lambda: self.save_positions(None))
+        Start = CTkButton(self, width=80, fg_color='Green', text="Go Start", command=self.go_start)
+        XY_center = CTkButton(self,width=80,  fg_color='Green', text="CentXY", command=self.go_centerXY)
+        Save = CTkButton(self,width=80,  fg_color='Green', text="Save Start",command=lambda: self.save_positions(None))
         
         self.snap_button()
-        
-        
+                
         ######## placing the elements
         ##Sliders
         Start.place(x=10,y=310)
@@ -54,21 +52,7 @@ class FreeMovementInterface(Interface, Frame):
         
         Save.place(x=80,y=450)
 
-    def XYsliders(self, position=(0,10), l=220): #### Place the two navigation sliders
-        GoX =  Button(self, width=5, height=2, text="Go X", command=lambda: self.microscope.move_single_axis(1, self.Xaxis.get()*1000 ))
-        GoY =  Button(self, width=5, height=2,  text="Go Y", command=lambda: self.microscope.move_single_axis(2, self.Yaxis.get()*1000 ))
-        self.Xaxis = Scale(self, from_=0, to=Xmaxrange/1000, length=l, width=60)  
-        self.Yaxis = Scale(self, from_=0, to=Ymaxrange/1000, length=l, width=60)
-    
-        self.Xaxis.place(x=position[0], y=position[1])
-        self.Yaxis.place(x=position[0]+115, y=position[1])
-        GoX.place(x=position[0]+ 15, y=position[1]+l+10)       
-        GoY.place(x=position[0]+140, y=position[1]+l+10)
-
-
-        self.last_positions = None ##For scale updates
-        self.set_scale() ##Continuously update scales, if positions are changed
-
+ 
     def go_start(self):
         start_position = self.parameters.get()["start"]
         led = self.parameters.get()["led"]
@@ -76,24 +60,31 @@ class FreeMovementInterface(Interface, Frame):
         self.microscope.set_ledpwr(led[0])
         self.microscope.set_led_state(led[1])
 
-#main loop for testing only
+#main loop
 if __name__ == "__main__": 
-    from ..microscope import Microscope
-    from ..position_grid import PositionsGrid
-    from ..microscope_param import *
-    from ..cameracontrol import previewPiCam
-    from tkinter import Tk
-
+    from modules.cameracontrol3 import Microscope_camera
+    from modules.microscope import Microscope
+    from modules.position_grid import PositionsGrid
+    from modules.physical_controller import encoder_read, controller_startup
+    from modules.interface.main_menu import *
+    from modules.microscope_param import *
+    from modules.parametersIO import ParametersSets, create_folder
+    import customtkinter
     ### Object for microscope to run
-    microscope = Microscope(addr, ready_pin)
-    grid = PositionsGrid(microscope)
-    #camera = picamera.PiCamera()
 
     #Tkinter object
-    Tk_root = Tk()
+    parameters = ParametersSets()
+    microscope = Microscope(addr, ready_pin, parameters)
+    grid = PositionsGrid(microscope, parameters)
+    micro_cam = None
+
+    #Tkinter object
+    customtkinter.set_appearance_mode("dark")
+    Tk_root = customtkinter.CTk()
     Tk_root.geometry("230x560+800+35")   
     
     ### Don't display border if on the RPi display
-    Interface._freemove_main = FreeMovementInterface(Tk_root, last_window=None, microscope=microscope, grid=grid)
+    Interface._freemove_main = FreeMovementInterface(Tk_root, microscope=microscope, grid=grid, camera=None, parameters=parameters)
 
     Tk_root.mainloop()
+
