@@ -168,7 +168,7 @@ class Microscope_camera(Picamera2):
             #self.controls.ColourGains = awbR_white,  awbB_white
             #camera.controls.Contrast = 10 
 
-    def curent_exposure(self):
+    def current_exposure(self):
         metadata = self.capture_metadata()
         return (metadata['ExposureTime'], metadata['AnalogueGain'])
 

@@ -125,7 +125,7 @@ def awb_preset(picam2, awb):
         #picam2.controls.ColourGains = awbR_white,  awbB_white
         #camera.controls.Contrast = 10 
 
-def curent_exposure(picam2):
+def current_exposure(picam2):
     metadata = picam2.capture_metadata()
     return (metadata['ExposureTime'], metadata['AnalogueGain'])
 

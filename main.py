@@ -36,8 +36,8 @@ if __name__ == "__main__":
 
     if display == ":0.0" or display == ":0": ## :0.0 in terminal and :0 without terminal
         micro_cam.initialise()   
-    #else:
-    #    micro_cam.initialise(QT=True)
+    else:
+        micro_cam.initialise(QT=True)
 
 
     

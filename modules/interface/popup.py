@@ -1,5 +1,5 @@
 from .super import Interface
-from customtkinter import CTkFrame, CTkButton, CTkLabel, CTkSlider, BOTH, HORIZONTAL, CENTER, N
+from customtkinter import CTkFrame, CTkButton, CTkLabel, CTkSlider, BOTH, HORIZONTAL, N
 
 
 def led_focus_zoom_buttons(self, position=400):
@@ -61,14 +61,12 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
 
 
         self.Led_scale.set(self.microscope.positions[3])
-        current_exp, current_gain = self.camera.curent_exposure()
-        self.Exp_scale .set(current_exp)
-        self.Gain_scale.set(current_gain)
+        #current_exp, current_gain = self.camera.current_exposure()
+        #self.Exp_scale .set(current_exp)
+        #self.Gain_scale.set(current_gain)
 
-
+        self.set_exp_and_gain()
         self.set_led()
-        self.set_exp()
-        self.set_analog_gain()
         
         Save.place(x=20, y=490)
         self.back_button(position=(90,490))
@@ -124,31 +122,28 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
             self.microscope.set_ledpwr(pwr)
         Interface._job1 = self.after(100, self.set_led)
     
-    def set_exp(self): ## Read the scale and set the led at the proper power
+    def set_exp_and_gain(self): ## Read the scale and set the led at the proper power
         exp_scale = int(self.Exp_scale.get())
         self.Shutter_label.configure(text=f"Shutter speed {exp_scale}μs")
-        real_exp = self.camera.curent_exposure()[0]
-        if exp_scale != real_exp: 
+        current_exp, current_gain = self.camera.current_exposure()
+        if exp_scale != current_exp: 
             if self.auto_exp_value == "off":
                 self.camera.set_exposure( exp_scale)
             elif self.auto_exp_value == "auto":
-                if real_exp > 20000:
-                    real_exp = 20000
-                self.Exp_scale.set(real_exp)
+                if current_exp > 20000:
+                    current_exp = 20000
+                self.Exp_scale.set(current_exp)
         
-        Interface._job2 = self.after(100, self.set_exp)
-    
-    def set_analog_gain(self):
         gain_scale = int(self.Gain_scale.get())
         self.Gain_label.configure(text=f"Analogue Gain: {gain_scale}")
-        real_gain = self.camera.curent_exposure()[1]
-        if gain_scale != real_gain: 
+        current_gain = self.camera.current_exposure()[1]
+        if gain_scale != current_gain: 
             if self.auto_exp_value == "off":
-                self.camera.set_exposure( gain=gain_scale)
+                self.camera.set_exposure(gain=gain_scale)
             elif self.auto_exp_value == "auto":
-                self.Gain_scale.set(real_gain)
-        
-        Interface._job3 = self.after(100, self.set_analog_gain)
+                self.Gain_scale.set(current_gain)
+
+        Interface._job2 = self.after(200, self.set_exp_and_gain)
          
 
     def set_default(self): ## Read led power from Default parameter set

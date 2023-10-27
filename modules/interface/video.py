@@ -103,9 +103,9 @@ class VideoTimer(): ## callable timer for measuring video lengh
         self.start_time = int(time())
     
     def update_time(self):
-        curent_time = int(time()) - self.start_time
-        minutes = int(curent_time / 60)
-        secondes = curent_time - (minutes * 60)
+        current_time = int(time()) - self.start_time
+        minutes = int(current_time / 60)
+        secondes = current_time - (minutes * 60)
         self.text_output = f"{minutes} min {secondes} sec"
     
 

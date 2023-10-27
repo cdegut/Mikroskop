@@ -1,4 +1,4 @@
-from customtkinter import CTkFrame, CTkButton, CTkSlider, BOTH, N, CENTER, IntVar, CTkLabel
+from customtkinter import CTkFrame, CTkButton, BOTH
 from .super import Interface
 from .popup import led_focus_zoom_buttons
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     parameters = ParametersSets()
     microscope = Microscope(addr, ready_pin, parameters)
     grid = PositionsGrid(microscope, parameters)
-    micro_cam = None
+    micro_cam = Microscope_camera()
 
     #Tkinter object
     customtkinter.set_appearance_mode("dark")
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     Tk_root.geometry("230x560+800+35")   
     
     ### Don't display border if on the RPi display
-    Interface._freemove_main = FreeMovementInterface(Tk_root, microscope=microscope, grid=grid, camera=None, parameters=parameters)
+    Interface._freemove_main = FreeMovementInterface(Tk_root, microscope=microscope, grid=grid, camera=micro_cam, parameters=parameters)
 
     Tk_root.mainloop()
 

@@ -62,7 +62,7 @@ class Interface:
         Interface._blink = None
 
 
-    ######## update the label to corespond to the actual curent position of the microscope
+    ######## update the label to corespond to the actual current position of the microscope
     def update_coordinates_label(self):
         if self.microscope.is_ready():
             self.microscope.positions = self.microscope.checked_read_positions()
