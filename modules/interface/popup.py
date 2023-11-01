@@ -61,15 +61,12 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
 
 
         self.Led_scale.set(self.microscope.positions[3])
-        #current_exp, current_gain = self.camera.current_exposure()
-        #self.Exp_scale .set(current_exp)
-        #self.Gain_scale.set(current_gain)
 
         self.set_exp_and_gain()
         self.set_led()
         
-        Save.place(x=20, y=490)
-        self.back_button(position=(90,490))
+        Save.place(x=110, y=490)
+        self.back_button(position=(10,490))
 
         if self.auto_exp_value == "off":
             self.AutoExp.configure(text="AutoExp OFF")
@@ -236,13 +233,18 @@ class Zoom_popup(Interface, CTkFrame): #widget to fill popup window, show an sto
 
         if not Interface._video_timer: ## Deactivate zoom button if filming
             zoom_buttons = [(" 1x", 1),("1.5x", 0.75),(" 2x", 0.5),(" 4x", 0.25),(" 8x", 0.125)]
-            y_p = 30
-            for button in zoom_buttons:
-                button_text = button[0]
-                value = button[1]
-                b = CTkButton(self, text=button_text, width=80, height=40, command=lambda: self.camera.change_zoom(value))
-                b.place(relx=0.5, y=y_p, anchor=N)
-                y_p = y_p+60
+            y_p = 60
+            Zoom_1 = CTkButton(self, text=zoom_buttons[0][0], width=80, height=40, command=lambda: self.camera.change_zoom(zoom_buttons[0][1]))
+            Zoom_1.place(relx=0.5, y=30, anchor=N)
+            Zoom_2 = CTkButton(self, text=zoom_buttons[1][0], width=80, height=40, command=lambda: self.camera.change_zoom(zoom_buttons[1][1]))
+            Zoom_2.place(relx=0.5, y=30+y_p, anchor=N)
+            Zoom_3 = CTkButton(self, text=zoom_buttons[2][0], width=80, height=40, command=lambda: self.camera.change_zoom(zoom_buttons[2][1]))
+            Zoom_3.place(relx=0.5, y=30+y_p*2, anchor=N)
+            Zoom_4 = CTkButton(self, text=zoom_buttons[3][0], width=80, height=40, command=lambda: self.camera.change_zoom(zoom_buttons[3][1]))
+            Zoom_4.place(relx=0.5, y=30+y_p*3, anchor=N)
+            Zoom_5 = CTkButton(self, text=zoom_buttons[4][0], width=80, height=40, command=lambda: self.camera.change_zoom(zoom_buttons[4][1]))
+            Zoom_5.place(relx=0.5, y=30+y_p*4, anchor=N)
+
         else:
             warning = CTkLabel(self, text="Can't change zoom \n whilerecording video")
             warning.place(x=10, y=30)

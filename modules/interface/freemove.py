@@ -50,7 +50,7 @@ class FreeMovementInterface(Interface, CTkFrame):
         XY_center.place(x=110, y=310)
         #Park.place(x=140,y=300)
         
-        Save.place(x=80,y=450)
+        Save.place(x=110,y=450)
 
  
     def go_start(self):

@@ -61,10 +61,9 @@ class Time_lapse_window(Interface, CTkFrame):
             self.menu(x_p=20, y_p=120)
             led_focus_zoom_buttons(self,position=300)
         else:
-            self.Stop.place(x=rec_position[0], y=rec_position[1])
+            self.Stop.place(relx=rec_position[0], y=rec_position[1])
             self.FrameLabel = CTkLabel(self, text=f"Frame Number: {self.frame_index + 1} \nof total: {self.max_frame }")
-            self.FrameLabel.place(x=rec_position[0], y=rec_position[1]+40)
-
+            self.FrameLabel.place(relx=rec_position[0], y=rec_position[1]+40)
 
     def start_time_lapse(self):
         data_dir = self.parameters.get()["data_dir"]
@@ -74,14 +73,14 @@ class Time_lapse_window(Interface, CTkFrame):
         self.max_frame = int(60 / self.timer *  int(self.TotalTimeMenu.get()))
         date = self.timestamp()
         create_folder(f"{data_dir}time-lapse/")
-        #full_data_path = f"{data_dir}time-lapse/{date}/"
-        self.full_data_path = f"{data_dir}time-lapse/"
+        self.full_data_path = f"{data_dir}time-lapse/{date}/"
+        #self.full_data_path = f"{data_dir}time-lapse/"
         create_folder(self.full_data_path)
         self.camera.switch_mode_keep_zoom("full_res")
         self.start_timer = time()
         self.camera.auto_exp_enable(False)
 
-        self.camera.capture_with_flash("0", self.full_data_path, self.microscope, self.led, self.ledpwr )
+        self.camera.capture_with_flash("0".zfill(len(str(self.max_frame))), self.full_data_path, self.microscope, self.led, self.ledpwr )
         
         self.frame_index = 1
         self.is_recording = True
@@ -96,7 +95,8 @@ class Time_lapse_window(Interface, CTkFrame):
             if (time() - self.start_timer) > self.timer:
                 self.start_timer = time()
                 
-                self.camera.capture_with_flash(self.frame_index, self.full_data_path, self.microscope, self.led, self.ledpwr )
+                pic_name = str(self.frame_index).zfill(len(str(self.max_frame)))
+                self.camera.capture_with_flash(pic_name, self.full_data_path, self.microscope, self.led, self.ledpwr )
                 
                 self.FrameLabel.configure(text=f"Frame Number: {self.frame_index + 1} \nof total: {self.max_frame}")
                 self.frame_index += 1
@@ -105,7 +105,6 @@ class Time_lapse_window(Interface, CTkFrame):
                     self.stop_time_lapse()
         
             Interface._timelapse_job = self.after(100, self.run_time_lapse)
-
     
     def stop_time_lapse(self):
         self.is_recording = False
@@ -121,7 +120,6 @@ if __name__ == "__main__":
     from modules.cameracontrol3 import Microscope_camera
     from modules.microscope import Microscope
     from modules.position_grid import PositionsGrid
-    from modules.physical_controller import encoder_read, controller_startup
     from modules.interface.main_menu import *
     from modules.microscope_param import *
     from modules.parametersIO import ParametersSets, create_folder
