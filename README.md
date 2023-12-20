@@ -18,3 +18,18 @@ pip install --upgrade pip setuptools wheel smbus2 customtkinter packaging opencv
 
 # Misc
 Strongly suggest to increase the size of the Swap file
+
+```
+sudo dphys-swapfile swapoff
+sudo nano /etc/dphys-swapfile
+```
+change:
+CONF_SWAPSIZE=100
+to
+```
+CONF_SWAPSIZE=2048
+```
+```
+sudo dphys-swapfile setup
+sudo dphys-swapfile swapon
+```
