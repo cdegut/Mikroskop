@@ -1,6 +1,8 @@
 # microcontrol
 Software for the microscope
-Works on raspberypi os bulseye
+Works on raspberypi os bookworm,
+As of January 2024, there is a bug that provoke display crash if using wayland, 
+Need to back to X11 using raspi-config
 
 # Raspbery pi config in /boot/config.txt
 ```
