@@ -24,7 +24,9 @@ sudo dphys-swapfile swapoff
 sudo nano /etc/dphys-swapfile
 ```
 change:
+```
 CONF_SWAPSIZE=100
+```
 to
 ```
 CONF_SWAPSIZE=2048
