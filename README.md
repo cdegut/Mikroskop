@@ -8,15 +8,12 @@ Works on raspberypi os bulseye
 dtparam=i2c_arm=on
 # Clock stretching by slowing down to 10KHz
 dtparam=i2c_arm_baudrate=10000
-gpu_mem=256
 ```
 
 # Package needed
 upgrade pip and install the needed packages:
 ```
-pip install --upgrade pip setuptools wheel
-pip install smbus2
-pip install opencv-python==4.5.3.56
+pip install --upgrade pip setuptools wheel smbus2 customtkinter packaging opencv-python 
 ```
 
 # Misc
