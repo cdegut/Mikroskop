@@ -13,7 +13,7 @@ dtparam=i2c_arm_baudrate=10000
 # Package needed
 upgrade pip and install the needed packages:
 ```
-pip install --upgrade pip setuptools wheel smbus2 customtkinter packaging opencv-python 
+pip install --upgrade pip setuptools wheel smbus2 customtkinter packaging opencv-python --break-system-packages
 ```
 
 # Misc
