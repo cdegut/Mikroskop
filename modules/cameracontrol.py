@@ -1,109 +1,220 @@
-'''
-Deprecated file, using the old Picamera instead of picamera 2
-'''
+from picamera2 import Picamera2,Preview
 from .parametersIO import create_folder
-from time import sleep
 from threading import Thread, Event
 from .microscope_param import awbR_fluo, awbB_fluo, awbR_white, awbB_white
-#import picamera
-import picamera.array
-import numpy as np
-from PIL import Image
-import io
-
-
+from libcamera import Transform
+from time import sleep
 camera_full_resolution = (4056,3040)
-camera_max_resolution = (3000, 2248)
 h264_max_resolution = (1664,1248)
 
-
-def previewPiCam(camera): #show preview directly as screen overlay
-    camera.preview_fullscreen=False
-    camera.preview_window=(0,25, 800, 625)
-    camera.resolution=(camera_max_resolution)
-    camera.video_stabilization=True
-    camera.iso = 200
-    camera.brightness = 50
-    camera.exposure_compensation = 0
-    camera.start_preview()
-    camera.vflip = True
-    camera.hflip = True
-
-
-def change_zoom(camera, value):
-    ##Centered zoom
-    position_scale = (1 - value)/2
-
-    ###Scale the resolution according to the zoom
-    new_resolution = (int(value*camera_full_resolution[0]),int(value*camera_full_resolution[1]))
-
-    camera.resolution=(new_resolution)
-    camera.zoom=(position_scale,position_scale, value, value)
-
-
-def save_image(camera, picture_name, data_dir):
-    create_folder(data_dir + "img/")
-
-    full_data_name = data_dir + "img/"  + picture_name 
-    save = Thread(target = save_img_thread, args=(camera, full_data_name))
-    save.start()
-
-def awb_preset(camera, awb):
-    if awb == "Green Fluo":
-        camera.awb_mode = 'off'
-        camera.awb_gains = (awbR_fluo, awbB_fluo)
-        camera.contrast = 10
-    if awb == "auto":
-        camera.awb_mode = "auto"
-    if awb == "white":
-        camera.awb_mode = 'off'
-        camera.awb_gains = (awbR_white, awbB_white)
-        camera.contrast = 10 
-
-def save_img_thread(camera, name):
-
-    ## get the size of the image rounded to 32x16
-    image_w = camera.resolution[0]
-    if image_w%32 != 0:
-        image_w = image_w + 32 - image_w%32
-    image_h = camera.resolution[1]
-    if image_h%16 != 0:
-        image_h = image_h + 16 - image_h%16 
+class Microscope_camera(Picamera2):
+    def __init__(self):
+        Picamera2.__init__(self)
+        self.crop_value = 1
+        self.EV_value = 0
+        self.exp = 500
+        self.gain = 1
     
-    stream = io.BytesIO()
-    #start = time.time()
-    camera.capture(stream, format='bgr')
-    # I have got this code from picamera array.py :                                                                                                                                         
-    # class PiRGBArray(PiArrayOutput):                                                                                                                                          
-    # Produces a 3-dimensional RGB array from an RGB capture.                                                                                                                   
-    # Round a (width, height) tuple up to the nearest multiple of 32 horizontally                                                                                               
-    # and 16 vertically (as this is what the Pi's camera module does for                                                                                                        
-    # unencoded output).                                                                                                                                                        
-    width, height = camera.resolution
-    fwidth = (width + 31) // 32 * 32
-    fheight = (height + 15) // 16 * 16
-    #if len(stream.getvalue()) != (fwidth * fheight * 3):
-    #    raise PiCameraValueError('Incorrect buffer length for resolution %dx%d' % (width, height))
-    image= np.frombuffer(stream.getvalue(), dtype=np.uint8).\
-        reshape((fheight, fwidth, 3))[:height, :width, :]
-    cv2.imwrite(f'{name}.png',image)
-   
-    ###
-    #output = picamera.array.PiRGBArray(camera)
-    #camera.capture(output, 'rgb')
-    #print(output)
-    #print('Captured %dx%d image' % (output.array.shape[1], output.array.shape[0]))
-    #output.array.
-    ###
-    #output = output.reshape((image_h, image_w, 3))
-    #image = Image.fromarray(output)
-    #image.save(name + ".png",)
-    #cv2.imwrite(name + ".png", output)
+    def initialise(self, QT=False):
+        self.general_config = self.create_preview_configuration(main={"size":  (1610, 1200)}, 
+                                                                lores={"size": (804, 600), "format": "YUV420"}, 
+                                                                raw={"size": (2028, 1520)}, display= "lores", buffer_count=1)
+        self.align_configuration(self.general_config)
+        self.full_res_config = self.create_still_configuration(main={"size":  (400,300)},
+                                                               lores={"size": (402, 300), "format": "YUV420"}, 
+                                                               raw={"size":  (4056,3040)}, display= "lores")
+        self.align_configuration(self.full_res_config)
+
+        self.make_running_config()
+
+        self.configure(self.running_config)
+        if not QT:
+            self.start_preview(Preview.QTGL, x=0 , y=25, width=800, height=625, transform=Transform(vflip=1))
+        else:
+            self.start_preview(Preview.QT, width=800, height=625, transform=Transform(vflip=1))
+
+        self.start()
+        self.title_fields = ['FocusFoM']
     
-    #image = np.empty((image_w * image_h * 3,), dtype=np.uint8)
-    #camera.capture(image, "bgr")
-    #image = image.reshape((image_h, image_w, 3))
-    #cv2.imwrite(name + ".png", image)
+    def make_running_config(self):
+        ## make a copy of general_config (copy and deep copy do not work well)
+        main = self.general_config["main"]
+        lores = self.general_config["lores"]
+        raw = self.general_config["raw"]
+        buffer =  self.general_config["buffer_count"]
+        print(f"main{main}, lores {lores}, raw {raw}, buffers {buffer}")
+        self.running_config = self.create_preview_configuration(main=main, lores=lores, raw=raw, display= "lores", buffer_count=buffer)
+    
+    def change_zoom(self, crop_factor, animation = True):
+        full_res = self.camera_properties['PixelArraySize']
+        
+        if not animation:
+            crop = [int(crop_factor*full_res[0]),int(crop_factor*full_res[1])]
+            offset = [(full_res[0] - crop[0]) // 2 , (full_res[1] - crop[1]) // 2 , ]
+            self.set_controls({"ScalerCrop": offset  + crop})
+            return offset, crop
+
+        zoom_step = (crop_factor - self.crop_value) / 20 
+
+        for i in range(22):
+            self.capture_metadata() #image sync
+            value = self.crop_value + ((i+1) * zoom_step)
+            crop = [int(value*full_res[0]),int(value*full_res[1])]
+            offset = [(full_res[0] - crop[0]) // 2 , (full_res[1] - crop[1]) // 2 , ]
+            self.set_controls({"ScalerCrop": offset  + crop})
+            
+        crop = [int(crop_factor*full_res[0]),int(crop_factor*full_res[1])]
+
+        
+        offset = [(full_res[0] - crop[0]) // 2 , (full_res[1] - crop[1]) // 2 , ]
+        self.set_controls({"ScalerCrop": offset  + crop})
+        self.crop_value = crop_factor
+        
+        self.correct_resolution((crop[0], crop[1]))
+        self.set_controls({"ScalerCrop": offset  + crop})
+
+    def correct_resolution(self, new_field = (1400, 1080)):
+        new_main_config = None
+        new_lores_config = None
+        
+        ## main corection when zooming in
+        if new_field[0] < self.general_config["main"]["size"][0]:
+            new_main_config = new_field
+            
+            ## lores corection when zooming in
+            if new_main_config[0] < self.running_config["lores"]["size"][0]:
+                new_lores_config = new_field
+            
+ 
+        ## main corection when zooming out
+        if new_field[0] > self.running_config["main"]["size"][0]:
+            
+            if new_field[0] < self.general_config["main"]["size"][0]:
+                new_main_config = new_field
+            else:
+                new_main_config = self.general_config["main"]["size"]
+            
+            ## lowres corection when zoming out
+            if self.running_config["lores"]["size"][0] < new_field[0]:
+                if new_field[0] < self.general_config["lores"]["size"][0]:
+                    new_lores_config = new_field
+                else:
+                    new_lores_config = self.general_config["lores"]["size"]
+        
+        
+        if new_main_config:            
+            self.running_config["main"]["size"] = (new_main_config[0] // 2 * 2 , new_main_config[1] // 2 * 2 )
+        
+        if new_lores_config:
+            self.running_config["lores"]["size"] = (new_lores_config[0] // 2 * 2 , new_lores_config[1] // 2 * 2 )
+        
+        self.align_configuration(self.running_config)
+        if self.running_config["main"]["size"] > self.running_config["lores"]["size"]:
+            self.running_config["lores"]["size"] = self.running_config["main"]["size"]
+        self.switch_mode(self.running_config)
+                        
+
+    def switch_mode_keep_zoom(self, mode):
+        if mode == "general":
+            self.switch_mode(self.running_config)
+            self.change_zoom(self.crop_value, animation =False)
+        if mode == "full_res":
+            offset, crop = self.change_zoom(self.crop_value, False)
+            self.full_res_config["main"]["size"] = (crop[0] //2 *2, crop[1]//2*2)
+            self.align_configuration(self.full_res_config)
+            self.switch_mode(self.full_res_config)
+            self.set_controls({"ScalerCrop": offset  + crop})
+            self.capture_metadata() ## need to wait an image before giving the feed back
+        if mode == "video":
+            self.switch_mode(self.video_config)
+            self.change_zoom(self.crop_value, animation =False)
+             
+
+    def capture_and_save(self, picture_name, data_dir):
+        create_folder(data_dir)
+        full_data_name = f"{data_dir}/{picture_name}.png"
+        capture = self.capture_image("main")       
+        save = Thread(target = self.save_capture, args=(capture, full_data_name))
+        save.start()
+
+    def capture_full_res(self,  picture_name, data_dir):
+        self.switch_mode_keep_zoom("full_res")
+        self.capture_and_save(picture_name, data_dir)
+        self.switch_mode_keep_zoom("general")
+
+    def capture_with_flash(self, picture_name, data_dir, microscope, led, ledpwr):
+        
+        microscope.set_led_state(led)
+        microscope.set_ledpwr(ledpwr)
+        
+        self.capture_metadata()
+        #self.capture_metadata()
+        self.capture_and_save(picture_name, data_dir)
+
+        microscope.set_led_state(0)
+        microscope.set_ledpwr(0)
+            
+    def save_capture(self, capture, full_data_name): ##run as a separate thread
+        capture.save(full_data_name, format = "png" )
+
+    def awb_preset(self, awb):
+        if awb == "Green Fluo":
+            self.controls.AwbEnable = False
+            self.controls.ColourGains = awbR_fluo,  awbB_fluo
+            #camera.controls.Contrast = 10
+        if awb == "auto":
+            self.controls.AwbEnable = True
+        if awb == "white":
+            self.controls.AwbEnable = True
+            #self.controls.AwbEnable = False
+            #self.controls.ColourGains = awbR_white,  awbB_white
+            #camera.controls.Contrast = 10 
+
+    def current_exposure(self):
+
+        metadata = self.capture_metadata()
+        return (metadata['ExposureTime'], metadata['AnalogueGain'])
+
+    def current_exposure_nowait(self):  
+        ## result will be found in the self.exp and self.wait when function return
+        self.metadata_job = self.capture_metadata(wait=False, signal_function=self.metadata_update)
+    
+    def metadata_update(self, job):
+        metadata = self.wait(job)
+        self.exp = metadata['ExposureTime']
+        self.gain = metadata['AnalogueGain']
+
+    def print_metadata(self):
+        metadata = self.capture_metadata()
+        print(metadata)
+    
+    def auto_exp_enable(self, value):
+        metadata = self.capture_metadata()
+        if value == False:
+            with self.controls as controls:
+                controls.AeEnable = False
+                controls.AnalogueGain = metadata['AnalogueGain']
+                controls.ExposureTime = metadata['ExposureTime']
+
+        elif value == True:
+            with self.controls as controls:
+                controls.AeEnable = True
+                controls.AnalogueGain = 0
+                controls.ExposureTime = 0
+        
+    def set_exposure(self, shutter = None, gain= None):
+        if shutter:
+            self.controls.ExposureTime = shutter
+        if gain:
+            with self.controls as controls:
+                controls.AeEnable = False
+                controls.AnalogueGain = gain
+
+    def set_EV(self, value):
+        self.controls.ExposureValue = value
+        self.EV_value = value 
+
+from picamera2.encoders import H264Encoder, Quality
 
 class VideoRecorder(Thread):
     def __init__(self,camera, video_quality, video_name,event_rec_on):
@@ -115,7 +226,7 @@ class VideoRecorder(Thread):
 
     def run(self):
         ## Save the current preview settings
-        preview_resolution = self.camera.resolution
+        preview_resolution = self.camera.running_config["main"]["size"]
 
         ## If the video quality demanded is higher than the preview, get back to the preview (avoided useless oversampling of zoomed in video)
         if preview_resolution[0] < self.video_quality:          
@@ -124,43 +235,42 @@ class VideoRecorder(Thread):
         ## else set the camera to the new resolution
         else:
             record_resolution = (self.video_quality, 
-                int((self.video_quality)*(camera_full_resolution[1]/camera_full_resolution[0])))
+                int((self.video_quality)*(self.camera.camera_properties['PixelArraySize'][1]/self.camera.camera_properties['PixelArraySize'][0])))
 
         #### Change resolution if incompatible with the video
         if record_resolution[0] > h264_max_resolution[0]:
             record_resolution = h264_max_resolution
         
         #### Set the resolution
-        self.camera.resolution = record_resolution
+        if record_resolution[0] < self.camera.general_config["lores"]["size"][0]:
+            self.camera.video_config = self.camera.create_video_configuration(main={"size":  (record_resolution[0],record_resolution[1]), "format": "YUV420" },
+                                                                raw={"size": (2028, 1520)}, 
+                                                                display= "main", encode = "main", buffer_count=6)
+        else:
+            self.camera.video_config = self.camera.create_video_configuration(main={"size":  (record_resolution[0],record_resolution[1]), "format": "YUV420"}, 
+                                                                lores={"size": (804, 600), "format": "YUV420"},
+                                                                raw={"size": (2028, 1520)}, 
+                                                                display= "lores", encode = "main", buffer_count=6)
+        self.camera.align_configuration(self.camera.video_config)
 
         ### Start recording and wait for stop button
-        self.camera.start_recording(self.video_name)
+        encoder = H264Encoder()
+        self.camera.switch_mode_keep_zoom("video")
+        self.camera.start_encoder(encoder, self.video_name)
         while not self.event.is_set():
             sleep(0.1)
 
         ### Stop recording
-        self.camera.stop_recording()
+        self.camera.stop_encoder()
 
-        ### put back the former resolution setting
-        if preview_resolution != self.camera.resolution:
-            self.camera.resolution=preview_resolution
+        self.camera.switch_mode_keep_zoom("general")
 
 
 ##### Function that generate the worker and pass the information to it
 def start_recording(camera, data_dir, video_quality=320, video_name="test"):
-    """Start a recording worker as a separate thread
 
-    Args:
-        camera (Pi.camera object): _description_
-        data_dir (str): data directory 
-        video_quality (int, optional): image heigh. Defaults to 320.
-        video_name (str, optional): video name. Defaults to "test".
-
-    Returns:
-        VideoRecorder, Event: the video recorder object, and the event to stop it
-    """
-    create_folder(data_dir + "rec/")
-    data_name = data_dir + "rec/" + video_name + ".h264"
+    create_folder(data_dir + "/rec/")
+    data_name = data_dir + "/rec/" + video_name + ".h264"
     rec_off = Event()
     rec = VideoRecorder(camera, video_quality, data_name, rec_off)
     rec.start()
@@ -169,76 +279,21 @@ def start_recording(camera, data_dir, video_quality=320, video_name="test"):
 
 def stop_video(off_event):
     off_event.set()
-
-
+    
 if __name__ == "__main__":
-    import picamera
-    from RPi import GPIO
-    from os import environ
-
-    from modules.cameracontrol import previewPiCam
-    from modules.microscope import Microscope
-    from modules.position_grid import PositionsGrid
-    from modules.physical_controller import encoder_read, controller_startup
-    from modules.interface.main_menu import *
-    from modules.microscope_param import *
-    from modules.parametersIO import ParametersSets
-    from time import sleep
-
-
-    ### Object for microscope to run
-    parameters = ParametersSets()
-    microscope = Microscope(addr, ready_pin, parameters)
-    grid = PositionsGrid(microscope, parameters)
-    camera = picamera.PiCamera()
+    import time
+    micro_cam = Microscope_camera()
+    micro_cam.initialise(QT=True)
+    print(micro_cam.camera_ctrl_info)
+    while True:
+        time.sleep(1)
+    #micro_cam.print_metadata()
+    #micro_cam.list_controls()
 
     
-    #start picamPreview
-    previewPiCam(camera)
-    sleep(1)
-    camera.exposure_mode = 'off'
-    camera.awb_mode = 'off'
-    camera.drc_strength = 'off'
-    awb_preset(camera, "Green Fluo")
 
+    
+    
 
-    while True:
-        print("1 AWB \n2 Shutter \n3 Brightness \n4 ISO \n5 Contrast \n6 Analog Gain\n7 Save Image")
-        setting_choice = input("Seting:")
-       
-        if setting_choice == "1":
-            camera.awb_mode = 'off'
-            blue_input = input("AWB_blue: ")
-            red_input = input("AWB_red: ")
-            camera.awb_gains = (float(red_input), float(blue_input))
+    
 
-        if setting_choice == "2":        
-            shutter_input = input("Shutter_speed: ")
-            camera.shutter_speed = (int(shutter_input))
-        
-        if setting_choice == "3":     
-            bright_input = input("Brightness: ")
-            camera.brightness = int(bright_input)
-
-        if setting_choice == "4": 
-            iso_input = input("Iso: ")
-            camera.iso = int(iso_input)
-        
-        if setting_choice == "5": 
-            text_input = input("Contrast -100 to 100:")
-            camera.contrast = int(text_input)
-        
-        if setting_choice == "6": 
-            text_input = input("Analog Gain:")
-            print(camera.analog_gain)
-            camera.analog_gain = int(text_input)
-        
-        if setting_choice == "7": 
-            text_input = input("Save")
-            save_img_thread(camera, "/home/pi/microscope_data/img/test_img" )
-        
-
-
-
-    #GPIO cleanup
-    GPIO.cleanup()

@@ -23,7 +23,7 @@
     "start_well": "A1",
     "finish_well": "B2",
     "grid_subwells": 1,
-    "data_dir": "/home/pi/microscope_data/"
+    "data_dir": "/home/microscope/microscope_data/"
 },
     "Plate":
     {
@@ -49,6 +49,6 @@
         "start_well": "A1",
         "finish_well": "B2",
         "grid_subwells": 1,
-        "data_dir": "/home/pi/microscope_data/"
+        "data_dir": "/home/p/microscope_data/"
     }
 }

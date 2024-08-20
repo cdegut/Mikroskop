@@ -117,7 +117,7 @@ class Time_lapse_window(Interface, CTkFrame):
 
 #main loop
 if __name__ == "__main__": 
-    from modules.cameracontrol3 import Microscope_camera
+    from modules.cameracontrol import Microscope_camera
     from modules.microscope import Microscope
     from modules.position_grid import PositionsGrid
     from modules.interface.main_menu import *

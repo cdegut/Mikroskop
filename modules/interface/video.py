@@ -1,7 +1,7 @@
 from .super import Interface
 from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N, StringVar
 
-from ..cameracontrol3 import start_recording
+from ..cameracontrol import start_recording
 from time import time
 from .popup import led_focus_zoom_buttons
 
@@ -112,7 +112,7 @@ class VideoTimer(): ## callable timer for measuring video lengh
 
 #main loop
 if __name__ == "__main__": 
-    from modules.cameracontrol3 import Microscope_camera
+    from modules.cameracontrol import Microscope_camera
     from modules.microscope import Microscope
     from modules.position_grid import PositionsGrid
     from modules.physical_controller import encoder_read, controller_startup

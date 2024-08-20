@@ -20,7 +20,8 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
 
     ###########
     ### Generate the window content, called every time window is (re)opened 
-    def init_window(self, last_window):  
+    def init_window(self, last_window):
+        self.camera.print_metadata()
         self.last_window = last_window
         
         self.Tk_root.title("Light and Exposure") 
@@ -39,6 +40,9 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
         self.Exp_scale = CTkSlider(self, from_=100, to=20000, height=60, width=200, number_of_steps=(20000-100)/100, orientation=HORIZONTAL)
         self.Gain_label = CTkLabel(self, text = "Analogue Gain:")
         self.Gain_scale = CTkSlider(self, from_=1.0, to=10.5, height=60, width=200, number_of_steps=(10.5-1)/0.5, orientation=HORIZONTAL)
+        self.EV_label = CTkLabel(self, text = "EV:")
+        self.EV_scale = CTkSlider(self, from_=-2.0, to=2, height=60, width=200, number_of_steps=8, orientation=HORIZONTAL)
+        
         self.AWB_button = CTkButton(self, text="Normal mode", command=self.awb)
  
         
@@ -48,19 +52,14 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
 
         self.Power_label.place(x=10, y= 80)  
         self.Led_scale.place(relx=0.5, y=105, anchor=N)
+        self.Led_scale.set(self.microscope.positions[3])
+
+
 
         self.AWB_button.place(relx=0.5,y=190, anchor=N)       
         self.AutoExp.place(relx=0.5,y=230, anchor=N) 
-        
-        self.Shutter_label.place(x=10, y= 270)  
-        self.Exp_scale.place(relx=0.5,y=295, anchor=N)
 
-        self.Gain_label.place(x=10, y= 380)  
-        self.Gain_scale.place(relx=0.5,y=405, anchor=N)
-
-
-
-        self.Led_scale.set(self.microscope.positions[3])
+        self.exposure_panel()
 
         self.set_exp_and_gain()
         self.set_led()
@@ -75,27 +74,56 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
             self.AWB_button.configure(text="AWB Fluo")
 
 
+    def exposure_panel(self):
+            
+            if self.auto_exp_value == "off":
+                current_exp, current_gain = self.camera.current_exposure()
+                self.EV_scale.place_forget()
+                self.EV_label.place_forget()
+
+                self.Shutter_label.place(x=10, y= 270)
+                self.Exp_scale.place(relx=0.5,y=295, anchor=N)
+                self.Exp_scale.set(current_exp)
+
+                self.Gain_label.place(x=10, y= 380)  
+                self.Gain_scale.place(relx=0.5,y=405, anchor=N)
+                self.Gain_scale.set(current_gain)
+
+            else:
+                self.Exp_scale.place_forget()
+                self.Gain_scale.place_forget()
+            
+                self.Shutter_label.place(x=10, y= 270)
+                self.Gain_label.place(x=10, y= 290)
+
+                self.EV_label.place(x=10, y= 330)  
+                self.EV_scale.place(relx=0.5,y=350, anchor=N)
+                self.EV_scale.set(self.camera.EV_value)
+
+
+
     def led_change(self, led):
         if led == 1:
             self.microscope.set_led_state(1)
             self.camera.awb_preset("white")
-            self.AWB_button.configure(text="Normal mode")
+            self.AWB_button.configure(text="AWB: Normal")
 
         if led == 2:
             self.microscope.set_led_state(2)
             self.camera.awb_preset("Green Fluo")
-            self.AWB_button.configure(text="Green Fluo Mode")
+            self.AWB_button.configure(text="AWB: Green Fluo")
 
     def auto_exp(self):
         if self.auto_exp_value == "auto":
             self.camera.auto_exp_enable(False)
             self.auto_exp_value = "off"
-            self.AutoExp.configure(text="AutoExp OFF")
+            self.exposure_panel()
+
         
         elif self.auto_exp_value == "off":
             self.camera.auto_exp_enable(True)
             self.auto_exp_value = "auto"
-            self.AutoExp.configure(text="AutoExp ON")
+            self.exposure_panel()
     
     def awb(self):
         if self.awb_value == "auto":
@@ -120,9 +148,12 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
         Interface._job1 = self.after(100, self.set_led)
     
     def set_exp_and_gain(self): ## Read the scale and set the led at the proper power
+        self.camera.current_exposure_nowait()
+
         exp_scale = int(self.Exp_scale.get())
         self.Shutter_label.configure(text=f"Shutter speed {exp_scale}μs")
-        current_exp, current_gain = self.camera.current_exposure()
+
+        current_exp = self.camera.exp
         if exp_scale != current_exp: 
             if self.auto_exp_value == "off":
                 self.camera.set_exposure( exp_scale)
@@ -133,12 +164,18 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
         
         gain_scale = int(self.Gain_scale.get())
         self.Gain_label.configure(text=f"Analogue Gain: {gain_scale}")
-        current_gain = self.camera.current_exposure()[1]
+
+        current_gain = self.camera.gain
         if gain_scale != current_gain: 
             if self.auto_exp_value == "off":
                 self.camera.set_exposure(gain=gain_scale)
             elif self.auto_exp_value == "auto":
                 self.Gain_scale.set(current_gain)
+        
+        if self.auto_exp_value == "auto":
+            EV = self.EV_scale.get()
+            self.EV_label.configure(text=f"EV: {EV}")
+            self.camera.set_EV(EV)
 
         Interface._job2 = self.after(200, self.set_exp_and_gain)
          
@@ -260,3 +297,32 @@ class Zoom_popup(Interface, CTkFrame): #widget to fill popup window, show an sto
             Interface._zoom_popup.init_window(self)
         else:
             Interface._zoom_popup = Zoom_popup(self.Tk_root, last_window=self, microscope=self.microscope, parameters=self.parameters, camera=self.camera)
+
+if __name__ == "__main__": 
+    from modules.cameracontrol import Microscope_camera
+    from modules.microscope import Microscope
+    from modules.position_grid import PositionsGrid
+    from modules.physical_controller import encoder_read, controller_startup
+    from modules.interface.main_menu import *
+    from modules.microscope_param import *
+    from modules.parametersIO import ParametersSets, create_folder
+    import customtkinter
+    ### Object for microscope to run
+
+    #Tkinter object
+    parameters = ParametersSets()
+    microscope = Microscope(addr, ready_pin, parameters)
+    grid = PositionsGrid(microscope, parameters)
+    micro_cam = Microscope_camera()
+    micro_cam.initialise(QT=True)
+
+    #Tkinter object
+    customtkinter.set_appearance_mode("dark")
+    Tk_root = customtkinter.CTk()
+    Tk_root.geometry("230x560+800+35")   
+    
+    ### Don't display border if on the RPi display
+    Interface._freemove_main = FreeMovementInterface(Tk_root, microscope=microscope, grid=grid, camera=micro_cam, parameters=parameters)
+
+
+    Tk_root.mainloop()

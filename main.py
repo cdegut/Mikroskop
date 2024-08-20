@@ -1,7 +1,7 @@
 from RPi import GPIO
 from os import environ
 
-from modules.cameracontrol3 import Microscope_camera
+from modules.cameracontrol import Microscope_camera
 from modules.microscope import Microscope
 from modules.position_grid import PositionsGrid
 from modules.physical_controller import encoder_read, controller_startup
@@ -38,7 +38,6 @@ if __name__ == "__main__":
         micro_cam.initialise()   
     else:
         micro_cam.initialise(QT=True)
-
 
     
     if microscope.positions[4] == 1:

@@ -75,8 +75,7 @@ class ParametersSets:
 
 def create_folder(new_folder_path):
     p = pathlib.Path(new_folder_path)
-    if not p.exists():
-        p.mkdir()
+    p.mkdir(exist_ok=True)
 
 #main loop
 if __name__ == "__main__": 
