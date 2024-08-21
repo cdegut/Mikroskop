@@ -16,6 +16,7 @@ dtparam=i2c_arm_baudrate=10000
 upgrade pip and install the needed packages:
 ```
 pip install --upgrade pip setuptools wheel smbus2 customtkinter packaging opencv-python --break-system-packages
+sudo apt install python3-rpi-lgpio
 ```
 
 # Misc

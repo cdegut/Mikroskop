@@ -1,4 +1,4 @@
-from customtkinter import CTkFrame, CTkButton, CTkLabel, N, CTkSlider, IntVar, CENTER
+from customtkinter import CTkFrame, CTkButton, CTkLabel, N, CTkSlider, IntVar, CENTER, CTkImage
 from ..microscope import Microscope
 from ..position_grid import PositionsGrid
 from ..microscope_param import Xmaxrange, Ymaxrange
@@ -238,7 +238,7 @@ class Interface:
 #main loop
 if __name__ == "__main__": 
 
-    import picamera
+    import picamera2
     from ..microscope import *
     from ..position_grid import *
     from tkinter import Tk
@@ -246,7 +246,7 @@ if __name__ == "__main__":
     microscope = Microscope(addr, ready_pin)
     grid = PositionsGrid(microscope)
     #start picamPreview
-    camera = picamera.PiCamera()
+    camera = picamera2.PiCamera()
     #previewPiCam(camera)
 
     #create tkinter objects

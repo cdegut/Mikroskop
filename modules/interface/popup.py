@@ -54,8 +54,6 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
         self.Led_scale.place(relx=0.5, y=105, anchor=N)
         self.Led_scale.set(self.microscope.positions[3])
 
-
-
         self.AWB_button.place(relx=0.5,y=190, anchor=N)       
         self.AutoExp.place(relx=0.5,y=230, anchor=N) 
 

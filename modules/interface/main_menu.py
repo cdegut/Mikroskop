@@ -65,6 +65,8 @@ class MainMenu(Interface, CTkFrame):
         Quit.place(relx=self.menu_button_x, y=450, anchor=CENTER)
         ParknQuit = CTkButton(self, width=self.menu_button_w, text="Park and Quit", command=self.parknquit)
         ParknQuit.place(relx=self.menu_button_x, y=500, anchor=CENTER)
+
+        #self.display_image_as_label()
     
     def objective_change(self):
         self.microscope.go_absolute([Xmaxrange, Ymaxrange, 0])
