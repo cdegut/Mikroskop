@@ -25,7 +25,8 @@ def send_destination(motor, destination):
 
 def set_ledpwr(pwr):
     with SMBus(1) as bus:
-        bus.write_i2c_block_data(addr, 4, [ 4 , pwr])
+        checksum = ((pwr + pwr)) % 256 
+        bus.write_i2c_block_data(addr, 4, [ 4 , pwr, pwr,checksum])
 
 def send_simplecmd(cmd):
     with SMBus(1) as bus:
@@ -34,8 +35,7 @@ def send_simplecmd(cmd):
 def read_postions():
     # Read 12 bytes
     with SMBus(1) as bus:
-        msg = i2c_msg.read(addr, 12)
-        bus.i2c_rdwr(msg)
+        msg = bus.read_i2c_block_data(addr, 0, 15) #generate I²C msg instance as msg
 
     #parse the 12 bytes into 3*4 bytes values
     X_b = []

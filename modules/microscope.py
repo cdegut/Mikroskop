@@ -214,8 +214,7 @@ class Microscope:
            
                 try:  # Read 15 bytes (last is checksum)
                     with SMBus(1) as bus:
-                        msg = i2c_msg.read(self.addr, 15) #generate I²C msg instance as msg
-                        bus.i2c_rdwr(msg)	#I²C transaction
+                        msg = bus.read_i2c_block_data(addr, 0, 15) #generate I²C msg instance as msg
 
                 except:
                     time.sleep(1)
@@ -242,14 +241,14 @@ class Microscope:
                     Focus_b.append(value) 
 
                 if i == 13:
-                    led_b = value
+                    led1 = value
                 if i == 14:
-                    led_state_b = value
+                    led2 = value
                 if i == 15:
                     received_checksum = value
                 i = i+1
 
-            checksum = (sum(X_b) + sum(Y_b) + sum(Focus_b) + led_b + led_state_b) %256 #checksum on arduino side is an overflown byte, need to take modulo 256 to reproduce behaviour
+            checksum = (sum(X_b) + sum(Y_b) + sum(Focus_b) + led1 + led2) %256 #checksum on arduino side is an overflown byte, need to take modulo 256 to reproduce behaviour
             
             if checksum != received_checksum:
                 return None
@@ -260,7 +259,7 @@ class Microscope:
             Y_pos = int.from_bytes(Y_b, byteorder='little', signed=False)
             Focus_pos = int.from_bytes(Focus_b, byteorder='little', signed=False)
 			
-            positions = [X_pos, Y_pos, Focus_pos, led_b, led_state_b]
+            positions = [X_pos, Y_pos, Focus_pos, led1, led2]
             return positions
 
     def checked_read_positions(self): #return position if read_postiions() is not none (=checksum match) or exit after 10 retry
