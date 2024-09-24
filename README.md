@@ -1,18 +1,34 @@
 # microcontrol
 Software for the microscope
 Works on raspberypi os bookworm,
-As of January 2024, there is a bug that provoke display crash if using wayland, 
-Need to back to X11 using raspi-config
 
-# Raspbery pi config in /boot/config.txt
+# Raspbery pi config in /boot/firmware/config.txt
+## I2C
 ```
 # activate I2C interface
 dtparam=i2c_arm=on
 # Clock stretching by slowing down to 10KHz
 dtparam=i2c_arm_baudrate=10000
-# Allow for 1024x600 resolution do not add if using different screen
-hdmi_cvt=1024 600 3 0 0 0
 ```
+## Screen configuration
+for MPI7002, 7" 1024x600 touch screen; change:
+```
+dtoverlay=vc4-kms-v3d
+```
+to
+```
+dtoverlay=vc4-fkms-v3d
+```
+and at the end add:
+```
+# Allow for 1024x600 resolution do not add if using different screen
+hdmi_group=2
+hdmi_mode=87
+hdmi_cvt 1024 600 60 6 0 0 0
+hdmi_drive=1
+```
+
+
 
 
 # Package needed
