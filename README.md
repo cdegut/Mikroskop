@@ -10,7 +10,10 @@ Need to back to X11 using raspi-config
 dtparam=i2c_arm=on
 # Clock stretching by slowing down to 10KHz
 dtparam=i2c_arm_baudrate=10000
+# Allow for 1024x600 resolution do not add if using different screen
+hdmi_cvt=1024 600 3 0 0 0
 ```
+
 
 # Package needed
 upgrade pip and install the needed packages:
