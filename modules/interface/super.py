@@ -64,11 +64,12 @@ class Interface:
 
     ######## update the label to corespond to the actual current position of the microscope
     def update_coordinates_label(self):
-        if self.microscope.is_ready():
-            self.microscope.positions = self.microscope.checked_read_positions()
+        self.microscope.update_real_state()
+        text_coordinates = f"X:  + {self.microscope.XYFposition[0]}\
+ Y: {self.microscope.XYFposition[1]}\
+ F: {self.microscope.XYFposition[2]}\
+\nLed 1: {self.microscope.led1pwr}  Led 2:  {self.microscope.led2pwr}"
         
-        positions = self.microscope.positions
-        text_coordinates = "X: " + str(positions[0]) + "   Y: " + str(positions[1]) + "   F: " + str(positions[2]) + "\nLed "+ str(positions[4])  + ": " + str(positions[3])
         self.Coordinates.configure(text=text_coordinates)
 
         if hasattr(self, 'well_info'): ## update the well_info atribute if needed
@@ -78,7 +79,7 @@ class Interface:
 
     
     def save_positions(self,parameter_subset): 
-        self.parameters.update_start(self.microscope.positions[0],self.microscope.positions[1], self.microscope.positions[2],parameter_subset)
+        self.parameters.update_start(self.microscope.XYFposition[0],self.microscope.XYFposition[1], self.microscope.XYFposition[2],parameter_subset)
         self.grid.generate_grid() 
 
     #def guess_parameters_subset(self):
@@ -214,7 +215,7 @@ class Interface:
         self.set_scale(position, l) ##Continuously update scales, if positions are changed
     
     def set_scale(self, position=(60,20), l=220):
-        positions = self.microscope.positions
+        positions = self.microscope.XYFposition
         Xvar = self.Xvar.get()
         Yvar = self.Yvar.get()
         Xlabel_scale = (position[1]+(l-30)-Xvar*((l-60)/(Xmaxrange/1000)))

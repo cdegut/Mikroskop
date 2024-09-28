@@ -57,8 +57,8 @@ class FreeMovementInterface(Interface, CTkFrame):
         start_position = self.parameters.get()["start"]
         led = self.parameters.get()["led"]
         self.microscope.go_absolute(start_position) #this function return only after arduin is ready
-        self.microscope.set_ledpwr(led[0])
-        self.microscope.set_led_state(led[1])
+        
+
 
 #main loop
 if __name__ == "__main__": 

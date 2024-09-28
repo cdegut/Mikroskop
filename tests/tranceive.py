@@ -23,48 +23,67 @@ def send_destination(motor, destination):
         with SMBus(1) as bus:
             bus.write_i2c_block_data(addr, motor, destination_as_bytes)
 
-def set_ledpwr(pwr):
+def set_ledpwr(led1pwr, led2pwr):
     with SMBus(1) as bus:
-        checksum = ((pwr + pwr)) % 256 
-        bus.write_i2c_block_data(addr, 4, [ 4 , pwr, pwr,checksum])
+        checksum = (led1pwr + led2pwr) % 256 
+        bus.write_i2c_block_data(addr, 4, [ 4 , led1pwr, led2pwr,checksum])
+
+def neoPixel_solid_color(R,G,B):
+        checksum = (R + G +B ) % 256 
+        with SMBus(1) as bus:
+            bus.write_i2c_block_data(addr, 5, [ 5 , R, G, B, checksum])
+
+def neoPixel_indexLed(index, R,G,B):
+        checksum = (index + R + G +B ) % 256 
+        with SMBus(1) as bus:
+            bus.write_i2c_block_data(addr, 6, [ 6 ,index, R, G, B, checksum])
 
 def send_simplecmd(cmd):
     with SMBus(1) as bus:
         bus.write_byte_data(addr, cmd, cmd) #command is sent twice to be executed
 
-def read_postions():
-    # Read 12 bytes
-    with SMBus(1) as bus:
-        msg = bus.read_i2c_block_data(addr, 0, 15) #generate I²C msg instance as msg
+def read_positions(): #get position from the microscope
 
-    #parse the 12 bytes into 3*4 bytes values
-    X_b = []
-    Y_b = []
-    Focus_b = []
-    i = 1
-    for value in msg: 
-        if i <= 4:
-            X_b.append(value) 
-        if 5 <= i <= 8:
-            Y_b.append(value) 
-        if 9 <= i <= 12:
-            Focus_b.append(value) 
-        i = i+1
+    retry = 10
+    i=1
+    while i <= retry: #do the comunication, but catch error and retry in case of problem          
+        try:  # Read 15 bytes (last is checksum)
+            with SMBus(1) as bus:
+                msg = bus.read_i2c_block_data(addr, 0, 15) #generate I²C msg instance as msg
 
-    X_pos = int.from_bytes(X_b, byteorder='little', signed=False)
-    Y_pos = int.from_bytes(Y_b, byteorder='little', signed=False)
-    Focus_pos = int.from_bytes(Focus_b, byteorder='little', signed=False)
+        except:
+            time.sleep(0.5)
+            i += 1
+            print("At "+ time.strftime("%H:%M:%S", time.localtime()) +" read position: comunication error, retrying "+str(i)+" of "+ str(retry) +" times")                   
+        
+        else:
+            checksum = (sum(msg[:14])) %256 
+            if checksum == msg[14]:
+                break
 
-    return X_pos, Y_pos, Focus_pos
+            time.sleep(0.5)
+            i += 1
+            print("At "+ time.strftime("%H:%M:%S", time.localtime()) +" read position: Bad checksum, retrying "+str(i)+" of "+ str(retry) +" times")
+        
 
+    #generate integer from the list of bytess.
+    
+    X_pos = int.from_bytes(msg[:4], byteorder='little', signed=False)
+    Y_pos = int.from_bytes(msg[4:8], byteorder='little', signed=False)
+    Focus_pos = int.from_bytes(msg[8:12], byteorder='little', signed=False)		
+    led1 = msg[12]
+    led2 = msg[13]
+
+    return [X_pos, Y_pos, Focus_pos, led1, led2]
 
 while True:
     while not GPIO.input(4): # read position only if pin 4 is up = arduino is ready
         time.sleep(0.1)
-    x_position, y_position, f_position = read_postions()
+    positions = read_positions()
+    print(positions)
 
     
-    print(" 1 : X (current : ", x_position, ") \n 2 : Y (current : ", y_position, ")\n 3 : F (current : ", f_position, ")")   
+    print(" 1 : X (current : ", positions[0], ") \n 2 : Y (current : ", positions[1], ")\n 3 : F (current : ", positions[2], ")")   
     cmd_input = input("cmd:")
     if cmd_input != '':
         
@@ -75,8 +94,22 @@ while True:
         cmd = int(cmd_input)
 
         if cmd == 4:
-            ledpwr_input = input("Led power (0 - 255):")
-            set_ledpwr(int(ledpwr_input))
+            led1pwr_input = input("Led 1 power (0 - 100):")
+            led2pwr_input = input("Led 2 power (0 - 100):")
+            set_ledpwr(int(led1pwr_input),int(led2pwr_input))
+
+        if cmd == 5:
+            R = input("Red Value:")
+            G = input("Green Value:")
+            B = input("Blue Value:")
+            neoPixel_solid_color(int(R),int(G),int(B))
+
+        if cmd == 6:
+            index = input("Led Index:")
+            R = input("Red Value:")
+            G = input("Green Value:")
+            B = input("Blue Value:")
+            neoPixel_indexLed(int(index),int(R),int(G),int(B))
 
         if cmd in [1,2,3]:
             destination_input = input("destination in steps:")

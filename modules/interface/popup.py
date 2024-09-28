@@ -13,27 +13,27 @@ def led_focus_zoom_buttons(self, position=400):
 class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop button and a modifiable label
 
     def __init__(self, Tk_root, last_window, microscope, parameters, camera):
+
         Interface.__init__(self, Tk_root, last_window, microscope, parameters=parameters, camera=camera)
         self.auto_exp_value = "auto"
         self.awb_value = "auto"
         self.init_window(last_window)
-
+        
     ###########
     ### Generate the window content, called every time window is (re)opened 
     def init_window(self, last_window):
-        self.camera.print_metadata()
         self.last_window = last_window
         
         self.Tk_root.title("Light and Exposure") 
         self.pack(fill=BOTH, expand=1)
 
-        self.Power_label = CTkLabel(self, text = "LED power:")
-        self.Led_scale = CTkSlider(self, from_=0, to=255, height=60, width=200, orientation=HORIZONTAL)
+        self.led1_label = CTkLabel(self, text = "LED power:")
+        self.led1_scale = CTkSlider(self, from_=0, to=100, height=60, width=200, orientation=HORIZONTAL)
+        self.led2_label = CTkLabel(self, text = "LED power:")
+        self.led2_scale = CTkSlider(self, from_=0, to=100, height=60, width=200, orientation=HORIZONTAL)
+
         Save =  CTkButton(self, width=80, text="Save", command=self.save_led)
 
-        Led1 = CTkButton(self, width=80, text="LED 1", command= lambda: self.led_change(1))
-        Led2 = CTkButton(self, width=80, text="LED 2", command= lambda:  self.led_change(2))
-        LedOff = CTkButton(self, width=80, text="Off", command= lambda: self.microscope.set_led_state(0))
 
         self.AutoExp = CTkButton(self, text="AutoExp ON", command=self.auto_exp)
         self.Shutter_label = CTkLabel(self, text = "Shutter speed μs")
@@ -45,14 +45,13 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
         
         self.AWB_button = CTkButton(self, text="Normal mode", command=self.awb)
  
-        
-        Led1.place(x=20,y=20)
-        Led2.place(x=120,y=20)
-        LedOff.place(x=70,y=55)
 
-        self.Power_label.place(x=10, y= 80)  
-        self.Led_scale.place(relx=0.5, y=105, anchor=N)
-        self.Led_scale.set(self.microscope.positions[3])
+        self.led1_label.place(x=10, y= 10)  
+        self.led1_scale.place(relx=0.5, y=35, anchor=N)
+        self.led1_scale.set(self.microscope.led1pwr)
+        self.led2_label.place(x=10, y= 95)  
+        self.led2_scale.place(relx=0.5, y=120, anchor=N)
+        self.led2_scale.set(self.microscope.led2pwr)
 
         self.AWB_button.place(relx=0.5,y=190, anchor=N)       
         self.AutoExp.place(relx=0.5,y=230, anchor=N) 
@@ -75,17 +74,16 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
     def exposure_panel(self):
             
             if self.auto_exp_value == "off":
-                current_exp, current_gain = self.camera.current_exposure()
                 self.EV_scale.place_forget()
                 self.EV_label.place_forget()
 
                 self.Shutter_label.place(x=10, y= 270)
                 self.Exp_scale.place(relx=0.5,y=295, anchor=N)
-                self.Exp_scale.set(current_exp)
+                self.Exp_scale.set(self.camera.metadata['ExposureTime'])
 
                 self.Gain_label.place(x=10, y= 380)  
                 self.Gain_scale.place(relx=0.5,y=405, anchor=N)
-                self.Gain_scale.set(current_gain)
+                self.Gain_scale.set(self.camera.metadata['AnalogueGain'])
 
             else:
                 self.Exp_scale.place_forget()
@@ -97,7 +95,6 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
                 self.EV_label.place(x=10, y= 330)  
                 self.EV_scale.place(relx=0.5,y=350, anchor=N)
                 self.EV_scale.set(self.camera.EV_value)
-
 
 
     def led_change(self, led):
@@ -138,20 +135,23 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
         self.parameters.update([("led",[self.microscope.positions[3], self.microscope.positions[4]])])
 
     def set_led(self): ## Read the scale and set the led at the proper power
-        pwr = int(self.Led_scale.get())
-        self.Power_label.configure(text=f"LED power: {pwr}")
-        if pwr != self.microscope.positions[3]:
-            self.microscope.positions[3] = pwr
-            self.microscope.set_ledpwr(pwr)
+        pwr_1 = int(self.led1_scale.get())
+        pwr_2 = int(self.led2_scale.get())
+        self.led1_label.configure(text=f"LED 1 power: {pwr_1}")
+        self.led2_label.configure(text=f"LED 2 power: {pwr_2}")
+
+        if pwr_1 != self.microscope.led1pwr or pwr_2 != self.microscope.led2pwr:
+            self.microscope.led1pwr = pwr_1
+            self.microscope.led2pwr = pwr_2
+            self.microscope.set_ledspwr(pwr_1, pwr_2)
         Interface._job1 = self.after(100, self.set_led)
     
     def set_exp_and_gain(self): ## Read the scale and set the led at the proper power
-        self.camera.current_exposure_nowait()
-
+        
         exp_scale = int(self.Exp_scale.get())
         self.Shutter_label.configure(text=f"Shutter speed {exp_scale}μs")
 
-        current_exp = self.camera.exp
+        current_exp = self.camera.metadata['ExposureTime']
         if exp_scale != current_exp: 
             if self.auto_exp_value == "off":
                 self.camera.set_exposure( exp_scale)
@@ -163,7 +163,7 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
         gain_scale = int(self.Gain_scale.get())
         self.Gain_label.configure(text=f"Analogue Gain: {gain_scale}")
 
-        current_gain = self.camera.gain
+        current_gain = self.camera.metadata['AnalogueGain']
         if gain_scale != current_gain: 
             if self.auto_exp_value == "off":
                 self.camera.set_exposure(gain=gain_scale)
@@ -186,6 +186,7 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
         self.Led_scale.set(self.microscope.positions[3])
     
     def open(self):
+        print("popup init")
         self.clear_jobs()
         self.clear_frame()
         if Interface._led_popup:
@@ -240,7 +241,7 @@ class Focus_popup(Interface, CTkFrame):
         self.back_button()
 
     def save_focus(self):
-        self.parameters.update_start(None , None, self.microscope.positions[2], None)
+        self.parameters.update_start(None , None, self.microscope.XYFposition[2], None)
         self.grid.generate_grid()
    
     

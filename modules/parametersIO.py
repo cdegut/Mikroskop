@@ -1,5 +1,6 @@
 import json
 import pathlib
+from os import getenv
 
 class ParametersSets:
 
@@ -7,6 +8,7 @@ class ParametersSets:
         self.param_file_path = self.__param_file_path()
         self.all_parameters_sets = self.__load_all()
         self.selected = self.__get_selected()
+        self.home = getenv('HOME')
 
     def __param_file_path(self):
         current_path = str(pathlib.Path(__file__).parent.absolute())
@@ -75,7 +77,7 @@ class ParametersSets:
 
 def create_folder(new_folder_path):
     p = pathlib.Path(new_folder_path)
-    p.mkdir(exist_ok=True)
+    p.mkdir(parents=True, exist_ok=True)
 
 #main loop
 if __name__ == "__main__": 

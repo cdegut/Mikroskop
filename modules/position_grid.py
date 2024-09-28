@@ -67,11 +67,11 @@ class PositionsGrid:
     
     def find_current_position(self):
         #iterate through all the possible well position to find a match
-        microscope_position = self.microscope.checked_read_positions()[:3]
+        self.microscope.update_real_state()
 
         for well in self.absolute_grid:
             for subwell in self.absolute_grid[well]:
-                if self.absolute_grid[well][subwell] == microscope_position:
+                if self.absolute_grid[well][subwell] == self.microscope.XYFposition:
                     self.current_grid_position = [well, subwell]
                     return [well, subwell]
         

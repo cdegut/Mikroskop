@@ -14,7 +14,11 @@ class Microscope:
         self.ready_pin = ready_pin
         GPIO.setup(ready_pin, GPIO.IN) # set up the GPIO channels - one input for ready pin
         self.wait_ready()
-        self.positions = self.checked_read_positions()
+        self.XYFposition = [0,0,0]
+        self.led1pwr = 0
+        self.led2pwr = 0
+        self.runing = False
+        self.update_real_state()
         
         if parameters: ## if no parameter set are given, dynamic endstop are disabled
             endstops_dict = parameters.get()["dyn_endstops"]
@@ -43,7 +47,6 @@ class Microscope:
     
     def is_ready(self): #check if arduino is ready
         return GPIO.input(self.ready_pin) 
-
 
     def send_motor_cmd(self, motor, destination):
 
@@ -83,26 +86,26 @@ class Microscope:
             data = bytes([steps, steps])
             bus.write_i2c_block_data(self.addr, cmd, data)
             
-    def safe_destination_update(self, motor, destination):
-               
-        destination = self.make_safe(motor, destination) #update destination with max value acccording to set soft endstop if needed      
-        self.send_motor_cmd(motor, destination)
-
+    #def safe_destination_update(self, motor, destination):
+    #           
+    #    destination = self.make_safe(motor, destination) #update destination with max value acccording to set soft endstop if needed      
+        
 
     def move_single_axis(self, motor, destination):
         i = 1
         while i <= retry:
 
-            self.safe_destination_update(motor, destination)
-            self.wait_ready()
+            destination = self.make_safe(motor, destination)
+            self.send_motor_cmd(motor, destination)
+            time.sleep(0.1)
 
-            #update position and check that it was corectly done
-            self.positions = self.checked_read_positions()
-            if self.positions[motor-1] == destination:
+            if not self.is_ready():
+                return
+            
+            self.update_real_state()
+            if self.XYFposition[motor-1] == destination:
                 return
 
-            #Loop if the function was not returned after the check position (with checksum added to I²C communication, this should never happen)
-            #May happen if axis maxrange are > to endstop set in arduino firmware
             print("At "+ time.strftime("%H:%M:%S", time.localtime()) +" motor did not move as expected, retrying "+str(i)+" of "+ str(retry) +" times") 
             time.sleep(0.5)
             i += 1
@@ -111,23 +114,9 @@ class Microscope:
         self.move_single_axis(3, destination)
     
     def move_X_Y(self, destination_X, destination_Y):
-        i = 1
-        while i <= retry:
 
-            self.safe_destination_update(1, destination_X)
-            self.safe_destination_update(2, destination_Y)
-            self.wait_ready()
-
-            #update position and check that it was corectly done
-            self.positions = self.checked_read_positions()
-            if self.positions[0] == destination_X and self.positions[1] == destination_Y:
-                return
-
-            #Loop if the function was not returned after the check position (with checksum added to I²C communication, this should never happen)
-            #May happen if axis maxrange are > to endstop set in arduino firmware
-            print("At "+ time.strftime("%H:%M:%S", time.localtime()) +" motor did not move as expected, retrying "+str(i)+" of "+ str(retry) +" times") 
-            time.sleep(0.5)
-            i += 1
+        self.move_single_axis(1,destination_X)
+        self.move_single_axis(2,destination_Y)
 
     def make_safe(self, motor, destination): #Software and dynamic endstops, update destination to avoid collision or out of range
 
@@ -142,7 +131,7 @@ class Microscope:
         #Dynamic endstops should be used to delimite a safe area coresponding to the observation window
         if self.dynamic_endstops:
 
-            if self.positions[2] >= self.safe_Fcs: ### Stop movement if the objective is to close to unsafe borders
+            if self.XYFposition[2] >= self.safe_Fcs: ### Stop movement if the objective is to close to unsafe borders
                 
                 if motor == 1 and destination < self.dyn_Xmin:
                     destination = self.dyn_Xmin
@@ -157,119 +146,78 @@ class Microscope:
             if motor == 3 and destination > self.dyn_maxFcs:
                 destination = self.dyn_maxFcs   
              
-            if motor == 3 and destination > self.safe_Fcs and (self.positions[0] < self.dyn_Xmin or self.positions[0] > self.dyn_Xmax or 
-                                                            self.positions[1] >  self.dyn_Ymax or self.positions[1] < self.dyn_Ymin ):
+            if motor == 3 and destination > self.safe_Fcs and (self.XYFpositions[0] < self.dyn_Xmin or self.XYFposition[0] > self.dyn_Xmax or 
+                                                            self.XYFposition[1] >  self.dyn_Ymax or self.XYFposition[1] < self.dyn_Ymin ):
                 destination = self.safe_Fcs
             
         return destination
 
     def move_1axis(self, axis, movement): # for small axis movement 
 	#convert a movement into a destination          
-        motor_position = self.positions[axis-1]
+        motor_position = self.XYFposition[axis-1]
         motor_destination = motor_position + movement
         if motor_destination < 0:
             return
         self.move_single_axis(axis, motor_destination)           
         
     def go_absolute(self, destinations): #ordered movement of the 3 axis, move focus first of last depending on condition to avoid triggering dyn_endstop
-        if destinations[2] < self.positions[2]: #move focus first if it's going down (park)
+        if destinations[2] < self.XYFposition[2]: #move focus first if it's going down (park)
             self.move_focus(destinations[2]) 
             self.move_X_Y(destinations[0],destinations[1])
         else: #move focus last if it's going up (start)
             self.move_X_Y(destinations[0],destinations[1])    
             self.move_focus(destinations[2])
    
-    def set_ledpwr(self, pwr):
-        if self.is_ready: #nothing is done if arduino is not available
-            with SMBus(1) as bus:
-                bus.write_i2c_block_data(addr, 4, [ 4 , pwr])
+    def set_ledspwr(self, led1pwr, led2pwr):
+        with SMBus(1) as bus:
+            checksum = (led1pwr + led2pwr) % 256 
+            bus.write_i2c_block_data(addr, 4, [ 4 , led1pwr, led2pwr,checksum])
 
     def send_simplecmd(self, cmd):
-        if self.is_ready: #nothing is done if arduino is not available
-            with SMBus(1) as bus:
-                bus.write_byte_data(addr, cmd, cmd) #command need to be sent twice to be executed (crude error check)
-    
-    def set_led_state(self, state):        
-        if state == 0:
-            self.send_simplecmd(8)
-            self.positions[4] = 0
-        elif state == 1:
-            self.send_simplecmd(5)
-            self.positions[4] = 1
-        elif state == 2:
-            self.send_simplecmd(6)
-            self.positions[4] = 2
-        elif state == 3:
-            self.send_simplecmd(7)
-            self.positions[4] = 3
-        elif state == 4:
-            self.send_simplecmd(9)
-            self.positions[4] = 2
+        with SMBus(1) as bus:
+            bus.write_byte_data(addr, cmd, cmd) #command need to be sent twice to be executed (crude error check)
          
     def read_positions(self): #get position from the microscope
+        i=1
+        while i <= retry: #do the comunication, but catch error and retry in case of problem          
+            try:  # Read 15 bytes (last is checksum)
+                with SMBus(1) as bus:
+                    msg = bus.read_i2c_block_data(addr, 0, 15) #generate I²C msg instance as msg
 
-        if self.is_ready: #nothing is done if arduino is not available
-            i=1
-            while i <= retry: #do the comunication, but catch error and retry in case of problem
-           
-                try:  # Read 15 bytes (last is checksum)
-                    with SMBus(1) as bus:
-                        msg = bus.read_i2c_block_data(addr, 0, 15) #generate I²C msg instance as msg
-
-                except:
-                    time.sleep(1)
-                    i += 1
-                    print("At "+ time.strftime("%H:%M:%S", time.localtime()) +" read position: comunication error, retrying "+str(i)+" of "+ str(retry) +" times")
-                    
-                else:
-                    break
-
-            #parse the 14 bytes into 3*4 +2 bytes values (there is probably a better way to do it)
-            X_b = []
-            Y_b = []
-            Focus_b = []
-            i = 1
-
-            for value in msg: #I²C msg instance can be iterated to get the byte one by one
-                if i <= 4:
-                    X_b.append(value)
+            except:
+                time.sleep(0.5)
+                i += 1
+                print("At "+ time.strftime("%H:%M:%S", time.localtime()) +" read position: comunication error, retrying "+str(i-1)+" of "+ str(retry) +" times")                   
             
-                if 5 <= i <= 8:
-                    Y_b.append(value) 
+            else:
+                break
 
-                if 9 <= i <= 12:
-                    Focus_b.append(value) 
-
-                if i == 13:
-                    led1 = value
-                if i == 14:
-                    led2 = value
-                if i == 15:
-                    received_checksum = value
-                i = i+1
-
-            checksum = (sum(X_b) + sum(Y_b) + sum(Focus_b) + led1 + led2) %256 #checksum on arduino side is an overflown byte, need to take modulo 256 to reproduce behaviour
-            
-            if checksum != received_checksum:
+            checksum = (sum(msg[:14])) %256 
+            if checksum != msg[14]:
                 return None
             
-			#generate integer from the list of bytess.
-			
-            X_pos = int.from_bytes(X_b, byteorder='little', signed=False)
-            Y_pos = int.from_bytes(Y_b, byteorder='little', signed=False)
-            Focus_pos = int.from_bytes(Focus_b, byteorder='little', signed=False)
-			
-            positions = [X_pos, Y_pos, Focus_pos, led1, led2]
-            return positions
+        #generate integer from the list of bytess.
+        
+        X_pos = int.from_bytes(msg[:4], byteorder='little', signed=False)
+        Y_pos = int.from_bytes(msg[4:8], byteorder='little', signed=False)
+        Focus_pos = int.from_bytes(msg[8:12], byteorder='little', signed=False)		
+        led1 = msg[12]
+        led2 = msg[13]
 
-    def checked_read_positions(self): #return position if read_postiions() is not none (=checksum match) or exit after 10 retry
+        positions = [X_pos, Y_pos, Focus_pos, led1, led2]
+        return positions
+
+    def update_real_state(self): #return position if read_postiions() is not none (=checksum match) or exit after 10 retry
         i=1
         while i <= read_retry:
             positions = self.read_positions()
             if positions is not None:
-                return positions
-            
-            time.sleep(0.5)
+                self.XYFposition = positions[:3]
+                self.led1pwr = positions[3]
+                self.led2pwr = positions[4]
+                return
+        
+            time.sleep(0.1)
             i += 1
         print("Unable to read position after " +str(read_retry)+ " attempents" )
         exit()

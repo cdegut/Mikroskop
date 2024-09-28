@@ -4,8 +4,11 @@ from threading import Thread, Event
 from .microscope_param import awbR_fluo, awbB_fluo, awbR_white, awbB_white
 from libcamera import Transform
 from time import sleep
+from .interface.picameraQT import PreviewWidget
+
 camera_full_resolution = (4056,3040)
 h264_max_resolution = (1664,1248)
+preview_resolution = (804, 580)
 
 class Microscope_camera(Picamera2):
     def __init__(self):
@@ -14,10 +17,14 @@ class Microscope_camera(Picamera2):
         self.EV_value = 0
         self.exp = 500
         self.gain = 1
+        self.initialise()
+        self.metadata = []
+        self.post_callback = self.post_callback_exec
+        self.qpicamera = None
     
-    def initialise(self, QT=False):
+    def initialise(self):
         self.general_config = self.create_preview_configuration(main={"size":  (1610, 1200)}, 
-                                                                lores={"size": (804, 600), "format": "YUV420"}, 
+                                                                lores={"size": preview_resolution, "format": "YUV420"}, 
                                                                 raw={"size": (2028, 1520)}, display= "lores", buffer_count=1)
         self.align_configuration(self.general_config)
         self.full_res_config = self.create_still_configuration(main={"size":  (400,300)},
@@ -28,13 +35,18 @@ class Microscope_camera(Picamera2):
         self.make_running_config()
 
         self.configure(self.running_config)
+
+        self.title_fields = ['FocusFoM']
+    
+    def post_callback_exec(self, request):
+        self.metadata = request.get_metadata()
+
+    def simple_preview(self, QT):
         if not QT:
             self.start_preview(Preview.QTGL, x=0 , y=25, width=800, height=625, transform=Transform(vflip=1))
         else:
             self.start_preview(Preview.QT, width=800, height=625, transform=Transform(vflip=1))
-
         self.start()
-        self.title_fields = ['FocusFoM']
     
     def make_running_config(self):
         ## make a copy of general_config (copy and deep copy do not work well)
@@ -138,9 +150,11 @@ class Microscope_camera(Picamera2):
         save.start()
 
     def capture_full_res(self,  picture_name, data_dir):
-        self.switch_mode_keep_zoom("full_res")
-        self.capture_and_save(picture_name, data_dir)
-        self.switch_mode_keep_zoom("general")
+        #self.switch_mode_keep_zoom("full_res")
+        self.switch_mode_and_capture_file(self.full_res_config, "/home/microscope/microscope/test.jpg", signal_function=self.qpicamera.signal_done)
+        #self.capture_and_save(picture_name, data_dir)
+
+        #self.switch_mode_keep_zoom("general")
 
     def capture_with_flash(self, picture_name, data_dir, microscope, led, ledpwr):
         
@@ -148,7 +162,6 @@ class Microscope_camera(Picamera2):
         microscope.set_ledpwr(ledpwr)
         
         self.capture_metadata()
-        #self.capture_metadata()
         self.capture_and_save(picture_name, data_dir)
 
         microscope.set_led_state(0)
@@ -171,30 +184,15 @@ class Microscope_camera(Picamera2):
             #camera.controls.Contrast = 10 
 
     def current_exposure(self):
+        return (self.metadata['ExposureTime'], self.metadata['AnalogueGain'])
 
-        metadata = self.capture_metadata()
-        return (metadata['ExposureTime'], metadata['AnalogueGain'])
-
-    def current_exposure_nowait(self):  
-        ## result will be found in the self.exp and self.wait when function return
-        self.metadata_job = self.capture_metadata(wait=False, signal_function=self.metadata_update)
-    
-    def metadata_update(self, job):
-        metadata = self.wait(job)
-        self.exp = metadata['ExposureTime']
-        self.gain = metadata['AnalogueGain']
-
-    def print_metadata(self):
-        metadata = self.capture_metadata()
-        print(metadata)
-    
     def auto_exp_enable(self, value):
-        metadata = self.capture_metadata()
+
         if value == False:
             with self.controls as controls:
                 controls.AeEnable = False
-                controls.AnalogueGain = metadata['AnalogueGain']
-                controls.ExposureTime = metadata['ExposureTime']
+                controls.AnalogueGain = self.metadata['AnalogueGain']
+                controls.ExposureTime = self.metadata['ExposureTime']
 
         elif value == True:
             with self.controls as controls:
@@ -264,6 +262,7 @@ class VideoRecorder(Thread):
         self.camera.stop_encoder()
 
         self.camera.switch_mode_keep_zoom("general")
+
 
 
 ##### Function that generate the worker and pass the information to it

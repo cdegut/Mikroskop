@@ -3,6 +3,7 @@ from .popup import led_focus_zoom_buttons
 from ..parametersIO import create_folder
 from time import time
 from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N
+from os import getenv
 
 
 class Time_lapse_window(Interface, CTkFrame):
@@ -11,7 +12,8 @@ class Time_lapse_window(Interface, CTkFrame):
         Interface.__init__(self, Tk_root, microscope=microscope, camera=camera, parameters=parameters)
         
         self.led = 0
-        self.ledpwr = 0
+        self.led1pwr = 0
+        self.led2pwr = 0
         self.max_frame = 5
         self.timer = 5
 
@@ -66,17 +68,20 @@ class Time_lapse_window(Interface, CTkFrame):
             self.FrameLabel.place(relx=rec_position[0], y=rec_position[1]+40)
 
     def start_time_lapse(self):
-        data_dir = self.parameters.get()["data_dir"]
-        self.led = self.microscope.positions[4]
-        self.ledpwr = self.microscope.positions[3]
+        data_dir = f"{self.parameters.home}{self.parameters.get()['data_dir']}"
+        
+        self.led1pwr = self.microscope.led1pwr
+        self.led2pwr = self.microscope.led2pwr
+
         self.timer = int(self.TimerMenu.get())
         self.max_frame = int(60 / self.timer *  int(self.TotalTimeMenu.get()))
         date = self.timestamp()
         create_folder(f"{data_dir}time-lapse/")
         self.full_data_path = f"{data_dir}time-lapse/{date}/"
-        #self.full_data_path = f"{data_dir}time-lapse/"
         create_folder(self.full_data_path)
+
         self.camera.switch_mode_keep_zoom("full_res")
+        
         self.start_timer = time()
         self.camera.auto_exp_enable(False)
 

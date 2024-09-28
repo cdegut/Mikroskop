@@ -70,11 +70,7 @@ class MainMenu(Interface, CTkFrame):
     
     def objective_change(self):
         self.microscope.go_absolute([Xmaxrange, Ymaxrange, 0])
-        self.microscope.set_ledpwr(0)
-        self.microscope.set_led_state(0)
 
     def parknquit(self):
         self.microscope.go_absolute([Xmaxrange, Ymaxrange/2, 0])
-        self.microscope.set_ledpwr(0)
-        self.microscope.set_led_state(0)
         self.exit()

@@ -222,15 +222,15 @@ class ParametersConfig(Interface, CTkFrame):
 
     def save_A1(self):
         start = self.parameters.get()["start"]
-        start[0] = self.microscope.positions[0]
-        start[1] = self.microscope.positions[1]
+        start[0] = self.microscope.XYFposition[0]
+        start[1] = self.microscope.XYFposition[1]
         self.parameters.update([("start", start)])
         self.start = start
         self.grid.generate_grid()
 
     def measure(self):  
-        self.Xsteps = abs(int( (self.microscope.positions[0] - self.start[0]) / int(self.divisorX.get())))
-        self.Ysteps = abs(int( (self.microscope.positions[1] - self.start[1]) / int(self.divisorY.get())))
+        self.Xsteps = abs(int( (self.microscope.XYFposition[0] - self.start[0]) / int(self.divisorX.get())))
+        self.Ysteps = abs(int( (self.microscope.XYFposition[1] - self.start[1]) / int(self.divisorY.get())))
     
     def label_update(self):
         self.measure()
