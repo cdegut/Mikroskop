@@ -1,14 +1,14 @@
 from picamera2 import Picamera2,Preview
 from .parametersIO import create_folder
 from threading import Thread, Event
-from .microscope_param import awbR_fluo, awbB_fluo, awbR_white, awbB_white
+from .microscope_param import awbR_fluo, awbB_fluo, awbR_white, awbB_white, preview_resolution
 from libcamera import Transform
 from time import sleep
 from .interface.picameraQT import PreviewWidget
+from picamera2.previews.qt import QGlPicamera2, QPicamera2
 
 camera_full_resolution = (4056,3040)
 h264_max_resolution = (1664,1248)
-preview_resolution = (804, 580)
 
 class Microscope_camera(Picamera2):
     def __init__(self):
@@ -20,16 +20,20 @@ class Microscope_camera(Picamera2):
         self.initialise()
         self.metadata = []
         self.post_callback = self.post_callback_exec
-        self.qpicamera = None
+        self.qpicamera: QPicamera2 | QGlPicamera2 = None
+        self.save_data_name = None
+
+        self.request_counter = 0
+        self.zoom_animation = {}
     
     def initialise(self):
         self.general_config = self.create_preview_configuration(main={"size":  (1610, 1200)}, 
                                                                 lores={"size": preview_resolution, "format": "YUV420"}, 
                                                                 raw={"size": (2028, 1520)}, display= "lores", buffer_count=1)
         self.align_configuration(self.general_config)
-        self.full_res_config = self.create_still_configuration(main={"size":  (400,300)},
+        self.full_res_config = self.create_still_configuration(main={"size":  camera_full_resolution},
                                                                lores={"size": (402, 300), "format": "YUV420"}, 
-                                                               raw={"size":  (4056,3040)}, display= "lores")
+                                                               raw={"size":  camera_full_resolution}, display= "lores")
         self.align_configuration(self.full_res_config)
 
         self.make_running_config()
@@ -58,32 +62,36 @@ class Microscope_camera(Picamera2):
         self.running_config = self.create_preview_configuration(main=main, lores=lores, raw=raw, display= "lores", buffer_count=buffer)
     
     def change_zoom(self, crop_factor, animation = True):
-        full_res = self.camera_properties['PixelArraySize']
+    
+        self.zoom_animation["full_res"] = self.camera_properties['PixelArraySize']  
+        #curent_crop = self.crop_value
+
         
         if not animation:
-            crop = [int(crop_factor*full_res[0]),int(crop_factor*full_res[1])]
-            offset = [(full_res[0] - crop[0]) // 2 , (full_res[1] - crop[1]) // 2 , ]
+            crop = [int(crop_factor*self.zoom_animation["full_res"][0]),int(crop_factor*self.zoom_animation["full_res"][1])]
+            offset = [(self.zoom_animation["full_res"][0] - crop[0]) // 2 , (self.zoom_animation["full_res"][1] - crop[1]) // 2 , ]
             self.set_controls({"ScalerCrop": offset  + crop})
             return offset, crop
-
-        zoom_step = (crop_factor - self.crop_value) / 20 
-
-        for i in range(22):
-            self.capture_metadata() #image sync
-            value = self.crop_value + ((i+1) * zoom_step)
-            crop = [int(value*full_res[0]),int(value*full_res[1])]
-            offset = [(full_res[0] - crop[0]) // 2 , (full_res[1] - crop[1]) // 2 , ]
-            self.set_controls({"ScalerCrop": offset  + crop})
-            
-        crop = [int(crop_factor*full_res[0]),int(crop_factor*full_res[1])]
-
         
-        offset = [(full_res[0] - crop[0]) // 2 , (full_res[1] - crop[1]) // 2 , ]
+        self.post_callback = self.post_callback_zoom_animation
+        self.request_counter = 0
+        self.zoom_animation["steps"] = (crop_factor - self.crop_value) / 20 
+
+    ## use the callback to animate the zoom
+    def post_callback_zoom_animation(self, request):
+        self.metadata = request.get_metadata()
+        self.request_counter += 1
+
+        value = self.crop_value + ((self.request_counter) * self.zoom_animation["steps"])
+        crop = [int(value*self.zoom_animation["full_res"][0]),int(value*self.zoom_animation["full_res"][1])]
+        offset = [(self.zoom_animation["full_res"][0] - crop[0]) // 2 , (self.zoom_animation["full_res"][1] - crop[1]) // 2 , ]
         self.set_controls({"ScalerCrop": offset  + crop})
-        self.crop_value = crop_factor
         
-        self.correct_resolution((crop[0], crop[1]))
-        self.set_controls({"ScalerCrop": offset  + crop})
+        if self.request_counter == 20:
+            self.post_callback = self.post_callback_exec
+            #self.correct_resolution((crop[0], crop[1]))
+            self.set_controls({"ScalerCrop": offset  + crop}) 
+            self.crop_value = value     
 
     def correct_resolution(self, new_field = (1400, 1080)):
         new_main_config = None
@@ -123,7 +131,7 @@ class Microscope_camera(Picamera2):
         self.align_configuration(self.running_config)
         if self.running_config["main"]["size"] > self.running_config["lores"]["size"]:
             self.running_config["lores"]["size"] = self.running_config["main"]["size"]
-        self.switch_mode(self.running_config)
+        self.switch_mode(self.running_config, signal_function=self.qpicamera.signal_done)
                         
 
     def switch_mode_keep_zoom(self, mode):
@@ -144,17 +152,33 @@ class Microscope_camera(Picamera2):
 
     def capture_and_save(self, picture_name, data_dir):
         create_folder(data_dir)
-        full_data_name = f"{data_dir}/{picture_name}.png"
-        capture = self.capture_image("main")       
-        save = Thread(target = self.save_capture, args=(capture, full_data_name))
+        self.save_data_name = f"{data_dir}/{picture_name}.png"
+        self.capture_image("main", signal_function=self.process_capture_)        
+
+    def process_capture_(self,capture_job):
+        self.qpicamera.signal_done(capture_job)
+        pil_img = self.wait(capture_job)
+        save = Thread(target = self.thread_save_capture_, args=(pil_img, self.save_data_name))
         save.start()
+   
+    def thread_save_capture_(self, pil_img , full_data_name): ##run as a separate thread
+        print("saving")
+        img_RGB = pil_img.convert('RGB')
+        img_RGB.save(full_data_name, format = "png" )
 
     def capture_full_res(self,  picture_name, data_dir):
-        #self.switch_mode_keep_zoom("full_res")
-        self.switch_mode_and_capture_file(self.full_res_config, "/home/microscope/microscope/test.jpg", signal_function=self.qpicamera.signal_done)
-        #self.capture_and_save(picture_name, data_dir)
-
-        #self.switch_mode_keep_zoom("general")
+        self.save_data_name = f"{data_dir}/{picture_name}.png"
+        self.switch_mode(self.full_res_config, signal_function=self.qpicamera.signal_done)
+        self.capture_and_save(picture_name, data_dir) 
+        self.switch_mode(self.running_config, signal_function=self.qpicamera.signal_done)
+        if self.crop_value != 1:
+            self.change_zoom(self.crop_value, False)
+    
+    def capture_HD_(self, switch_job):
+        self.qpicamera.signal_done(switch_job)
+        self.wait(switch_job)
+        self.capture_image("main", signal_function=self.process_capture_)
+        
 
     def capture_with_flash(self, picture_name, data_dir, microscope, led, ledpwr):
         
@@ -166,9 +190,6 @@ class Microscope_camera(Picamera2):
 
         microscope.set_led_state(0)
         microscope.set_ledpwr(0)
-            
-    def save_capture(self, capture, full_data_name): ##run as a separate thread
-        capture.save(full_data_name, format = "png" )
 
     def awb_preset(self, awb):
         if awb == "Green Fluo":

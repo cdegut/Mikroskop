@@ -37,3 +37,6 @@ awbR_fluo = 1
 awbB_fluo = 0.3
 awbR_white = 4.5
 awbB_white = 0.8
+
+#Preview window size
+preview_resolution = (804, 580) 

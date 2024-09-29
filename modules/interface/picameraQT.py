@@ -2,9 +2,10 @@ import sys, os
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, QLabel, QCheckBox, QWidget, QTabWidget, QVBoxLayout, QGridLayout)
 from picamera2.previews.qt import QGlPicamera2, QPicamera2
 from PyQt5 import QtCore
-#from ..cameracontrol import  Microscope_camera, preview_resolution
+from ..microscope_param import preview_resolution
 from libcamera import Transform
 import sys
+
 preview_resolution = (804, 580)
 class MainApp(QMainWindow):
 
@@ -51,15 +52,6 @@ class PreviewWidget(QWidget):
         self.overlay()
         micro_cam.start()
 
-    def Up_clicked(self):
-        self.microscope.push_axis(1 , 100)
-
-
-
-    def capture(self):
-        cfg = self.micro_cam.create_still_configuration()
-        #self.switch_mode_and_capture_file(cfg, "test.jpg", signal_function=self.qpicamera2.signal_done)
-
     def overlay(self):
 
         class ScrollButton(QPushButton):
@@ -95,14 +87,6 @@ class PreviewWidget(QWidget):
         Fplus = ScrollButton("F+", (0,0), button_size, focus_button_style, (3, 50), self.microscope, self)
         Fminus = ScrollButton("F-", (0,button_size +10), button_size, focus_button_style, (3, -50), self.microscope, self)
 
-        snap = QPushButton(self)
-        snap.setText("test")
-        snap.setGeometry(100,100,80,80)
-        snap.setStyleSheet( button_style)
-        snap.clicked.connect(self.capture)
-
-
-
 
 if __name__ == '__main__':
     from os import environ
@@ -125,7 +109,7 @@ if __name__ == '__main__':
     else:
         export = True
     
-    micro_cam =  Microscope_camera()
+    micro_cam =  Picamera2()
     parameters = ParametersSets()
     microscope = Microscope(addr, ready_pin, parameters)
 
