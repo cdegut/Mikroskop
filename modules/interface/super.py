@@ -1,7 +1,8 @@
-from customtkinter import CTkFrame, CTkButton, CTkLabel, N, CTkSlider, IntVar, CENTER, CTkImage
+from customtkinter import CTkFrame, CTkButton, CTkLabel, N, CTkSlider, IntVar, CENTER, CTk
 from ..microscope import Microscope
 from ..position_grid import PositionsGrid
 from ..microscope_param import Xmaxrange, Ymaxrange
+from ..cameracontrol import Microscope_camera
 from time import localtime
 
 
@@ -13,7 +14,7 @@ plate_name = "Plate" ##is a place holder to later add a plate type selector, may
 
 class Interface: 
 
-    def __init__(self, Tk_root, last_window=None, microscope=None, grid=None, camera=None, parameters=None):
+    def __init__(self, Tk_root: CTk, last_window=None, microscope: Microscope =None, grid=None, camera: Microscope_camera = None, parameters=None):
         CTkFrame.__init__(self, Tk_root)
         self.Tk_root = Tk_root
         self.microscope = microscope

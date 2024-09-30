@@ -6,14 +6,15 @@ from libcamera import Transform
 from time import sleep
 from .interface.picameraQT import PreviewWidget
 from picamera2.previews.qt import QGlPicamera2, QPicamera2
+from.microscope import Microscope
 
 camera_full_resolution = (4056,3040)
 h264_max_resolution = (1664,1248)
 
 class Microscope_camera(Picamera2):
-    def __init__(self):
+    def __init__(self, microscope):
         Picamera2.__init__(self)
-        self.crop_value = 1
+        self.crop_factor = 1
         self.EV_value = 0
         self.exp = 500
         self.gain = 1
@@ -22,16 +23,20 @@ class Microscope_camera(Picamera2):
         self.post_callback = self.post_callback_exec
         self.qpicamera: QPicamera2 | QGlPicamera2 = None
         self.save_data_name = None
+        self.microscope: Microscope = microscope
+
+        self.new_config = None
 
         self.request_counter = 0
         self.zoom_animation = {}
+        self.capture_param = {}
     
     def initialise(self):
-        self.general_config = self.create_preview_configuration(main={"size":  (1610, 1200)}, 
-                                                                lores={"size": preview_resolution, "format": "YUV420"}, 
+        self.general_config = self.create_preview_configuration(main={"size":  (1610, 1200), "format": "RGB888" }, 
+                                                                lores={"size": (preview_resolution), "format": "YUV420"}, 
                                                                 raw={"size": (2028, 1520)}, display= "lores", buffer_count=1)
         self.align_configuration(self.general_config)
-        self.full_res_config = self.create_still_configuration(main={"size":  camera_full_resolution},
+        self.full_res_config = self.create_still_configuration(main={"size":  camera_full_resolution, "format": "RGB888" },
                                                                lores={"size": (402, 300), "format": "YUV420"}, 
                                                                raw={"size":  camera_full_resolution}, display= "lores")
         self.align_configuration(self.full_res_config)
@@ -64,48 +69,49 @@ class Microscope_camera(Picamera2):
     def change_zoom(self, crop_factor, animation = True):
     
         self.zoom_animation["full_res"] = self.camera_properties['PixelArraySize']  
-        #curent_crop = self.crop_value
-
-        
+       
         if not animation:
             crop = [int(crop_factor*self.zoom_animation["full_res"][0]),int(crop_factor*self.zoom_animation["full_res"][1])]
             offset = [(self.zoom_animation["full_res"][0] - crop[0]) // 2 , (self.zoom_animation["full_res"][1] - crop[1]) // 2 , ]
+            self.zoom_animation["final_crop"] = crop
+            self.zoom_animation["final_offset"] = offset
+            self.correct_resolution(crop)
             self.set_controls({"ScalerCrop": offset  + crop})
-            return offset, crop
         
-        self.post_callback = self.post_callback_zoom_animation
+        self.post_callback = self.post_callback_zoom_animation_
         self.request_counter = 0
-        self.zoom_animation["steps"] = (crop_factor - self.crop_value) / 20 
+        self.zoom_animation["steps"] = (crop_factor - self.crop_factor) / 20
 
     ## use the callback to animate the zoom
-    def post_callback_zoom_animation(self, request):
+    def post_callback_zoom_animation_(self, request):
         self.metadata = request.get_metadata()
         self.request_counter += 1
 
-        value = self.crop_value + ((self.request_counter) * self.zoom_animation["steps"])
-        crop = [int(value*self.zoom_animation["full_res"][0]),int(value*self.zoom_animation["full_res"][1])]
+        crop_factor = self.crop_factor + ((self.request_counter) * self.zoom_animation["steps"])
+        crop = [int(crop_factor*self.zoom_animation["full_res"][0]),int(crop_factor*self.zoom_animation["full_res"][1])]
         offset = [(self.zoom_animation["full_res"][0] - crop[0]) // 2 , (self.zoom_animation["full_res"][1] - crop[1]) // 2 , ]
         self.set_controls({"ScalerCrop": offset  + crop})
         
         if self.request_counter == 20:
+            
+            self.zoom_animation["final_crop"] = crop   
+            self.zoom_animation["final_offset"] = offset
+            self.crop_factor = crop_factor
             self.post_callback = self.post_callback_exec
-            #self.correct_resolution((crop[0], crop[1]))
-            self.set_controls({"ScalerCrop": offset  + crop}) 
-            self.crop_value = value     
+            self.correct_resolution(crop)
+            self.set_controls({"ScalerCrop": offset  + crop})
+    
 
     def correct_resolution(self, new_field = (1400, 1080)):
+        '''
+        crop to the real sensor resolution
+        '''
         new_main_config = None
-        new_lores_config = None
         
         ## main corection when zooming in
         if new_field[0] < self.general_config["main"]["size"][0]:
             new_main_config = new_field
             
-            ## lores corection when zooming in
-            if new_main_config[0] < self.running_config["lores"]["size"][0]:
-                new_lores_config = new_field
-            
- 
         ## main corection when zooming out
         if new_field[0] > self.running_config["main"]["size"][0]:
             
@@ -113,33 +119,28 @@ class Microscope_camera(Picamera2):
                 new_main_config = new_field
             else:
                 new_main_config = self.general_config["main"]["size"]
-            
-            ## lowres corection when zoming out
-            if self.running_config["lores"]["size"][0] < new_field[0]:
-                if new_field[0] < self.general_config["lores"]["size"][0]:
-                    new_lores_config = new_field
-                else:
-                    new_lores_config = self.general_config["lores"]["size"]
         
-        
-        if new_main_config:            
-            self.running_config["main"]["size"] = (new_main_config[0] // 2 * 2 , new_main_config[1] // 2 * 2 )
-        
-        if new_lores_config:
-            self.running_config["lores"]["size"] = (new_lores_config[0] // 2 * 2 , new_lores_config[1] // 2 * 2 )
-        
-        self.align_configuration(self.running_config)
-        if self.running_config["main"]["size"] > self.running_config["lores"]["size"]:
+        if new_main_config:
+            self.running_config["main"]["size"] = (new_main_config[0] - new_main_config[0] % 16,
+                                                    new_main_config[1] - new_main_config[1] % 16)        
+
+        # need to alin configuration to 64 for YUV stram and 16 omly for RGB stream, not exactly sure why
+
+        self.stop()
+        if self.running_config["main"]["size"] < self.running_config["lores"]["size"]:
             self.running_config["lores"]["size"] = self.running_config["main"]["size"]
-        self.switch_mode(self.running_config, signal_function=self.qpicamera.signal_done)
+
+        self.configure_(self.running_config)
+        self.start()
+
                         
 
     def switch_mode_keep_zoom(self, mode):
         if mode == "general":
-            self.switch_mode(self.running_config)
-            self.change_zoom(self.crop_value, animation =False)
+            self.switch_mode(self.running_config, signal_function=self.qpicamera.signal_done)
+            self.change_zoom(self.crop_factor, animation =False)
         if mode == "full_res":
-            offset, crop = self.change_zoom(self.crop_value, False)
+            offset, crop = self.change_zoom(self.crop_factor, False)
             self.full_res_config["main"]["size"] = (crop[0] //2 *2, crop[1]//2*2)
             self.align_configuration(self.full_res_config)
             self.switch_mode(self.full_res_config)
@@ -147,7 +148,7 @@ class Microscope_camera(Picamera2):
             self.capture_metadata() ## need to wait an image before giving the feed back
         if mode == "video":
             self.switch_mode(self.video_config)
-            self.change_zoom(self.crop_value, animation =False)
+            self.change_zoom(self.crop_factor, animation =False)
              
 
     def capture_and_save(self, picture_name, data_dir):
@@ -170,26 +171,71 @@ class Microscope_camera(Picamera2):
         self.save_data_name = f"{data_dir}/{picture_name}.png"
         self.switch_mode(self.full_res_config, signal_function=self.qpicamera.signal_done)
         self.capture_and_save(picture_name, data_dir) 
-        self.switch_mode(self.running_config, signal_function=self.qpicamera.signal_done)
-        if self.crop_value != 1:
-            self.change_zoom(self.crop_value, False)
-    
-    def capture_HD_(self, switch_job):
-        self.qpicamera.signal_done(switch_job)
-        self.wait(switch_job)
-        self.capture_image("main", signal_function=self.process_capture_)
+        self.switch_mode(self.running_config, signal_function=self.zoom_back_)
+        print(self.crop_factor)
+ 
+    def zoom_back_(self, job):
+        self.qpicamera.signal_done(job)
+        if self.crop_factor != 1:
+            print("zoom back")
+            self.wait(job)
+            self.set_controls({"ScalerCrop": self.zoom_animation["final_offset"]  + self.zoom_animation["final_crop"]})
         
+    def capture_with_preset(self):
+        #self.capture_param = capture_param
 
-    def capture_with_flash(self, picture_name, data_dir, microscope, led, ledpwr):
-        
-        microscope.set_led_state(led)
-        microscope.set_ledpwr(ledpwr)
-        
-        self.capture_metadata()
-        self.capture_and_save(picture_name, data_dir)
+        self.stop()
+        self.configure_(self.full_res_config)
+        self.start()
+        self.post_callback = self.capture_with_preset_callback_
+        self.capture_param["counter"] = 0
 
-        microscope.set_led_state(0)
-        microscope.set_ledpwr(0)
+        if "led1pwr" in self.capture_param.keys():
+            self.set_preset_values(self.capture_param)
+  
+    def capture_with_preset_callback_(self, request):
+        self.capture_param["counter"] += 1
+        self.metadata = request.get_metadata()
+
+        if self.capture_param["counter"] < 5: #some images are needed to stabilise the cature
+            return 
+        
+        data_name = f"{self.capture_param['data_dir']}/{self.capture_param['picture_name']}"
+        result = request.make_image("main")
+        save = Thread(target = self.thread_save_capture_, args=(result, data_name))
+        save.start()
+        self.post_callback = self.post_callback_exec
+
+        # No blocking switch_mode:
+        self.stop()
+        self.configure_(self.running_config)
+        self.start()
+
+        if "led1pwr" in self.capture_param.keys():
+            self.set_preset_values()
+
+
+    def set_preset_values(self, preset = None):
+        '''
+        take dictionary with ["awb"] ["led1pwr"] ["led2pwr"] ["auto_exp"] (auto) ["EV"] ["gain"] ["exp"]
+        None = all auto values
+        '''
+        if preset is None:
+             self.awb_preset("auto")
+             self.auto_exp_enable(True)
+             self.set_EV(0)
+             self.microscope.set_ledspwr(25,0)
+             return
+
+        self.awb_preset(preset["awb"])
+        self.microscope.set_ledspwr(preset["led1pwr"],preset["led2pwr"])
+
+        if preset["auto_exp"] == "auto":
+            self.auto_exp_enable(True)
+            self.set_EV(preset["EV"])
+        else:
+            self.set_exposure(preset["exp"], preset["gain"])
+
 
     def awb_preset(self, awb):
         if awb == "Green Fluo":

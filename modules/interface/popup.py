@@ -32,7 +32,7 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
         self.led2_label = CTkLabel(self, text = "LED power:")
         self.led2_scale = CTkSlider(self, from_=0, to=100, height=60, width=200, orientation=HORIZONTAL)
 
-        Save =  CTkButton(self, width=80, text="Save", command=self.save_led)
+        Save =  CTkButton(self, width=80, text="Save", command=self.save_capture_param)
 
 
         self.AutoExp = CTkButton(self, text="AutoExp ON", command=self.auto_exp)
@@ -67,7 +67,7 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
         if self.auto_exp_value == "off":
             self.AutoExp.configure(text="AutoExp OFF")
         
-        if self.awb_value == "off":
+        if self.awb_value == "Green Fluo":
             self.AWB_button.configure(text="AWB Fluo")
 
 
@@ -97,24 +97,12 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
                 self.EV_scale.set(self.camera.EV_value)
 
 
-    def led_change(self, led):
-        if led == 1:
-            self.microscope.set_led_state(1)
-            self.camera.awb_preset("white")
-            self.AWB_button.configure(text="AWB: Normal")
-
-        if led == 2:
-            self.microscope.set_led_state(2)
-            self.camera.awb_preset("Green Fluo")
-            self.AWB_button.configure(text="AWB: Green Fluo")
-
     def auto_exp(self):
         if self.auto_exp_value == "auto":
             self.camera.auto_exp_enable(False)
             self.auto_exp_value = "off"
             self.exposure_panel()
-
-        
+       
         elif self.auto_exp_value == "off":
             self.camera.auto_exp_enable(True)
             self.auto_exp_value = "auto"
@@ -122,17 +110,23 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
     
     def awb(self):
         if self.awb_value == "auto":
-            self.awb_value = "off"
+            self.awb_value = "Green Fluo"
             self.camera.awb_preset("Green Fluo")
             self.AWB_button.configure(text="Green Fluo Mode")
 
-        elif self.awb_value == "off":
+        elif self.awb_value == "Green Fluo":
             self.awb_value = "auto"
             self.camera.awb_preset( "auto")
             self.AWB_button.configure(text="Normal mode")
    
-    def save_led(self):
-        self.parameters.update([("led",[self.microscope.positions[3], self.microscope.positions[4]])])
+    def save_capture_param(self):
+        self.camera.capture_param["led1pwr"] = self.led1_scale.get()
+        self.camera.capture_param["led2pwr"] = self.led2_scale.get()
+        self.camera.capture_param["auto_exp"] = self.auto_exp_value
+        self.camera.capture_param["exp"] = self.camera.metadata['ExposureTime']
+        self.camera.capture_param["gain"] = self.camera.metadata['AnalogueGain']
+        self.camera.capture_param["awb"] = self.awb_value
+        self.camera.capture_param["EV"] = self.EV_scale.get()
 
     def set_led(self): ## Read the scale and set the led at the proper power
         pwr_1 = int(self.led1_scale.get())

@@ -34,7 +34,7 @@ if __name__ == "__main__":
     parameters = ParametersSets()
     microscope = Microscope(addr, ready_pin, parameters)
     grid = PositionsGrid(microscope, parameters)
-    micro_cam = Microscope_camera()
+    micro_cam = Microscope_camera(microscope)
     
     #Tkinter object
     customtkinter.set_appearance_mode("dark")

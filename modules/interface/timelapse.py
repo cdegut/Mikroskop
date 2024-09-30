@@ -3,7 +3,6 @@ from .popup import led_focus_zoom_buttons
 from ..parametersIO import create_folder
 from time import time
 from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N
-from os import getenv
 
 
 class Time_lapse_window(Interface, CTkFrame):
@@ -11,7 +10,6 @@ class Time_lapse_window(Interface, CTkFrame):
     def __init__(self, Tk_root, microscope, camera, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, camera=camera, parameters=parameters)
         
-        self.led = 0
         self.led1pwr = 0
         self.led2pwr = 0
         self.max_frame = 5
@@ -20,6 +18,8 @@ class Time_lapse_window(Interface, CTkFrame):
         self.start_timer = None
         self.frame_index = 0
         self.is_recording = False
+
+        self.capture_parameters = {}
       
         self.init_window()
     
@@ -35,10 +35,14 @@ class Time_lapse_window(Interface, CTkFrame):
         self.pack(fill=BOTH, expand=1)
 
         #generic buttons
+        self.Test = CTkButton(self, text="Test Image", command= self.test_image)
+        
         self.back_to_main_button()
         self.coordinate_place()
         self.show_record_label()
         self.record_button_place((0.5,50))
+
+        
         
     def menu(self, x_p=20, y_p=10):
         TimerLabel = CTkLabel(self, text="Delay (s)")
@@ -61,31 +65,29 @@ class Time_lapse_window(Interface, CTkFrame):
             self.Rec.place(relx=rec_position[0], y=rec_position[1], anchor=N)
             self.back_to_main_button()
             self.menu(x_p=20, y_p=120)
+            self.Test.place(x=20, y=360)
             led_focus_zoom_buttons(self,position=300)
         else:
-            self.Stop.place(relx=rec_position[0], y=rec_position[1])
+            self.Stop.place(relx=rec_position[0], y=rec_position[1], anchor=N)
             self.FrameLabel = CTkLabel(self, text=f"Frame Number: {self.frame_index + 1} \nof total: {self.max_frame }")
-            self.FrameLabel.place(relx=rec_position[0], y=rec_position[1]+40)
+            self.FrameLabel.place(relx=rec_position[0], y=rec_position[1]+40, anchor=N)
+
+    def test_image(self):
+        
+        self.camera.capture_param["data_dir"] = f"{self.parameters.get()['data_dir']}/time_lapse/tests"
+        self.camera.capture_param["picture_name"] = self.timestamp()
+        self.camera.capture_with_preset()
+
 
     def start_time_lapse(self):
-        data_dir = f"{self.parameters.home}{self.parameters.get()['data_dir']}"
-        
-        self.led1pwr = self.microscope.led1pwr
-        self.led2pwr = self.microscope.led2pwr
 
         self.timer = int(self.TimerMenu.get())
         self.max_frame = int(60 / self.timer *  int(self.TotalTimeMenu.get()))
-        date = self.timestamp()
-        create_folder(f"{data_dir}time-lapse/")
-        self.full_data_path = f"{data_dir}time-lapse/{date}/"
-        create_folder(self.full_data_path)
-
-        self.camera.switch_mode_keep_zoom("full_res")
         
+        self.camera.capture_param["data_dir"] = f"{self.parameters.get()['data_dir']}/time_lapse/"
+        self.camera.capture_param["picture_name"] = f"{'0'.zfill(len(str(self.max_frame)))}-{self.timestamp()}"
         self.start_timer = time()
-        self.camera.auto_exp_enable(False)
-
-        self.camera.capture_with_flash("0".zfill(len(str(self.max_frame))), self.full_data_path, self.microscope, self.led, self.ledpwr )
+        self.camera.capture_with_preset()     
         
         self.frame_index = 1
         self.is_recording = True
@@ -100,9 +102,10 @@ class Time_lapse_window(Interface, CTkFrame):
             if (time() - self.start_timer) > self.timer:
                 self.start_timer = time()
                 
-                pic_name = str(self.frame_index).zfill(len(str(self.max_frame)))
-                self.camera.capture_with_flash(pic_name, self.full_data_path, self.microscope, self.led, self.ledpwr )
-                
+                pic_name = f"{str(self.frame_index).zfill(len(str(self.max_frame)))}-{self.timestamp()}"
+                self.camera.capture_param["picture_name"] = pic_name
+                self.camera.capture_with_preset()  
+            
                 self.FrameLabel.configure(text=f"Frame Number: {self.frame_index + 1} \nof total: {self.max_frame}")
                 self.frame_index += 1
                
@@ -113,9 +116,6 @@ class Time_lapse_window(Interface, CTkFrame):
     
     def stop_time_lapse(self):
         self.is_recording = False
-        self.camera.switch_mode_keep_zoom("general")
-        self.microscope.set_ledpwr(self.ledpwr)
-        self.microcope.set_led_state(self.led)
         self.open()
 
 
