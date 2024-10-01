@@ -6,15 +6,15 @@ from ..microscope_param import preview_resolution
 from libcamera import Transform
 import sys
 
-preview_resolution = (804, 580)
 class MainApp(QMainWindow):
 
     def __init__(self, micro_cam, microscope, export=False):
         super().__init__()
-        self.setGeometry(0, 0, preview_resolution[0], preview_resolution[1])
+        self.setGeometry(0, 0, 1024, 600)
         self.export = export
         self.setWindowTitle("PiCameraPreview")
         self.main_widget = PreviewWidget(self, micro_cam, microscope, export)
+        self.main_widget.size(preview_resolution[0], preview_resolution[1])
         self.setCentralWidget(self.main_widget)
         if not export:
             self.setWindowFlags(QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint));             

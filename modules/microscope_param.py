@@ -39,4 +39,4 @@ awbR_white = 4.5
 awbB_white = 0.8
 
 #Preview window size
-preview_resolution = (804, 580) 
+preview_resolution = (800, 600)

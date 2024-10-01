@@ -282,7 +282,7 @@ class Microscope_camera(Picamera2):
 from picamera2.encoders import H264Encoder, Quality
 
 class VideoRecorder(Thread):
-    def __init__(self,camera, video_quality, video_name,event_rec_on):
+    def __init__(self,camera: Microscope_camera, video_quality, video_name,event_rec_on):
         Thread.__init__(self)
         self.camera = camera
         self.video_name = video_name
@@ -306,6 +306,10 @@ class VideoRecorder(Thread):
         if record_resolution[0] > h264_max_resolution[0]:
             record_resolution = h264_max_resolution
         
+        #align resolution for YUV (need to be *64)
+        record_resolution[0] = record_resolution[0] - record_resolution[0] %64
+        record_resolution[1] = record_resolution[1] - record_resolution[1] %64
+
         #### Set the resolution
         if record_resolution[0] < self.camera.general_config["lores"]["size"][0]:
             self.camera.video_config = self.camera.create_video_configuration(main={"size":  (record_resolution[0],record_resolution[1]), "format": "YUV420" },
@@ -320,7 +324,11 @@ class VideoRecorder(Thread):
 
         ### Start recording and wait for stop button
         encoder = H264Encoder()
-        self.camera.switch_mode_keep_zoom("video")
+        self.camera.stop()
+        self.camera.configure_(self.camera.video_config)
+        self.camera.start()
+        if self.camera.crop_factor != 1:
+            self.set_controls({"ScalerCrop": self.camera.zoom_animation["final_offset"]  + self.camera.zoom_animation["final_crop"]})
         self.camera.start_encoder(encoder, self.video_name)
         while not self.event.is_set():
             sleep(0.1)
