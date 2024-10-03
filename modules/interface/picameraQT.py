@@ -14,12 +14,32 @@ class MainApp(QMainWindow):
         self.export = export
         self.setWindowTitle("PiCameraPreview")
         self.main_widget = PreviewWidget(self, micro_cam, microscope, export)
-        self.main_widget.size(preview_resolution[0], preview_resolution[1])
+        self.main_widget.resize(preview_resolution[0], preview_resolution[1])
         self.setCentralWidget(self.main_widget)
         if not export:
             self.setWindowFlags(QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint));             
         self.show()
 
+class ScrollButton(QPushButton):
+
+    def __init__(self, text, position, size, style, direction, microscope, parent):
+        super().__init__(parent)
+        self.scrollTimer = QtCore.QTimer()
+        self.setText(text)
+        self.setGeometry(position[0],position[1], size, size)
+        self.setStyleSheet(style)
+        self.pressed.connect(lambda: self.start_scroll(direction))
+        self.released.connect(self.stop_scroll)
+        self.microscope = microscope
+
+    def start_scroll(self, direction):
+        self.microscope.push_axis(direction[0] , direction[1])
+        self.scrollTimer.timeout.connect(lambda: self.microscope.push_axis(direction[0] , direction[1]))
+        self.scrollTimer.start(100)
+
+    def stop_scroll(self):
+        self.scrollTimer.stop()
+        self.scrollTimer.timeout.disconnect()
 
 class PreviewWidget(QWidget): 
         
@@ -45,35 +65,11 @@ class PreviewWidget(QWidget):
         
  
         self.layout = QVBoxLayout()
-
         self.layout.addWidget(self.qpicamera2)
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setContentsMargins(0, 0, 230, 0)
         self.setLayout(self.layout)
-        self.overlay()
         micro_cam.start()
 
-    def overlay(self):
-
-        class ScrollButton(QPushButton):
-
-            def __init__(self, text, position, size, style, direction, microscope, parent):
-                super().__init__(parent)
-                self.scrollTimer = QtCore.QTimer()
-                self.setText(text)
-                self.setGeometry(position[0],position[1], size, size)
-                self.setStyleSheet(style)
-                self.pressed.connect(lambda: self.start_scroll(direction))
-                self.released.connect(self.stop_scroll)
-                self.microscope = microscope
-
-            def start_scroll(self, direction):
-                self.microscope.push_axis(direction[0] , direction[1])
-                self.scrollTimer.timeout.connect(lambda: self.microscope.push_axis(direction[0] , direction[1]))
-                self.scrollTimer.start(200)
-
-            def stop_scroll(self):
-                self.scrollTimer.stop()
-                self.scrollTimer.timeout.disconnect()
 
         button_size = 80
         half = int(button_size/2)
