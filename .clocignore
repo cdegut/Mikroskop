@@ -1,0 +1,5 @@
+firmware/.pio
+.vscode
+firmware/.vscode
+.git
+firmware/platformio.ini
