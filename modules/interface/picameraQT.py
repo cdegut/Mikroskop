@@ -10,7 +10,7 @@ class MainApp(QMainWindow):
 
     def __init__(self, micro_cam, microscope, export=False):
         super().__init__()
-        self.setGeometry(0, 0, 1024, 600)
+        self.setGeometry(0, 0, 1024, 580)
         self.export = export
         self.setWindowTitle("PiCameraPreview")
         self.main_widget = PreviewWidget(self, micro_cam, microscope, export)
@@ -22,24 +22,38 @@ class MainApp(QMainWindow):
 
 class ScrollButton(QPushButton):
 
-    def __init__(self, text, position, size, style, direction, microscope, parent):
+    def __init__(self, text, position, size, style, direction, coarse, fine, microscope, parent):
         super().__init__(parent)
         self.scrollTimer = QtCore.QTimer()
         self.setText(text)
         self.setGeometry(position[0],position[1], size, size)
         self.setStyleSheet(style)
-        self.pressed.connect(lambda: self.start_scroll(direction))
+        self.movement = [direction, coarse]
+        self.pressed.connect(self.start_scroll)
         self.released.connect(self.stop_scroll)
         self.microscope = microscope
+        self.coarse = coarse
+        self.fine = fine
+        self.fine_move = False
 
-    def start_scroll(self, direction):
-        self.microscope.push_axis(direction[0] , direction[1])
-        self.scrollTimer.timeout.connect(lambda: self.microscope.push_axis(direction[0] , direction[1]))
+    def start_scroll(self):
+        self.microscope.push_axis(self.movement[0] , self.movement[1])
+        self.scrollTimer.timeout.connect(lambda: self.microscope.push_axis(self.movement[0] , self.movement[1]))
         self.scrollTimer.start(100)
 
     def stop_scroll(self):
         self.scrollTimer.stop()
         self.scrollTimer.timeout.disconnect()
+    
+    def toggle_fine_move(self):
+        if self.fine_move == True:
+            self.movement[1] = self.coarse
+            self.fine_move = False
+        else:
+            self.movement[1] = self.fine
+            self.fine_move = True
+
+
 
 class PreviewWidget(QWidget): 
         
@@ -62,8 +76,7 @@ class PreviewWidget(QWidget):
         #QGL Picamera supposed to be better, but bug with button tranparancy
         self.qpicamera2 = QPicamera2(self.micro_cam, width=preview_resolution[0], height=preview_resolution[1], keep_ar=False, transform=Transform(vflip=1))
 
-        
- 
+
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.qpicamera2)
         self.layout.setContentsMargins(0, 0, 230, 0)
@@ -75,14 +88,38 @@ class PreviewWidget(QWidget):
         half = int(button_size/2)
         button_style = f"border-radius : {button_size/2}; border : 2px solid black; background-color: rgba(94,150,174,128)"
         focus_button_style = f"border-radius : {button_size/2}; border : 2px solid black; background-color: rgba(241,224,176,128)"
+        self.toggle_button_style = f"border-radius : {button_size/2}; border : 2px solid black; background-color: rgba(252,225,228,128)"
+        self.toggle_button_style_off = f"border-radius : {button_size/2}; border : 2px solid black; background-color: rgba(252,225,0,128)"
 
-        Up = ScrollButton("X+", (int(preview_resolution[0]/2)-half,0), button_size, button_style, (1, 100), self.microscope, self)
-        Down = ScrollButton("X-", (int(preview_resolution[0]/2)-half, preview_resolution[1] - button_size -10), button_size, button_style, (1, -100), self.microscope, self)
-        Left = ScrollButton("Y-", (0,int(preview_resolution[1]/2)-half), button_size, button_style, (2, -100), self.microscope, self)
-        Right = ScrollButton("Y+", (preview_resolution[0] - button_size -5,int(preview_resolution[1]/2)-half), button_size, button_style, (2, 100), self.microscope, self)
-        Fplus = ScrollButton("F+", (0,0), button_size, focus_button_style, (3, 50), self.microscope, self)
-        Fminus = ScrollButton("F-", (0,button_size +10), button_size, focus_button_style, (3, -50), self.microscope, self)
+        
+        self.Fine = QPushButton(self)
+        self.Fine.setCheckable(True)
+        self.Fine.toggle()
+        self.Fine.setGeometry(0,580 - button_size -15,80,80)
+        self.Fine.setStyleSheet(self.toggle_button_style)
+        self.Fine.clicked.connect(self.fine_toggle)
+        self.Fine.setText("Coarse")
 
+        Up = ScrollButton("X+", (int(preview_resolution[0]/2)-half,0), button_size, button_style, 1, 100, 10, self.microscope, self)
+        Down = ScrollButton("X-", (int(preview_resolution[0]/2)-half, 580 - button_size -15), button_size, button_style, 1, -100, -10, self.microscope, self)
+        Left = ScrollButton("Y-", (0,int(preview_resolution[1]/2)-half), button_size, button_style, 2, -100, -10, self.microscope, self)
+        Right = ScrollButton("Y+", (preview_resolution[0] - button_size -5,int(preview_resolution[1]/2)-half), button_size, button_style, 2, 100, 10, self.microscope, self)
+        Fplus = ScrollButton("F+", (0,0), button_size, focus_button_style, 3, 50, 5, self.microscope, self)
+        Fminus = ScrollButton("F-", (0,button_size +10), button_size, focus_button_style, 3, -50, -5, self.microscope, self)
+        self.scrollable = [Up, Down, Left, Right, Fplus, Fminus]
+    
+    def fine_toggle(self):
+        if self.Fine.isChecked():
+            self.Fine.setStyleSheet(self.toggle_button_style)
+            for button in self.scrollable:
+                button.toggle_fine_move()
+                self.Fine.setText("Coarse")
+        else:
+            self.Fine.setStyleSheet(self.toggle_button_style_off)
+            for button in self.scrollable:
+                button.toggle_fine_move()
+                self.Fine.setText("Fine")
+ 
 
 if __name__ == '__main__':
     from os import environ
