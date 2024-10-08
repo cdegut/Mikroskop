@@ -1,10 +1,10 @@
 #include "Stepstick.h"
 
-void  Stepstick::setup_TMC(TMC2209Stepper * TMCdriver, uint8_t microsteps){
+void  Stepstick::setup_TMC(TMC2209Stepper * TMCdriver, uint8_t microsteps, uint16_t current){
   _TMCdriver = TMCdriver;
   _TMCdriver->begin();
   _TMCdriver->toff(5);  //4
-  _TMCdriver->rms_current(1000);        // Set motor RMS current          // Set microsteps to 1/8th   
+  _TMCdriver->rms_current(current);        // Set motor RMS current          // Set microsteps to 1/8th   
   setTMC_microsteps(microsteps, true);
 
   step();  //switches the drive back to run current.

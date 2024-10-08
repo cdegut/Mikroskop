@@ -21,11 +21,16 @@ void run_loop(Stepstick &axis1, Stepstick &axis2) {
 }
 
 void run_loop(Stepstick &axis1, Stepstick &axis2, Stepstick &axis3) {
-  while (axis1.get_state() != OFF || axis2.get_state() != OFF || axis3.get_state() != OFF) {
+  while (true) {
+
     axis1.run();
     axis2.run();
     axis3.run();
     delayMicroseconds(5);
+
+    if (axis1.get_state() == OFF && axis2.get_state() == OFF && axis3.get_state() != OFF) {
+      break;
+    }
   }
 }
 
@@ -49,6 +54,8 @@ void home_XYF(uint16_t bump) {
   Focus.switch_state(init_TIMER_STALLGUARD);
   run_loop(Focus);
   Focus.override_position(0);
+  Serial.print("Focus stalled with a value of:");
+  Serial.println(Focus.last_stall_value);
 
   // Bump focus
   Focus.set_destination(bump);
@@ -71,6 +78,8 @@ void home_XYF(uint16_t bump) {
   Focus.switch_state(init_TIMER_STALLGUARD);
   run_loop(Focus);
   Focus.override_position(0);
+  Serial.print("Focus stalled with a value of:");
+  Serial.println(Focus.last_stall_value);
 
 /* XY axes */
   //4 full step +
@@ -86,9 +95,15 @@ void home_XYF(uint16_t bump) {
   Serial.println("Finding 0 for X and Y axes");
   X.set_direction(-1, false);
   X.switch_state(init_TIMER_STALLGUARD);
+  run_loop(X);
+
   Y.set_direction(-1, false);
   Y.switch_state(init_TIMER_STALLGUARD);
-  run_loop(X,Y);
+  run_loop(Y);
+  Serial.print("X stalled with a value of:");
+  Serial.println(X.last_stall_value);
+  Serial.print("Y stalled with a value of:");
+  Serial.println(Y.last_stall_value);
   X.override_position(0);
   Y.override_position(0);
 
@@ -97,6 +112,7 @@ void home_XYF(uint16_t bump) {
   Y.set_destination(bump);
   X.switch_state(GO);
   Y.switch_state(GO);
+
   Serial.println("Bump!");
   run_loop(X,Y);
 
@@ -118,13 +134,23 @@ void home_XYF(uint16_t bump) {
   Serial.print("X STGTHRS: ");
   Serial.println(SGTHRS);
 
-
+  X.timing = Xslowspd;
+  Y.timing = Yslowspd;
+  Focus.timing = Fslowspd;
   // definite 0 focus
   Serial.println("Finding 0 again with new values");
   X.switch_state(init_TIMER_STALLGUARD);
   Y.switch_state(init_TIMER_STALLGUARD);
   run_loop(X);
+  Serial.print("X stalled with a value of:");
+  Serial.println(X.last_stall_value);
+  
+  X.motion_planner(X_0offset); // 
+  run_loop(X);
+
   run_loop(Y);
+  Serial.print("Y stalled with a value of:");
+  Serial.println(Y.last_stall_value);
   X.override_position(0);
   Y.override_position(0);
 

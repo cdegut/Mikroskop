@@ -36,7 +36,7 @@ class Stepstick {
     Stepstick(uint8_t stepPin, uint8_t dirPin);
     Stepstick(uint8_t stepPin, uint8_t dirPin, uint8_t enPin);
     void begin();
-    void setup_TMC(TMC2209Stepper *TMCdriver, uint8_t microsteps = 4);
+    void setup_TMC(TMC2209Stepper *TMCdriver, uint8_t microsteps = 4,  uint16_t current = 800);
 
     //basic movement
     void step();
