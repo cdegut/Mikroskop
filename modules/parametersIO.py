@@ -6,7 +6,7 @@ class ParametersSets:
 
     def __init__(self):
         self.param_file_path = self.__param_file_path()
-        self.all_parameters_sets = self.__load_all()
+        self.all_parameters_sets: dict = self.__load_all()
         self.selected = self.__get_selected()
         self.home = getenv('HOME')
 
@@ -27,7 +27,8 @@ class ParametersSets:
     def __get_selected(self):
         for parameters_set in self.all_parameters_sets:
             if self.all_parameters_sets[parameters_set]["Selected"]:
-                return(parameters_set)
+                return(parameters_set)          
+        return "Default"
 
     def get(self, subset = None):
         if not subset:
@@ -53,6 +54,13 @@ class ParametersSets:
     def copy(self, source, target):
         self.all_parameters_sets[target] = self.all_parameters_sets[source]
         self.__save_all()
+    
+    def delete(self, target):
+        if not self.all_parameters_sets[target]["Protected"]:
+            self.all_parameters_sets.pop(target)
+            self.__save_all()
+    
+        
 
 
     #### updaate parameter from a list of tuple with the format : [("keyA", value ), ("keyB", value)]

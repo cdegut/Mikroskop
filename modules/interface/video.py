@@ -125,7 +125,7 @@ if __name__ == "__main__":
     #Tkinter object
     parameters = ParametersSets()
     microscope = Microscope(addr, ready_pin, parameters)
-    grid = PositionsGrid(microscope, parameters)
+    position_grid = PositionsGrid(microscope, parameters)
     micro_cam = None
 
     #Tkinter object

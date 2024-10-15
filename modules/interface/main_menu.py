@@ -12,8 +12,8 @@ from ..microscope_param import Xmaxrange, Ymaxrange
 
 class MainMenu(Interface, CTkFrame):
 
-    def __init__(self, Tk_root, microscope, grid, camera, parameters):
-        Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera, parameters=parameters)
+    def __init__(self, Tk_root, microscope, position_grid, camera, parameters):
+        Interface.__init__(self, Tk_root, microscope=microscope, position_grid=position_grid, camera=camera, parameters=parameters)
         self.init_window()
    
     ######Function called to open this window, generate an new object the first time, 
@@ -25,7 +25,7 @@ class MainMenu(Interface, CTkFrame):
             Interface._main_menu.init_window()
         else:
             pass
-            Interface._main_menu = MainMenu(self.Tk_root, self.microscope, self.grid, self.camera, self.parameters)
+            Interface._main_menu = MainMenu(self.Tk_root, self.microscope, self.position_grid, self.camera, self.parameters)
         
     ###########
     ### Generate the window content, called every time window is (re)opened 
