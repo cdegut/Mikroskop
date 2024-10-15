@@ -26,7 +26,7 @@
 #define YmicroStep 8
 #define YSg_sensitivity_initial 70
 #define YSg_autoeval_divider 2.8 //adjust sensitivity of homing between 2 and 3 (3 = less sensitive)
-#define Y_MAX_RANGE 80000
+#define Y_MAX_RANGE 90000
 #define Y_current 1000
 
 #define FdirPin D14
