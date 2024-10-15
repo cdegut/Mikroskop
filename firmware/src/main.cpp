@@ -41,6 +41,7 @@ void setup() {
   X.setup_stallguard(XDiagPin, XSg_sensitivity_initial);
   X.config_coolstep();          
   X.config_speed(Xslowspd,Xfastspd);
+  X.config_range(0,X_MAX_RANGE);
   delay(500); // avoid low crrent on RPi
 
   Y.begin();
@@ -48,6 +49,7 @@ void setup() {
   Y.setup_stallguard(YDiagPin, YSg_sensitivity_initial);
   Y.config_coolstep();          
   Y.config_speed(Yslowspd,Yfastspd);
+  Y.config_range(0,Y_MAX_RANGE);
   delay(500); // avoid low crrent on RPi
 
   Focus.begin();
@@ -55,6 +57,7 @@ void setup() {
   Focus.setup_stallguard(FDiagPin, FSg_sensitivity_initial);
   Focus.config_coolstep();          
   Focus.config_speed(Fslowspd,Ffastspd);
+  Focus.config_range(0,F_MAX_RANGE);
   delay(500); // avoid low crrent on RPi
 
   home_XYF(4000);

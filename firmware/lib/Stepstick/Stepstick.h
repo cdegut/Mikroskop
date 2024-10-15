@@ -73,7 +73,6 @@ class Stepstick {
 
     //Cofigurations
     bool enable = true; // enable for timed step (allow to stop the motor)
-    void config_axis(uint8_t zeroPin, int slow_spd, int fast_spd, int32_t max_range, int hyst_steps);
     void config_endstops(uint8_t MinPin, uint8_t MaxPin = -1); //set pin to -1 to deactivate
     void setup_stallguard(uint8_t DiagPin, uint16_t Stall_value);
     void config_SG_thresold(uint16_t Stall_value);
@@ -83,6 +82,7 @@ class Stepstick {
     void config_coolstep();
     void setTMC_microsteps(uint8_t microsteps, bool interpol = true);
     void config_speed(int slow_spd, int fast_spd);
+    void config_range(int32_t min_range, int32_t max_range);
     void config_hyst(int hyst_steps);
     void set_max_range(int32_t max_range);
     void override_position(int32_t position);

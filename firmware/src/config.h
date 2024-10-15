@@ -12,6 +12,7 @@
 #define XmicroStep 8
 #define XSg_sensitivity_initial 70
 #define XSg_autoeval_divider 2.8  //adjust sensitivity of homing between 2 and 3 
+#define X_MAX_RANGE 59000
 #define X_0offset 7500 // Offset from true 0
 #define X_current 1000
 
@@ -25,6 +26,7 @@
 #define YmicroStep 8
 #define YSg_sensitivity_initial 70
 #define YSg_autoeval_divider 2.8 //adjust sensitivity of homing between 2 and 3 (3 = less sensitive)
+#define Y_MAX_RANGE 80000
 #define Y_current 1000
 
 #define FdirPin D14
@@ -36,7 +38,8 @@
 #define Fslowspd 600
 #define FmicroStep 8
 #define FSg_sensitivity_initial 70
-#define FSg_autoeval_divider 2.8 //adjust sensitivity of homing between 2 and 3 
+#define FSg_autoeval_divider 2.8 //adjust sensitivity of homing between 2 and 3
+#define F_MAX_RANGE 28000
 #define F_current 1000
 
 #define Led1Pin 11

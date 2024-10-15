@@ -66,11 +66,9 @@ void Stepstick::config_hyst(int hyst_steps){
   _hyst_steps = hyst_steps;
 }
 
-void Stepstick::config_axis(uint8_t zeroPin, int slow_spd_timing, int fast_spd_timing, int32_t max_range, int hyst_steps)
+
+void Stepstick::config_range(int32_t min_range, int32_t max_range)
 {
-  config_endstops(zeroPin);
-  config_speed(slow_spd_timing, fast_spd_timing);
-  timing = slow_spd_timing;
   _max_range = max_range;
-  config_hyst(hyst_steps);
+  _min_range = min_range;
 }
