@@ -21,7 +21,6 @@ class Interface:
         self.position_grid = position_grid
         self.camera = camera
         self.parameters = parameters
-
         self.last_positions = None
 
     ###########################################

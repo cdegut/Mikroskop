@@ -1,6 +1,7 @@
 from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N
 from .super import Interface
 from .popup import led_focus_zoom_buttons
+from .plate_parameters import Plate_parameters, ParametersConfig
 
 plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
 
@@ -8,6 +9,7 @@ class MainGridInterface(Interface, CTkFrame): #main GUI window
     
     def __init__(self, Tk_root, microscope, position_grid, camera, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, position_grid=position_grid, camera=camera, parameters=parameters)
+        self._param_config = None
 
         self.init_window()
         self.start_position = self.parameters.get()["start"]
@@ -28,8 +30,6 @@ class MainGridInterface(Interface, CTkFrame): #main GUI window
               
         #Title of the root  
         self.Tk_root.title("Control Panel")
-        
-        # allowing the widget to take the full space of the root window
         self.pack(fill=BOTH, expand=1)
 
         ##Generic buttons
@@ -43,10 +43,22 @@ class MainGridInterface(Interface, CTkFrame): #main GUI window
 
         # creating buttons instances          
         self.snap_button()
+        Adjust_A1 = CTkButton(self, width=80, text="Adjust A1 position", command=self.adjust_A1)
+        Adjust_A1.place(x=10, y=300)
 
         # placing the elements
 
-    
+    def adjust_A1(self):
+        self.clear_jobs()
+        self.clear_frame()
+        if self._param_config:
+            self._param_config.init_window()
+        else:
+            pass
+            self._param_config = ParametersConfig(self.Tk_root, self, self.microscope, self.position_grid, self.parameters, self.camera)
+            self._param_config.A1_mode = True
+            self._param_config.init_window()
+
     def grid_position_pad(self, pad_position):
         w = 65
         h = 30
@@ -54,11 +66,11 @@ class MainGridInterface(Interface, CTkFrame): #main GUI window
         A12 = CTkButton(self, width=w, text="A12", command=lambda: self.position_grid.go("A12"))
         H1 = CTkButton(self, width=w, text="H1", command=lambda: self.position_grid.go("H1"))
         H12 = CTkButton(self, width=w, text="H12", command=lambda: self.position_grid.go("H12"))
-        C6 = CTkButton(self, width=w, text="C6", command=lambda: self.position_grid.go("C6"))
+        D6 = CTkButton(self, width=w, text="D6", command=lambda: self.position_grid.go("D6"))
         ### Pad as relative position to pad_position       
         A1.place(x=pad_position[0], y=pad_position[1])
         A12.place(x=pad_position[0]+w*2, y=pad_position[1])
-        C6.place(x=pad_position[0]+w, y=pad_position[1]+h)
+        D6.place(x=pad_position[0]+w, y=pad_position[1]+h)
         H1.place(x=pad_position[0], y=pad_position[1]+h*2)
         H12.place(x=pad_position[0]+w*2, y=pad_position[1]+h*2)
 

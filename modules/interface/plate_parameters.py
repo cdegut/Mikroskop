@@ -146,7 +146,7 @@ class Plate_parameters(Interface,CTkFrame):
             self._param_config.init_window()
         else:
             pass
-            self._param_config = ParametersConfig(self.Tk_root, self.microscope, self.position_grid, self.Xsteps, self.Ysteps, self.parameters, self.camera)
+            self._param_config = ParametersConfig(self.Tk_root, self, self.microscope, self.position_grid, self.parameters, self.camera, self.Xsteps, self.Ysteps)
             self._param_config.step_mode = True
             self._param_config.A1_mode = False
             self._param_config.init_window()
@@ -159,7 +159,7 @@ class Plate_parameters(Interface,CTkFrame):
             self._param_config.init_window()
         else:
             pass
-            self._param_config = ParametersConfig(self.Tk_root, self.microscope, self.position_grid, self.Xsteps, self.Ysteps, self.parameters, self.camera)
+            self._param_config = ParametersConfig(self.Tk_root, self, self.microscope, self.position_grid, self.parameters, self.camera)
             self._param_config.step_mode = False
             self._param_config.A1_mode = True
             self._param_config.init_window()
@@ -170,13 +170,14 @@ class Plate_parameters(Interface,CTkFrame):
             self._param_config.init_window()
         else:
             pass
-            self._param_config = ParametersConfig(self.Tk_root, self.microscope, self.position_grid, self.Xsteps, self.Ysteps, self.parameters, self.camera)
+            self._param_config = ParametersConfig(self.Tk_root, self, self.microscope, self.position_grid, self.parameters, self.camera)
             self._param_config.init_window()        
 
 class ParametersConfig(Interface, CTkFrame):
 
-    def __init__(self, Tk_root, microscope, position_grid, Xsteps, Ysteps, parameters, camera):
-        Interface.__init__(self, Tk_root, microscope=microscope, position_grid=position_grid, camera=camera, parameters=parameters)             
+    def __init__(self, Tk_root, last_window, microscope, position_grid, parameters, camera, Xsteps= None, Ysteps = None):
+        Interface.__init__(self, Tk_root, last_window, microscope=microscope, position_grid=position_grid, camera=camera, parameters=parameters)
+        self.last_window = last_window      
         self.Tk_window = Tk_root
         self.Xold_steps = Xsteps
         self.Yold_steps = Ysteps
@@ -193,7 +194,7 @@ class ParametersConfig(Interface, CTkFrame):
             
         self.XYsliders(l=200)
 
-        Cancel =  CTkButton(self, text="Back", command=self.close_xy)
+        Cancel = CTkButton(self, text="Back", command=self.close)
         
 
         if self.step_mode:
@@ -277,8 +278,8 @@ class ParametersConfig(Interface, CTkFrame):
 
     def measure(self):
         self.microscope.update_real_state() 
-        self.Xsteps = abs(int( (self.microscope.XYFposition[0] - self.start[0]) / int(self.divisorX.get())))
-        self.Ysteps = abs(int( (self.microscope.XYFposition[1] - self.start[1]) / int(self.divisorY.get())))
+        self.Xsteps = int( (self.microscope.XYFposition[0] - self.start[0]) / int(self.divisorX.get()))
+        self.Ysteps = int( (self.microscope.XYFposition[1] - self.start[1]) / int(self.divisorY.get()))
     
     def label_update(self):
         self.measure()
