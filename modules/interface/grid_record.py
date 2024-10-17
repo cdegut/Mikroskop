@@ -1,5 +1,6 @@
 from tkinter import Frame, Button, BOTH, Label, StringVar, OptionMenu, Toplevel
 from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N, StringVar, CTkToplevel
+import os
 
 from .super import Interface
 from ..parametersIO import create_folder
@@ -136,8 +137,8 @@ class GridRecord(Interface, CTkFrame):
         date = str(current_time[0])[2:] + str(current_time[1]).zfill(2) + str(current_time[2]).zfill(2) + "_"  \
             + str(current_time[3]).zfill(2) + str(current_time[4]).zfill(2)
         data_dir= self.parameters.get()["data_dir"]
-
-        grid_folder = data_dir + "grid-" + date + "/"
+        home = os.getenv("HOME")
+        grid_folder = f"{home}/{data_dir}/grid-{date}/"
         create_folder(grid_folder)
 
 

@@ -4,6 +4,7 @@ from ..position_grid import PositionsGrid
 from ..microscope_param import Xmaxrange, Ymaxrange
 from ..cameracontrol import Microscope_camera
 from time import localtime
+import os
 
 
 plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
@@ -103,16 +104,18 @@ class Interface:
     def snap_grid(self,full_res=False):
         timestamp = self.timestamp()
         picture_name = timestamp + "_" + str(self.position_grid.current_grid_position[0]) + "-" + str(self.position_grid.current_grid_position[1])
+        home = os.getenv("HOME")
         data_dir = self.parameters.get()["data_dir"]
-        self.camera.capture_and_save(picture_name, data_dir)
+        self.camera.capture_and_save(picture_name, f"{home}/{data_dir}")
     
     def snap_timestamp(self, full_res=False):
         picture_name = self.timestamp()
         data_dir = self.parameters.get()["data_dir"]
+        home = os.getenv("HOME")
         if not full_res:
-            self.camera.capture_and_save(picture_name, f"{data_dir}/img")
+            self.camera.capture_and_save(picture_name, f"{home}/{data_dir}/img")
         else:
-            self.camera.capture_full_res(picture_name, f"{data_dir}/img")
+            self.camera.capture_full_res(picture_name, f"{home}/{data_dir}/img")
     
     def show_record_label(self):
         if Interface._video_timer:

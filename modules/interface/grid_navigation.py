@@ -61,17 +61,24 @@ class MainGridInterface(Interface, CTkFrame): #main GUI window
     def grid_position_pad(self, pad_position):
         w = 65
         h = 30
+        nlines = self.parameters.get()['lines']
+        last_line = f"{self.position_grid.line_namespace[nlines-1]}1"
+        last_column = f"A{self.parameters.get()['columns']}"
+        opposite = f"{self.position_grid.line_namespace[nlines-1]}{self.parameters.get()['columns']}"
+        center = f"{self.position_grid.line_namespace[int(nlines / 2)]}{int(self.parameters.get()['columns']/2)}"
+
         A1 = CTkButton(self, width=w, fg_color='Green', text="A1", command=lambda: self.position_grid.go("A1"))
-        A12 = CTkButton(self, width=w, text="A12", command=lambda: self.position_grid.go("A12"))
-        H1 = CTkButton(self, width=w, text="H1", command=lambda: self.position_grid.go("H1"))
-        H12 = CTkButton(self, width=w, text="H12", command=lambda: self.position_grid.go("H12"))
-        D6 = CTkButton(self, width=w, text="D6", command=lambda: self.position_grid.go("D6"))
+
+        last_columnB = CTkButton(self, width=w, text=last_column, command=lambda: self.position_grid.go(last_column))
+        last_lineB = CTkButton(self, width=w, text=last_line, command=lambda: self.position_grid.go(last_line))
+        oppositeB = CTkButton(self, width=w, text=opposite, command=lambda: self.position_grid.go(opposite))
+        centerB = CTkButton(self, width=w, text=center, command=lambda: self.position_grid.go(center))
         ### Pad as relative position to pad_position       
         A1.place(x=pad_position[0], y=pad_position[1])
-        A12.place(x=pad_position[0]+w*2, y=pad_position[1])
-        D6.place(x=pad_position[0]+w, y=pad_position[1]+h)
-        H1.place(x=pad_position[0], y=pad_position[1]+h*2)
-        H12.place(x=pad_position[0]+w*2, y=pad_position[1]+h*2)
+        last_columnB.place(x=pad_position[0]+w*2, y=pad_position[1])
+        centerB.place(x=pad_position[0]+w, y=pad_position[1]+h)
+        last_lineB.place(x=pad_position[0], y=pad_position[1]+h*2)
+        oppositeB.place(x=pad_position[0]+w*2, y=pad_position[1]+h*2)
 
     
     def grid_navigation_pad(self, pad_position):

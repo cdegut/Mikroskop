@@ -1,6 +1,6 @@
 from .super import Interface
 from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N, StringVar
-
+import os
 from ..cameracontrol import start_recording
 from time import time
 from .popup import led_focus_zoom_buttons
@@ -64,8 +64,9 @@ class Video_record_window(Interface, CTkFrame):
         
     def start_recording_action(self, position):
         timestamp = self.timestamp()
-        data_dir = self.parameters.get()["data_dir"]
-        self.recorder, self.rec_off_event = start_recording(self.camera,data_dir,  video_quality=int(self.quality.get()), video_name=timestamp)
+        home = os.getenv("HOME")
+        data_dir = f"{home}/{self.parameters.get()['data_dir']}"
+        self.recorder, self.rec_off_event = start_recording(self.camera, data_dir,  video_quality=int(self.quality.get()), video_name=timestamp)
         self.Stop.place(x=position[0], y=position[1])
         Interface._video_timer = VideoTimer()
         Interface._video_timer.start()
