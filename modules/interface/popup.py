@@ -191,8 +191,8 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
 
 class Focus_popup(Interface, CTkFrame):
 
-    def __init__(self, Tk_root, last_window, microscope,  grid, parameters):
-        Interface.__init__(self, Tk_root, last_window=self, microscope=microscope, grid=grid, parameters=parameters)    
+    def __init__(self, Tk_root, last_window, microscope,  position_grid, parameters):
+        Interface.__init__(self, Tk_root, last_window=self, microscope=microscope, position_grid=position_grid, parameters=parameters)    
         self.init_window(last_window)
 
     ###########
@@ -236,7 +236,7 @@ class Focus_popup(Interface, CTkFrame):
 
     def save_focus(self):
         self.parameters.update_start(None , None, self.microscope.XYFposition[2], None)
-        self.grid.generate_grid()
+        self.position_grid.generate_grid()
    
     
     def open(self):
@@ -245,7 +245,7 @@ class Focus_popup(Interface, CTkFrame):
         if Interface._focus_popup:
             Interface._focus_popup.init_window(self)
         else:
-            Interface._focus_popup = Focus_popup(self.Tk_root, last_window=self, microscope=self.microscope, grid=self.grid, parameters=self.parameters)
+            Interface._focus_popup = Focus_popup(self.Tk_root, last_window=self, microscope=self.microscope, position_grid=self.position_grid, parameters=self.parameters)
 
 class Zoom_popup(Interface, CTkFrame): #widget to fill popup window, show an stop button and a modifiable label
 
@@ -305,7 +305,7 @@ if __name__ == "__main__":
     #Tkinter object
     parameters = ParametersSets()
     microscope = Microscope(addr, ready_pin, parameters)
-    grid = PositionsGrid(microscope, parameters)
+    position_grid = PositionsGrid(microscope, parameters)
     micro_cam = Microscope_camera()
     micro_cam.initialise(QT=True)
 
@@ -315,7 +315,7 @@ if __name__ == "__main__":
     Tk_root.geometry("230x560+800+35")   
     
     ### Don't display border if on the RPi display
-    Interface._freemove_main = FreeMovementInterface(Tk_root, microscope=microscope, grid=grid, camera=micro_cam, parameters=parameters)
+    Interface._freemove_main = FreeMovementInterface(Tk_root, microscope=microscope, position_grid=position_grid, camera=micro_cam, parameters=parameters)
 
 
     Tk_root.mainloop()

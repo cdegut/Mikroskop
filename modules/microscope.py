@@ -146,7 +146,7 @@ class Microscope:
             if motor == 3 and destination > self.dyn_maxFcs:
                 destination = self.dyn_maxFcs   
              
-            if motor == 3 and destination > self.safe_Fcs and (self.XYFpositions[0] < self.dyn_Xmin or self.XYFposition[0] > self.dyn_Xmax or 
+            if motor == 3 and destination > self.safe_Fcs and (self.XYFposition[0] < self.dyn_Xmin or self.XYFposition[0] > self.dyn_Xmax or 
                                                             self.XYFposition[1] >  self.dyn_Ymax or self.XYFposition[1] < self.dyn_Ymin ):
                 destination = self.safe_Fcs
             

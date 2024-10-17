@@ -33,7 +33,7 @@ if __name__ == "__main__":
     ### Object for microscope to run
     parameters = ParametersSets()
     microscope = Microscope(addr, ready_pin, parameters)
-    grid = PositionsGrid(microscope, parameters)
+    position_grid = PositionsGrid(microscope, parameters)
     micro_cam = Microscope_camera(microscope)
     
     #Tkinter object
@@ -54,7 +54,7 @@ if __name__ == "__main__":
         if k.startswith("QT_") and "cv2" in v:
             del environ[k]   
     
-    Interface._main_menu = MainMenu(Tk_root, microscope=microscope, grid=grid, camera=micro_cam,  parameters=parameters)
+    Interface._main_menu = MainMenu(Tk_root, microscope=microscope, position_grid=position_grid, camera=micro_cam,  parameters=parameters)
     
     app = QApplication(sys.argv)
     preview_window = MainApp(micro_cam, microscope, export)
