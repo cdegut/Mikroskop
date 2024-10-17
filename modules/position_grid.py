@@ -19,6 +19,8 @@ class PositionsGrid:
         # the grid is a dictionary of well, containing dictionary of subwell
         absolute_grid = {}
         parameters =  self.parameters.get()
+        fx = parameters["XYFocusDrift"][0]
+        fy = parameters["XYFocusDrift"][1]
 
         for l in range (0, parameters["lines"]):
             x = parameters['start'][0] + parameters['Xsteps']*l
@@ -26,13 +28,14 @@ class PositionsGrid:
             for c in range(0, parameters["columns"]):
                 y = parameters['start'][1] + parameters['Ysteps']*c
 
-                z = parameters['start'][2]
+                f = parameters['start'][2] +  (fx * l ) + (fy * c)
 
                 sub_position = {}
                 for s in range (0, parameters["subwells"]):
-                    sub_position[s+1] = [x + parameters["subwells_spacing"][0] * s, y + parameters["subwells_spacing"][1] * s, z + parameters["subwells_spacing"][2] * s]
+                    sub_position[s+1] = [x + parameters["subwells_spacing"][0] * s, y + parameters["subwells_spacing"][1] * s, f + parameters["subwells_spacing"][2] * s]
 
                 absolute_grid[str(self.line_namespace[l])+str(c+1)] = sub_position
+
 
         #initialise nb_of_subwell for subwell switching fct
         self.nb_of_subwells = self.parameters.get()["subwells"]

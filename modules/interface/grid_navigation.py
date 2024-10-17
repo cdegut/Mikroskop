@@ -3,7 +3,6 @@ from .super import Interface
 from .popup import led_focus_zoom_buttons
 from .plate_parameters import Plate_parameters, ParametersConfig
 
-plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
 
 class MainGridInterface(Interface, CTkFrame): #main GUI window
     
@@ -19,6 +18,7 @@ class MainGridInterface(Interface, CTkFrame): #main GUI window
     def open(self):
         self.clear_jobs()
         self.clear_frame()
+        
         if Interface._grid_main:
             Interface._grid_main.init_window()
         else:
@@ -31,7 +31,6 @@ class MainGridInterface(Interface, CTkFrame): #main GUI window
         #Title of the root  
         self.Tk_root.title("Control Panel")
         self.pack(fill=BOTH, expand=1)
-
         ##Generic buttons
         self.back_to_main_button()
         led_focus_zoom_buttons(self)
@@ -56,7 +55,7 @@ class MainGridInterface(Interface, CTkFrame): #main GUI window
         else:
             pass
             self._param_config = ParametersConfig(self.Tk_root, self, self.microscope, self.position_grid, self.parameters, self.camera)
-            self._param_config.A1_mode = True
+            self._param_config.mode = "A1"
             self._param_config.init_window()
 
     def grid_position_pad(self, pad_position):
@@ -85,10 +84,10 @@ class MainGridInterface(Interface, CTkFrame): #main GUI window
         SubW = CTkButton(self, text="Sub", width=w, command=lambda:self.position_grid.switch_subwell())
         self.well_info = CTkLabel(self, text="## - #", font=("arial", 15))
 
-        PrevL.place(x=pad_position[0]+w, y=pad_position[1])
-        PrevC.place(x=pad_position[0], y=pad_position[1]+h)
-        NextC.place(x=pad_position[0]+w*2, y=pad_position[1]+h)
-        NextL.place(x=pad_position[0]+w, y=pad_position[1]+h*2)
+        PrevL.place(x=pad_position[0]+w, y=pad_position[1]+h*2 )
+        PrevC.place(x=pad_position[0]+w*2, y=pad_position[1]+h)
+        NextC.place(x=pad_position[0], y=pad_position[1]+h)
+        NextL.place(x=pad_position[0]+w, y=pad_position[1])
         self.well_info.place(x=pad_position[0]+w+w/2, y=pad_position[1]+h, anchor=N)
         SubW.place(x=pad_position[0]+w*2, y=pad_position[1]+h*2)
 

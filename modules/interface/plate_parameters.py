@@ -9,7 +9,7 @@ from .popup import led_focus_zoom_buttons
 class Plate_parameters(Interface,CTkFrame):
     def __init__(self, Tk_root, microscope, position_grid, camera, parameters: ParametersSets):
         Interface.__init__(self, Tk_root, microscope=microscope, position_grid=position_grid, camera=camera, parameters=parameters)
-        self._param_config = None
+        self._param_config = ParametersConfig(self.Tk_root, self, self.microscope, self.position_grid, self.parameters, self.camera)
         self.init_window()
 
     def open(self):
@@ -34,10 +34,12 @@ class Plate_parameters(Interface,CTkFrame):
 
         self.parameter_menu(20,10)
         self.lines_columns_subwels(20,80)
-        self.XYstep_config_buttons(10,280)
-        self.back_to_main_button([10, 480])
+        self.XYstep_config_buttons(10,260)
+        self.A1_button(10,350)
+        self.focus_button(10,410)
+        self.back_to_main_button([10, 520])
 
-    def XYstep_config_buttons(self, x_p=20, y_p=220):
+    def XYstep_config_buttons(self, x_p, y_p):
 
         TopLabel = CTkLabel(self, text="Grid distances:")
         XstepsLabel = CTkLabel(self, text="X steps:\n" + str(self.Xsteps))
@@ -49,12 +51,21 @@ class Plate_parameters(Interface,CTkFrame):
         YstepsLabel.place(x=x_p+90, y=y_p+20)
         Configure_XY.place(x=x_p, y=y_p+60)
 
+    def A1_button(self, x_p, y_p):
         A1X = self.parameters.get()["start"][0]
         A1Y = self.parameters.get()["start"][1]
         A1Label = CTkLabel(self, text=f"A1 position X: {A1X} Y: {A1Y}")
         A1position =  CTkButton(self, text="Change A1 position", command=self.set_A1_position)
-        A1Label.place(x=x_p, y=y_p+110)
-        A1position.place(x=x_p, y=y_p+140)
+        A1Label.place(x=x_p, y=y_p)
+        A1position.place(x=x_p, y=y_p+30)
+    
+    def focus_button(self, x_p, y_p):
+        FocusX = self.parameters.get()["XYFocusDrift"][0]
+        FocusY = self.parameters.get()["XYFocusDrift"][1]
+        A1Label = CTkLabel(self, text=f"Focus drift X: {FocusX} Y: {FocusY}")
+        A1position =  CTkButton(self, text="Set Focus drift", command=self.set_focus_drift)
+        A1Label.place(x=x_p, y=y_p)
+        A1position.place(x=x_p, y=y_p+30)
        
     def lines_columns_subwels(self, x_p=10, y_p=10):
         
@@ -140,38 +151,22 @@ class Plate_parameters(Interface,CTkFrame):
 
     def set_steps(self):
         self.clear_frame()
-        if self._param_config:
-            self._param_config.step_mode = True
-            self._param_config.A1_mode = False
-            self._param_config.init_window()
-        else:
-            pass
-            self._param_config = ParametersConfig(self.Tk_root, self, self.microscope, self.position_grid, self.parameters, self.camera, self.Xsteps, self.Ysteps)
-            self._param_config.step_mode = True
-            self._param_config.A1_mode = False
-            self._param_config.init_window()
+        self._param_config.mode = "steps"
+        self._param_config.init_window()
     
     def set_A1_position(self):
         self.clear_frame()
-        if self._param_config:
-            self._param_config.step_mode = False
-            self._param_config.A1_mode = True
-            self._param_config.init_window()
-        else:
-            pass
-            self._param_config = ParametersConfig(self.Tk_root, self, self.microscope, self.position_grid, self.parameters, self.camera)
-            self._param_config.step_mode = False
-            self._param_config.A1_mode = True
-            self._param_config.init_window()
+        self._param_config.mode = "A1"
+        self._param_config.init_window()
+    
+    def set_focus_drift(self):
+        self.clear_frame()
+        self._param_config.mode = "Focus"
+        self._param_config.init_window()
 
     def set_dyn_endstop_position(self):
         self.clear_frame()
-        if self._param_config:
-            self._param_config.init_window()
-        else:
-            pass
-            self._param_config = ParametersConfig(self.Tk_root, self, self.microscope, self.position_grid, self.parameters, self.camera)
-            self._param_config.init_window()        
+        self._param_config.init_window()        
 
 class ParametersConfig(Interface, CTkFrame):
 
@@ -181,8 +176,9 @@ class ParametersConfig(Interface, CTkFrame):
         self.Tk_window = Tk_root
         self.Xold_steps = Xsteps
         self.Yold_steps = Ysteps
-        self.A1_mode = False
-        self.step_mode = False
+        self.XFocusold_steps = None
+        self.YFocusold_steps = None
+        self.mode = None
 
    #Creation of init_window
     def init_window(self):
@@ -192,22 +188,23 @@ class ParametersConfig(Interface, CTkFrame):
         self.show_record_label()
         self.start = self.parameters.get()["start"]   
             
-        self.XYsliders(l=200)
-
         Cancel = CTkButton(self, text="Back", command=self.close)
         
-
-        if self.step_mode:
+        if self.mode == "steps":
             self.grid_go_pad((100,340))
+            self.XYsliders(l=200)
             self.save_XY_buttons(menus_position= (10,380))
             Cancel.place(x=10,y=520)
-        if self.A1_mode:
+        if self.mode == "A1":
+            self.XYsliders(l=200)
             self.A1_config_button()
             Cancel.place(x=10,y=450)
+        if self.mode == "Focus":
+            self.save_focus_buttons((10,10))
+            Cancel.place(x=10,y=520)
     
     def grid_go_pad(self, pad_position):
         w = 65
-        h = 30
         A1 = CTkButton(self, width=w,text="A1", command=lambda: self.position_grid.go("A1"))        
         B2 = CTkButton(self, width=w, text="B2", command=lambda: self.go_and_change_divisor("B2", (1,1)))
         H1 = CTkButton(self, width=w, text="H1", command=lambda: self.go_and_change_divisor("H1", (7,1)))
@@ -233,9 +230,9 @@ class ParametersConfig(Interface, CTkFrame):
         self.divisorY.set(11)
  
         DivisorXLabel = CTkLabel(self, text="Divisor X")
-        DivisorXMenu = CTkOptionMenu(self, width=40,  variable=self.divisorX, values=["      1   ","      2   ","      5   ","      7    "])
+        DivisorXMenu = CTkOptionMenu(self, width=40,  variable=self.divisorX, values=["      1   ","      2   ","      5   ","      7    ", "      15    ",])
         DivisorYLabel = CTkLabel(self, text="Divisor Y")
-        DivisorYMenu = CTkOptionMenu(self,  width=40, variable=self.divisorY, values=["      1   ","      2   ","      5   ","      11   "])
+        DivisorYMenu = CTkOptionMenu(self,  width=40, variable=self.divisorY, values=["      1   ","      2   ","      5   ","      11   ","      23   "])
         
         self.XSteps_label = CTkLabel(self, text="test")
         self.YSteps_label = CTkLabel(self, text="test")
@@ -253,6 +250,64 @@ class ParametersConfig(Interface, CTkFrame):
         
         self.label_update()
 
+    def save_focus_buttons(self, menus_position):
+        w = 90
+        nlines = self.parameters.get()['lines']
+        last_line = f"{self.position_grid.line_namespace[nlines-1]}1"
+        last_column = f"A{self.parameters.get()['columns']}"
+
+        ExplanationLabel = CTkLabel(self, text="Use the button to go to end of line focus, and save. \nRepeat for columns")
+        ExplanationLabel.place(x=menus_position[0],y=menus_position[1])
+
+        Xlabel = CTkLabel(self, text="Set Focus drift in X:")
+        goX = CTkButton(self, width=w,text=f"go to {last_line}", command=lambda: self.position_grid.go(last_line))
+        saveXdrift = CTkButton(self, width=w,text=f"Save X drift", command=lambda: self.save_focus_drift("X"))
+
+
+        Ylabel = CTkLabel(self, text="Set Focus drift in Y:")
+        goY = CTkButton(self, width=w,text=f"go to {last_column}", command=lambda: self.position_grid.go(last_column))
+        saveYdrift = CTkButton(self, width=w,text=f"Save Y drift", command=lambda: self.save_focus_drift("Y"))
+
+        Xlabel.place(x=menus_position[0],y=menus_position[1]+60)
+        goX.place(x=menus_position[0],y=menus_position[1]+90)
+        saveXdrift.place(x=menus_position[0],y=menus_position[1]+130)
+        Ylabel.place(x=menus_position[0],y=menus_position[1]+180)
+        goY.place(x=menus_position[0],y=menus_position[1]+210)
+        saveYdrift.place(x=menus_position[0],y=menus_position[1]+250)
+
+        Fp100 = CTkButton(self, width=80, text="Fcs +200", command=lambda: self.microscope.move_1axis(3,200))
+        Fm100 = CTkButton(self, width=80,text="Fcs -200", command=lambda: self.microscope.move_1axis(3,-200))
+
+        Fp25 = CTkButton(self, width=80,text="Fcs +25 ", command=lambda: self.microscope.move_1axis(3,25))
+        Fm25 = CTkButton(self, width=80,text="Fcs -25 ", command=lambda: self.microscope.move_1axis(3,-25))
+
+        Fp5 = CTkButton(self, width=80,text="Fcs +5  ", command=lambda: self.microscope.move_1axis(3,5))
+        Fm5 = CTkButton(self, width=80,text="Fcs -5  ", command=lambda: self.microscope.move_1axis(3,-5))
+       
+        Fp100.place(x=menus_position[0],y=menus_position[1]+310)
+        Fm100.place(x=menus_position[0]+100,y=menus_position[1]+310)
+        Fp25.place(x=menus_position[0],y=menus_position[1]+350)
+        Fm25.place(x=menus_position[0]+100,y=menus_position[1]+350)
+        Fp5.place(x=menus_position[0],y=menus_position[1]+390)
+        Fm5.place(x=menus_position[0]+100,y=menus_position[1]+390)
+
+    def save_focus_drift(self, axis):
+        self.microscope.update_real_state()
+        if axis == "X":
+            divisor = self.parameters.get()['lines'] -1
+        if axis == "Y":
+            divisor = self.parameters.get()['columns'] - 1
+
+        drift = int( (self.microscope.XYFposition[2] - self.start[2]) / divisor)
+        
+        if axis == "X":
+            XYdrift = drift, self.parameters.get()["XYFocusDrift"][1]
+            self.parameters.update([("XYFocusDrift", XYdrift)])
+        if axis == "Y":
+            XYdrift = self.parameters.get()["XYFocusDrift"][0], drift
+            self.parameters.update([("XYFocusDrift", XYdrift)])
+    
+        
     ### Panel only for setting up A1 position
     def A1_config_button(self):
 
@@ -280,6 +335,10 @@ class ParametersConfig(Interface, CTkFrame):
         self.microscope.update_real_state() 
         self.Xsteps = int( (self.microscope.XYFposition[0] - self.start[0]) / int(self.divisorX.get()))
         self.Ysteps = int( (self.microscope.XYFposition[1] - self.start[1]) / int(self.divisorY.get()))
+    
+    def measure_focus(self):
+        self.microscope.update_real_state() 
+        self.Fsteps = int( (self.microscope.XYFposition[2] - self.start[2]) / int(self.divisorX.get()))
     
     def label_update(self):
         self.measure()
