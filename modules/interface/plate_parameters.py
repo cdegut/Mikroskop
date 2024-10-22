@@ -30,26 +30,27 @@ class Plate_parameters(Interface,CTkFrame):
 
         self.Xsteps = self.parameters.get()["Xsteps"]
         self.Ysteps = self.parameters.get()["Ysteps"]
+        self._param_config.Xold_steps = self.Xsteps
+        self._param_config.Yold_steps = self.Ysteps
+
         self.subwells_spacing = self.parameters.get()["subwells_spacing"]
 
         self.parameter_menu(20,10)
         self.lines_columns_subwels(20,80)
         self.XYstep_config_buttons(10,260)
         self.A1_button(10,350)
-        self.focus_button(10,410)
+        self.focus_button(10,420)
         self.back_to_main_button([10, 520])
 
     def XYstep_config_buttons(self, x_p, y_p):
 
         TopLabel = CTkLabel(self, text="Grid distances:")
-        XstepsLabel = CTkLabel(self, text="X steps:\n" + str(self.Xsteps))
-        YstepsLabel = CTkLabel(self, text="Y steps:\n" + str(self.Ysteps))
+        stepsLabel = CTkLabel(self, text=f"X steps: {str(self.Xsteps)}     Y steps: {str(self.Ysteps)}")
         Configure_XY =  CTkButton(self, text="Configure X and Y step", command=self.set_steps)
 
         TopLabel.place(x=x_p, y=y_p)
-        XstepsLabel.place(x=x_p+20, y=y_p+20)
-        YstepsLabel.place(x=x_p+90, y=y_p+20)
-        Configure_XY.place(x=x_p, y=y_p+60)
+        stepsLabel.place(x=x_p, y=y_p+20)
+        Configure_XY.place(relx=0.5, y=y_p+50, anchor=N)
 
     def A1_button(self, x_p, y_p):
         A1X = self.parameters.get()["start"][0]
@@ -57,15 +58,17 @@ class Plate_parameters(Interface,CTkFrame):
         A1Label = CTkLabel(self, text=f"A1 position X: {A1X} Y: {A1Y}")
         A1position =  CTkButton(self, text="Change A1 position", command=self.set_A1_position)
         A1Label.place(x=x_p, y=y_p)
-        A1position.place(x=x_p, y=y_p+30)
+        A1position.place(relx=0.5, y=y_p+30, anchor=N)
     
     def focus_button(self, x_p, y_p):
         FocusX = self.parameters.get()["XYFocusDrift"][0]
         FocusY = self.parameters.get()["XYFocusDrift"][1]
-        A1Label = CTkLabel(self, text=f"Focus drift X: {FocusX} Y: {FocusY}")
-        A1position =  CTkButton(self, text="Set Focus drift", command=self.set_focus_drift)
-        A1Label.place(x=x_p, y=y_p)
-        A1position.place(x=x_p, y=y_p+30)
+        DriftX = self.parameters.get()["XYaxisSkew"][0]
+        DriftY = self.parameters.get()["XYaxisSkew"][1]
+        Label = CTkLabel(self, text=f"Focus drift X: {FocusX} Y: {FocusY}\nAxes skew X: {DriftX} Y: {DriftY}")
+        fs =  CTkButton(self, text="Set Focus drift \nand axes skew", command=self.set_focus_drift)
+        Label.place(x=x_p, y=y_p)
+        fs.place(relx=0.5, y=y_p+40, anchor=N)
        
     def lines_columns_subwels(self, x_p=10, y_p=10):
         
@@ -78,9 +81,9 @@ class Plate_parameters(Interface,CTkFrame):
         LinesLabel = CTkLabel(self, text="Lines:")
 
         w=40
-        LinesMenu = CTkOptionMenu(self, width=w, variable=self.lines, values=["4","8","16"])
+        LinesMenu = CTkOptionMenu(self, width=w, variable=self.lines, values=["2","3","4","8","16"])
         ColumnsLabel = CTkLabel(self, text="Columns:")
-        ColumnsMenu = CTkOptionMenu(self, width=w, variable=self.columns, values=["6","12","24"])
+        ColumnsMenu = CTkOptionMenu(self, width=w, variable=self.columns, values=["3","4","6","12","24"])
         SubWellsLabel = CTkLabel(self, text="Subwells:")
         SubWellsMenu = CTkOptionMenu(self, width=w, variable=self.subwells, values=["1","2","3","4"])
 
@@ -88,7 +91,7 @@ class Plate_parameters(Interface,CTkFrame):
         self.columns.set(self.parameters.get()["columns"])
         self.subwells.set(self.parameters.get()["subwells"])
 
-        Save = CTkButton(self, text="Save changes", command=self.save_grid_param)
+        #Save = CTkButton(self, text="Save changes", command=self.save_grid_param)
         New = CTkButton(self, text="New Parameter Set",  command=self.new_grid_param)
         Delete = CTkButton(self, text="Delete Current",  command=self.delete_grid_param)
         
@@ -100,9 +103,9 @@ class Plate_parameters(Interface,CTkFrame):
         ColumnsMenu.place(x=x_p+70, y=y_p+20)
         SubWellsLabel.place(x=x_p+140, y=y_p)
         SubWellsMenu.place(x=x_p+140, y=y_p+20)
-        Save.place(relx=0.5, y=y_p+60, anchor=N)
-        New.place(relx=0.5, y=y_p+90, anchor=N)
-        Delete.place(relx=0.5, y=y_p+120, anchor=N)
+        #Save.place(relx=0.5, y=y_p+60, anchor=N)
+        New.place(relx=0.5, y=y_p+60, anchor=N)
+        Delete.place(relx=0.5, y=y_p+90, anchor=N)
 
     def parameter_menu(self, x_p, y_p):
         self.parameters_selector = StringVar()
@@ -119,6 +122,7 @@ class Plate_parameters(Interface,CTkFrame):
         self.position_grid.generate_grid()
         endstops_dict = self.parameters.get()["dyn_endstops"] ## Load the specific dynamic endstops
         self.microscope.set_dynamic_endsotop(endstops_dict)
+        self.clear_frame()
         self.init_window()
 
     def save_grid_param(self):
@@ -138,9 +142,18 @@ class Plate_parameters(Interface,CTkFrame):
         while name in self.parameters.all_parameters_sets:
             i += 1
             name = f"{l}-{c}-{s}-({i})"
-        self.parameters.copy("Default", name)
+        
+        self.parameters.copy(self.parameters.selected, name)
+
+        Y_ratio = self.parameters.get()["columns"]/c
+        X_ratio = self.parameters.get()["lines"]/l
+
         self.parameters.select(name)
+        oldX = self.parameters.get()["Xsteps"]
+        oldY = self.parameters.get()["Ysteps"]
         self.parameters.update([("Protected", False)])
+        self.parameters.update([("Xsteps", int(oldX * X_ratio) )])
+        self.parameters.update([("Ysteps", int(oldY * Y_ratio) )])
         self.save_grid_param()
         self.init_window()
 
@@ -199,23 +212,36 @@ class ParametersConfig(Interface, CTkFrame):
             self.XYsliders(l=200)
             self.A1_config_button()
             Cancel.place(x=10,y=450)
+            self.coordinate_place()
         if self.mode == "Focus":
-            self.save_focus_buttons((10,10))
-            Cancel.place(x=10,y=520)
+            self.focus_skew_buttons((10,10))
+            Cancel.place(x=10,y=450)
+            self.coordinate_place()
     
     def grid_go_pad(self, pad_position):
         w = 65
         A1 = CTkButton(self, width=w,text="A1", command=lambda: self.position_grid.go("A1"))        
-        B2 = CTkButton(self, width=w, text="B2", command=lambda: self.go_and_change_divisor("B2", (1,1)))
-        H1 = CTkButton(self, width=w, text="H1", command=lambda: self.go_and_change_divisor("H1", (7,1)))
-        A12 = CTkButton(self, width=w, text="A12", command=lambda: self.go_and_change_divisor("A12", (1,11)))
-        H12 = CTkButton(self, width=w, text="H12", command=lambda: self.go_and_change_divisor("H12", (7,11)))
+        w = 65
+        h = 30
+        nlines = self.parameters.get()['lines']
+        ncolumns = self.parameters.get()['columns']
+        last_line = f"{self.position_grid.line_namespace[nlines-1]}1"
+        last_column = f"A{ncolumns}"
+        opposite = f"{self.position_grid.line_namespace[nlines-1]}{ncolumns}"
+        center = f"{self.position_grid.line_namespace[int(nlines / 2)]}{int(ncolumns/2)}"
 
+        A1 = CTkButton(self, width=w, fg_color='Green', text="A1", command=lambda: self.position_grid.go("A1"))
+        last_columnB = CTkButton(self, width=w, text=last_column, command=lambda: self.go_and_change_divisor(last_column, [1,ncolumns-1]))
+        last_lineB = CTkButton(self, width=w, text=last_line, command=lambda: self.go_and_change_divisor(last_line, [nlines -1, 1]))
+        oppositeB = CTkButton(self, width=w, text=opposite, command=lambda: self.go_and_change_divisor(opposite, [nlines -1, ncolumns -1] ))
+        centerB = CTkButton(self, width=w, text=center, command=lambda: self.position_grid.go(center))
+        
+        ### Pad as relative position to pad_position       
         A1.place(x=pad_position[0]-90, y=pad_position[1]-50)
-        A12.place(x=pad_position[0]+60, y=pad_position[1]-50)
-        H1.place(x=pad_position[0]-90, y=pad_position[1])
-        H12.place(x=pad_position[0]+60, y=pad_position[1])
-        B2.place(x=pad_position[0]-15, y=pad_position[1]-25)
+        last_columnB.place(x=pad_position[0]+60, y=pad_position[1]-50)
+        last_lineB.place(x=pad_position[0]-90, y=pad_position[1])
+        oppositeB.place(x=pad_position[0]+60, y=pad_position[1])
+        centerB.place(x=pad_position[0]-15, y=pad_position[1]-25)
     
     def go_and_change_divisor(self, position, div):      
         self.position_grid.go(position)
@@ -250,42 +276,45 @@ class ParametersConfig(Interface, CTkFrame):
         
         self.label_update()
 
-    def save_focus_buttons(self, menus_position):
+    def focus_skew_buttons(self, menus_position):
         w = 90
         nlines = self.parameters.get()['lines']
         last_line = f"{self.position_grid.line_namespace[nlines-1]}1"
         last_column = f"A{self.parameters.get()['columns']}"
 
-        ExplanationLabel = CTkLabel(self, text="Use the button to go to end of line focus, and save. \nRepeat for columns")
-        ExplanationLabel.place(x=menus_position[0],y=menus_position[1])
+        ExplanationLabel = CTkLabel(self, text="Use the button to go to end of line \n Adjust focus, position, and save. \nRepeat for columns")
+        ExplanationLabel.place(relx=0.5,y=menus_position[1])
 
-        Xlabel = CTkLabel(self, text="Set Focus drift in X:")
-        goX = CTkButton(self, width=w,text=f"go to {last_line}", command=lambda: self.position_grid.go(last_line))
-        saveXdrift = CTkButton(self, width=w,text=f"Save X drift", command=lambda: self.save_focus_drift("X"))
+        Xlabel = CTkLabel(self, text="Focus drift and skew in X:")
+        goX = CTkButton(self, width=w,text=f"go to {last_line} (last line)", command=lambda: self.position_grid.go(last_line))
+        saveXdrift = CTkButton(self, width=w,text=f"Save X \nFocus drift", command=lambda: self.save_focus_drift("X"))
+        saveYskew = CTkButton(self, width=w,text=f"Save Y \naxis skew", command=lambda: self.save_axis_skew("Y"))
 
 
-        Ylabel = CTkLabel(self, text="Set Focus drift in Y:")
-        goY = CTkButton(self, width=w,text=f"go to {last_column}", command=lambda: self.position_grid.go(last_column))
-        saveYdrift = CTkButton(self, width=w,text=f"Save Y drift", command=lambda: self.save_focus_drift("Y"))
 
+        Ylabel = CTkLabel(self, text="Focus drift and skew in Y:")
+        goY = CTkButton(self, width=w,text=f"go to {last_column} (last column)", command=lambda: self.position_grid.go(last_column))
+        saveYdrift = CTkButton(self, width=w,text=f"Save Y \nFocus drift", command=lambda: self.save_focus_drift("Y"))
+        saveXskew = CTkButton(self, width=w,text=f"Save X \naxis skew", command=lambda: self.save_axis_skew("X"))
+
+        offset = 5
         Xlabel.place(x=menus_position[0],y=menus_position[1]+60)
-        goX.place(x=menus_position[0],y=menus_position[1]+90)
-        saveXdrift.place(x=menus_position[0],y=menus_position[1]+130)
+        goX.place(relx=0.5,y=menus_position[1]+90, anchor=N)
+        saveXdrift.place(x=menus_position[0] + offset,y=menus_position[1]+130)
+        saveYskew.place(x=menus_position[0]+ w +20 + offset,y=menus_position[1]+130)
+        
         Ylabel.place(x=menus_position[0],y=menus_position[1]+180)
-        goY.place(x=menus_position[0],y=menus_position[1]+210)
-        saveYdrift.place(x=menus_position[0],y=menus_position[1]+250)
+        goY.place(relx=0.5,y=menus_position[1]+210, anchor=N)
+        saveYdrift.place(x=menus_position[0] + offset,y=menus_position[1]+250)
+        saveXskew.place(x=menus_position[0]+ w +20 + offset,y=menus_position[1]+250)
 
-        Fp100 = CTkButton(self, width=80, text="Fcs +200", command=lambda: self.microscope.move_1axis(3,200))
-        Fm100 = CTkButton(self, width=80,text="Fcs -200", command=lambda: self.microscope.move_1axis(3,-200))
 
         Fp25 = CTkButton(self, width=80,text="Fcs +25 ", command=lambda: self.microscope.move_1axis(3,25))
         Fm25 = CTkButton(self, width=80,text="Fcs -25 ", command=lambda: self.microscope.move_1axis(3,-25))
 
         Fp5 = CTkButton(self, width=80,text="Fcs +5  ", command=lambda: self.microscope.move_1axis(3,5))
         Fm5 = CTkButton(self, width=80,text="Fcs -5  ", command=lambda: self.microscope.move_1axis(3,-5))
-       
-        Fp100.place(x=menus_position[0],y=menus_position[1]+310)
-        Fm100.place(x=menus_position[0]+100,y=menus_position[1]+310)
+
         Fp25.place(x=menus_position[0],y=menus_position[1]+350)
         Fm25.place(x=menus_position[0]+100,y=menus_position[1]+350)
         Fp5.place(x=menus_position[0],y=menus_position[1]+390)
@@ -306,6 +335,26 @@ class ParametersConfig(Interface, CTkFrame):
         if axis == "Y":
             XYdrift = self.parameters.get()["XYFocusDrift"][0], drift
             self.parameters.update([("XYFocusDrift", XYdrift)])
+        
+        self.position_grid.generate_grid()
+    
+    def save_axis_skew(self, axis):
+        self.microscope.update_real_state()
+        if axis == "X":
+            divisor = self.parameters.get()['lines'] -1.
+            skew = int( (self.microscope.XYFposition[0] - self.start[0]) / divisor)
+        if axis == "Y":
+            divisor = self.parameters.get()['columns'] - 1
+            skew = int( (self.microscope.XYFposition[1] - self.start[1]) / divisor)
+        
+        if axis == "X":
+            XYskew = skew, self.parameters.get()["XYaxisSkew"][1]
+            self.parameters.update([("XYaxisSkew", XYskew)])
+        if axis == "Y":
+            XYskew = self.parameters.get()["XYaxisSkew"][0], skew
+            self.parameters.update([("XYaxisSkew", XYskew)])
+        
+        self.position_grid.generate_grid()
     
         
     ### Panel only for setting up A1 position
@@ -317,7 +366,6 @@ class ParametersConfig(Interface, CTkFrame):
         self.A1Label.place(x=10, y=280)
         A1.place(x=10, y=320)
 
-        self.coordinate_place()
 
         SaveA1 = CTkButton(self, text="Save A1 center", command=self.save_A1)
         SaveA1.place(x=10,y=400)

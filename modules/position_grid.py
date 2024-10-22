@@ -21,12 +21,16 @@ class PositionsGrid:
         parameters =  self.parameters.get()
         fx = parameters["XYFocusDrift"][0]
         fy = parameters["XYFocusDrift"][1]
+        sx = parameters["XYaxisSkew"][0]
+        sy = parameters["XYaxisSkew"][1]
 
         for l in range (0, parameters["lines"]):
-            x = parameters['start'][0] + parameters['Xsteps']*l
-
+            
             for c in range(0, parameters["columns"]):
-                y = parameters['start'][1] + parameters['Ysteps']*c
+
+                x = parameters['start'][0] + parameters['Xsteps']*l + (sx * c)
+
+                y = parameters['start'][1] + parameters['Ysteps']*c + (sy * l)
 
                 f = parameters['start'][2] +  (fx * l ) + (fy * c)
 
