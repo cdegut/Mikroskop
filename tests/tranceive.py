@@ -110,7 +110,28 @@ while True:
             G = input("Green Value:")
             B = input("Blue Value:")
             neoPixel_indexLed(int(index),int(R),int(G),int(B))
+        
+        if cmd == 7:
+            R = input("Red Value:")
+            G = input("Green Value:")
+            B = input("Blue Value:")
+            for i in range(0,8):
+                neoPixel_indexLed(int(i),int(R),int(G),int(B))
 
+        if cmd == 8:
+            R = input("Red Value:")
+            G = input("Green Value:")
+            B = input("Blue Value:")
+            for i in range(8,16):
+                neoPixel_indexLed(int(i),int(R),int(G),int(B))
+
+        if cmd == 9:
+            R = input("Red Value:")
+            G = input("Green Value:")
+            B = input("Blue Value:")
+            for i in range(0,5):
+                neoPixel_indexLed(int(i),int(R),int(G),int(B))
+        
         if cmd in [1,2,3]:
             destination_input = input("destination in steps:")
             send_destination(int(cmd), int(destination_input))

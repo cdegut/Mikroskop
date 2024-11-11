@@ -4,7 +4,7 @@ from .microscope import *
 
 class PositionsGrid:
 
-    def __init__(self, microscope, parameters):
+    def __init__(self, microscope: Microscope, parameters: ParametersSets):
         self.microscope = microscope
         self.current_grid_position = ["##",1]
         self.line_namespace = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -50,6 +50,14 @@ class PositionsGrid:
     def go(self, well, subwell=1):
         self.microscope.go_absolute(self.absolute_grid[well][subwell])
         self.current_grid_position = [well, subwell]
+    
+    def at_position(self):
+        self.microscope.update_real_state()
+        target = self.absolute_grid[self.current_grid_position[0]][self.current_grid_position[1]]
+        if self.microscope.XYFposition == target:
+            return True
+        else:
+            return False
     
     def go_next_well(self, direction="line", value_move=1):
 

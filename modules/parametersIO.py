@@ -30,7 +30,7 @@ class ParametersSets:
                 return(parameters_set)          
         return "Default"
 
-    def get(self, subset = None):
+    def get(self, subset = None) -> dict:# -> Dictionary of the current parameter set:
         if not subset:
             subset = self.selected
         return self.all_parameters_sets[subset]

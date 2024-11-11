@@ -43,6 +43,7 @@ class Interface:
     _scale_job = None
     _timelapse_job = None
     _blink = None
+    _grid_record_job = None
     _job1 = None
     _job2 = None
     _job3 = None

@@ -34,8 +34,8 @@ F_controller_Switch = 5
 
 #fluorescent gain value
 awbR_fluo = 1
-awbB_fluo = 0.3
-awbR_white = 4.5
+awbB_fluo = 0.25
+awbR_white = 4.0
 awbB_white = 0.8
 
 #Preview window size

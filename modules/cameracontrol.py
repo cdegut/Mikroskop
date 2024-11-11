@@ -30,6 +30,10 @@ class Microscope_camera(Picamera2):
         self.request_counter = 0
         self.zoom_animation = {}
         self.capture_param = {}
+
+        self.is_capturing = False
+
+        self.full_image_array = None
     
     def initialise(self):
         self.general_config = self.create_preview_configuration(main={"size":  (1610, 1200), "format": "RGB888" }, 
@@ -127,6 +131,8 @@ class Microscope_camera(Picamera2):
         # need to alin configuration to 64 for YUV stram and 16 omly for RGB stream, not exactly sure why
 
         self.stop()
+        #rescale the preview if needed, start by resting to default before rescaling
+        self.running_config["lores"]["size"] = self.general_config["lores"]["size"]
         if self.running_config["main"]["size"] < self.running_config["lores"]["size"]:
             self.running_config["lores"]["size"] = self.running_config["main"]["size"]
 
@@ -152,6 +158,7 @@ class Microscope_camera(Picamera2):
              
 
     def capture_and_save(self, picture_name, data_dir):
+        self.is_capturing = True
         create_folder(data_dir)
         self.save_data_name = f"{data_dir}/{picture_name}.png"
         self.capture_image("main", signal_function=self.process_capture_)        
@@ -161,18 +168,30 @@ class Microscope_camera(Picamera2):
         pil_img = self.wait(capture_job)
         save = Thread(target = self.thread_save_capture_, args=(pil_img, self.save_data_name))
         save.start()
+        self.is_capturing = False
    
     def thread_save_capture_(self, pil_img , full_data_name): ##run as a separate thread
-        print("saving")
         img_RGB = pil_img.convert('RGB')
         img_RGB.save(full_data_name, format = "png" )
 
     def capture_full_res(self,  picture_name, data_dir):
+        self.is_capturing = True
         self.save_data_name = f"{data_dir}/{picture_name}.png"
         self.switch_mode(self.full_res_config, signal_function=self.qpicamera.signal_done)
         self.capture_and_save(picture_name, data_dir) 
         self.switch_mode(self.running_config, signal_function=self.zoom_back_)
-        print(self.crop_factor)
+
+    def create_full_res_array(self):
+        self.is_capturing = True
+        self.switch_mode(self.full_res_config, signal_function=self.qpicamera.signal_done)
+        self.capture_array( name="main", wait=None, signal_function=self.process_array_)
+        self.switch_mode(self.running_config, signal_function=self.zoom_back_)
+
+    def process_array_(self, array_job):
+        self.qpicamera.signal_done(array_job)
+        array = self.wait(array_job)
+        self.full_image_array = array
+        
  
     def zoom_back_(self, job):
         self.qpicamera.signal_done(job)
@@ -244,16 +263,16 @@ class Microscope_camera(Picamera2):
             #camera.controls.Contrast = 10
         if awb == "auto":
             self.controls.AwbEnable = True
-        if awb == "white":
+        if awb == "White LED":
             self.controls.AwbEnable = True
-            #self.controls.AwbEnable = False
-            #self.controls.ColourGains = awbR_white,  awbB_white
+            self.controls.AwbEnable = False
+            self.controls.ColourGains = awbR_white,  awbB_white
             #camera.controls.Contrast = 10 
 
     def current_exposure(self):
         return (self.metadata['ExposureTime'], self.metadata['AnalogueGain'])
 
-    def auto_exp_enable(self, value):
+    def auto_exp_enable(self, value: bool):
 
         if value == False:
             with self.controls as controls:
@@ -295,12 +314,12 @@ class VideoRecorder(Thread):
 
         ## If the video quality demanded is higher than the preview, get back to the preview (avoided useless oversampling of zoomed in video)
         if preview_resolution[0] < self.video_quality:          
-            record_resolution = preview_resolution
+            record_resolution = [preview_resolution[0], preview_resolution[1]]
         
         ## else set the camera to the new resolution
         else:
-            record_resolution = (self.video_quality, 
-                int((self.video_quality)*(self.camera.camera_properties['PixelArraySize'][1]/self.camera.camera_properties['PixelArraySize'][0])))
+            record_resolution = [self.video_quality, 
+                int((self.video_quality)*(self.camera.camera_properties['PixelArraySize'][1]/self.camera.camera_properties['PixelArraySize'][0]))]
 
         #### Change resolution if incompatible with the video
         if record_resolution[0] > h264_max_resolution[0]:
@@ -328,7 +347,7 @@ class VideoRecorder(Thread):
         self.camera.configure_(self.camera.video_config)
         self.camera.start()
         if self.camera.crop_factor != 1:
-            self.set_controls({"ScalerCrop": self.camera.zoom_animation["final_offset"]  + self.camera.zoom_animation["final_crop"]})
+            self.camera.set_controls({"ScalerCrop": self.camera.zoom_animation["final_offset"]  + self.camera.zoom_animation["final_crop"]})
         self.camera.start_encoder(encoder, self.video_name)
         while not self.event.is_set():
             sleep(0.1)
@@ -357,7 +376,7 @@ def stop_video(off_event):
 if __name__ == "__main__":
     import time
     micro_cam = Microscope_camera()
-    micro_cam.initialise(QT=True)
+    micro_cam.initialise()
     print(micro_cam.camera_ctrl_info)
     while True:
         time.sleep(1)

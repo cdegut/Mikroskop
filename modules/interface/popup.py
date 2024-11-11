@@ -17,6 +17,8 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
         Interface.__init__(self, Tk_root, last_window, microscope, parameters=parameters, camera=camera)
         self.auto_exp_value = "auto"
         self.awb_value = "auto"
+        self.darkField_status = "Off"
+        self.darkfield_type = "Normal"
         self.init_window(last_window)
         
     ###########
@@ -35,16 +37,21 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
         Save =  CTkButton(self, width=80, text="Save", command=self.save_capture_param)
 
 
-        self.AutoExp = CTkButton(self, text="AutoExp ON", command=self.auto_exp)
+        
         self.Shutter_label = CTkLabel(self, text = "Shutter speed μs")
-        self.Exp_scale = CTkSlider(self, from_=100, to=20000, height=60, width=200, number_of_steps=(20000-100)/100, orientation=HORIZONTAL)
-        self.Gain_label = CTkLabel(self, text = "Analogue Gain:")
+        self.Exp_scale = CTkSlider(self, from_=100, to=83000, height=60, width=200, number_of_steps=(20000-100)/100, orientation=HORIZONTAL)
+        self.Gain_label = CTkLabel(self, text = "")
         self.Gain_scale = CTkSlider(self, from_=1.0, to=10.5, height=60, width=200, number_of_steps=(10.5-1)/0.5, orientation=HORIZONTAL)
         self.EV_label = CTkLabel(self, text = "EV:")
         self.EV_scale = CTkSlider(self, from_=-2.0, to=2, height=60, width=200, number_of_steps=8, orientation=HORIZONTAL)
         
-        self.AWB_button = CTkButton(self, text="Normal mode", command=self.awb)
- 
+        self.DarkField_button = CTkButton(self, text=f"Darkfield: {self.darkField_status}", command=self.darkfield_switch, width=100, height = 40)
+        self.DarkField_select_button = CTkButton(self, text=f"type {self.darkfield_type}", command=self.darkfield_select, width=100, height = 40)
+        self.AWB_button = CTkButton(self, text=f"AWB: {self.awb_value}", command=self.awb, width=100, height = 40)
+        #self.AWB_custom = CTkButton(self, text=f"Custom config", command=self.awb_config, width=100, height = 40)
+
+        self.AutoExp = CTkButton(self, text="AutoExp ON", command=self.auto_exp, width=100, height = 40)
+
 
         self.led1_label.place(x=10, y= 10)  
         self.led1_scale.place(relx=0.5, y=35, anchor=N)
@@ -53,16 +60,19 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
         self.led2_scale.place(relx=0.5, y=120, anchor=N)
         self.led2_scale.set(self.microscope.led2pwr)
 
-        self.AWB_button.place(relx=0.5,y=190, anchor=N)       
-        self.AutoExp.place(relx=0.5,y=230, anchor=N) 
+        self.DarkField_button.place(x=10,y=190)
+        self.DarkField_select_button.place(x=120,y=190)
+        self.AWB_button.place(x=10,y=240)   
+        #self.AWB_custom.place(x=120,y=240)     
+        self.AutoExp.place(relx=0.5,y=290, anchor=N ) 
 
         self.exposure_panel()
 
         self.set_exp_and_gain()
         self.set_led()
         
-        Save.place(x=110, y=490)
-        self.back_button(position=(10,490))
+        #Save.place(x=110, y=490)
+        self.back_button(position=(10,520))
 
         if self.auto_exp_value == "off":
             self.AutoExp.configure(text="AutoExp OFF")
@@ -72,30 +82,88 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
 
 
     def exposure_panel(self):
+            y_pos =340
             
             if self.auto_exp_value == "off":
                 self.EV_scale.place_forget()
                 self.EV_label.place_forget()
 
-                self.Shutter_label.place(x=10, y= 270)
-                self.Exp_scale.place(relx=0.5,y=295, anchor=N)
+                self.Shutter_label.place(x=10, y= y_pos)
+                self.Exp_scale.place(relx=0.5,y=y_pos+25, anchor=N)
                 self.Exp_scale.set(self.camera.metadata['ExposureTime'])
 
-                self.Gain_label.place(x=10, y= 380)  
-                self.Gain_scale.place(relx=0.5,y=405, anchor=N)
+                self.Gain_label.place(x=10, y= y_pos + 90)  
+                self.Gain_scale.place(relx=0.5,y=y_pos + 90 + 25, anchor=N)
                 self.Gain_scale.set(self.camera.metadata['AnalogueGain'])
 
             else:
                 self.Exp_scale.place_forget()
                 self.Gain_scale.place_forget()
             
-                self.Shutter_label.place(x=10, y= 270)
-                self.Gain_label.place(x=10, y= 290)
+                self.Shutter_label.place(x=10, y= y_pos)
+                self.Gain_label.place(x=10, y= y_pos + 20)
 
-                self.EV_label.place(x=10, y= 330)  
-                self.EV_scale.place(relx=0.5,y=350, anchor=N)
+                self.EV_label.place(x=10, y= y_pos + 45)  
+                self.EV_scale.place(relx=0.5,y=y_pos + 45 +25 , anchor=N)
                 self.EV_scale.set(self.camera.EV_value)
 
+
+    def darkfield_switch(self):
+
+        if self.darkField_status == "Off":
+            self.darkField_status = "On"
+
+            self.DarkField_button.configure(text = f"Darkfield: {self.darkField_status}")
+            
+            match self.darkfield_type:
+    
+                case "Normal":
+                    self.microscope.adressable_LED_solid_color(255,255,80)
+
+                case "Blue":
+                    self.microscope.adressable_LED_solid_color(0,0,255)
+                
+                case "Red":
+                    self.microscope.adressable_LED_solid_color(255,0,0)
+
+                case "Green":
+                    self.microscope.adressable_LED_solid_color(0,255,0)
+        
+                case "Half":
+                    for i in range(0,9):
+                        self.microscope.adressable_LED_indexLed(int(i),int(255),int(255),int(80))
+
+                case "Quarter":
+                    for i in range(0,5):
+                        self.microscope.adressable_LED_indexLed(int(i),int(255),int(255),int(80))
+      
+        else:
+
+            self.microscope.adressable_LED_solid_color(0,0,0)
+            self.darkField_status = "Off"
+            self.DarkField_button.configure(text = f"Darkfield: {self.darkField_status}")
+    
+    def darkfield_select(self):
+        match self.darkfield_type:
+            case "Normal":
+                self.darkfield_type = "Blue"
+
+            case "Blue":
+                self.darkfield_type = "Red"
+            
+            case "Red":
+                self.darkfield_type = "Green"
+
+            case "Green":
+                self.darkfield_type = "Half"
+    
+            case "Half":
+                self.darkfield_type = "Quarter"
+            
+            case _:
+                self.darkfield_type = "Normal"
+        
+        self.DarkField_select_button.configure(text = f"type: {self.darkfield_type}")
 
     def auto_exp(self):
         if self.auto_exp_value == "auto":
@@ -109,15 +177,20 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
             self.exposure_panel()
     
     def awb(self):
-        if self.awb_value == "auto":
+        if self.awb_value == "White LED":
+            self.awb_value = "auto"
+            self.camera.awb_preset("auto")
+            self.AWB_button.configure(text=f"AWB: {self.awb_value}")
+
+        elif self.awb_value == "auto":
             self.awb_value = "Green Fluo"
             self.camera.awb_preset("Green Fluo")
-            self.AWB_button.configure(text="Green Fluo Mode")
+            self.AWB_button.configure(text=f"AWB: {self.awb_value}")
 
         elif self.awb_value == "Green Fluo":
-            self.awb_value = "auto"
-            self.camera.awb_preset( "auto")
-            self.AWB_button.configure(text="Normal mode")
+            self.awb_value = "White LED"
+            self.camera.awb_preset("White LED")
+            self.AWB_button.configure(text=f"AWB: {self.awb_value}")
    
     def save_capture_param(self):
         self.camera.capture_param["led1pwr"] = self.led1_scale.get()
@@ -180,7 +253,6 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
         self.Led_scale.set(self.microscope.positions[3])
     
     def open(self):
-        print("popup init")
         self.clear_jobs()
         self.clear_frame()
         if Interface._led_popup:
@@ -306,8 +378,8 @@ if __name__ == "__main__":
     parameters = ParametersSets()
     microscope = Microscope(addr, ready_pin, parameters)
     position_grid = PositionsGrid(microscope, parameters)
-    micro_cam = Microscope_camera()
-    micro_cam.initialise(QT=True)
+    micro_cam = Microscope_camera(microscope)
+    micro_cam.initialise()
 
     #Tkinter object
     customtkinter.set_appearance_mode("dark")

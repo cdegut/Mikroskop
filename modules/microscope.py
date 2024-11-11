@@ -160,7 +160,7 @@ class Microscope:
             return
         self.move_single_axis(axis, motor_destination)           
         
-    def go_absolute(self, destinations): #ordered movement of the 3 axis, move focus first of last depending on condition to avoid triggering dyn_endstop
+    def go_absolute(self, destinations: list[int,int,int]): #ordered movement of the 3 axis, move focus first of last depending on condition to avoid triggering dyn_endstop
         if destinations[2] < self.XYFposition[2]: #move focus first if it's going down (park)
             self.move_focus(destinations[2]) 
             self.move_X_Y(destinations[0],destinations[1])
@@ -221,3 +221,13 @@ class Microscope:
             i += 1
         print("Unable to read position after " +str(read_retry)+ " attempents" )
         exit()
+    
+    def adressable_LED_solid_color(self, R,G,B):
+            checksum = (R + G +B ) % 256 
+            with SMBus(1) as bus:
+                bus.write_i2c_block_data(addr, 5, [ 5 , R, G, B, checksum])
+
+    def adressable_LED_indexLed(self, index, R,G,B):
+            checksum = (index + R + G +B ) % 256 
+            with SMBus(1) as bus:
+                bus.write_i2c_block_data(addr, 6, [ 6 ,index, R, G, B, checksum])
