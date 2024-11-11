@@ -44,6 +44,7 @@ void setup() {
   X.config_range(0,X_MAX_RANGE);
   delay(500); // avoid low crrent on RPi
 
+
   Y.begin();
   Y.setup_TMC(&Y_driver, YmicroStep, Y_current);
   Y.setup_stallguard(YDiagPin, YSg_sensitivity_initial);
@@ -51,6 +52,7 @@ void setup() {
   Y.config_speed(Yslowspd,Yfastspd);
   Y.config_range(0,Y_MAX_RANGE);
   delay(500); // avoid low crrent on RPi
+  
 
   Focus.begin();
   Focus.setup_TMC(&F_driver, FmicroStep, F_current);
@@ -75,8 +77,12 @@ void setup() {
   Wire.onReceive(receiveData);
   Wire.onRequest(sendData);
 
+  X.config_hyst(25);
+  Y.config_hyst(25);
   Led1.begin(1000000.0f, 0.0f);
   Led2.begin(1000000.0f, 0.0f);
+  neopixelSolidColour(0,64,0);
+  delay(500);
   neopixelSolidColour(0,0,0);
 
 }

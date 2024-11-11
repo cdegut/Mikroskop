@@ -165,7 +165,7 @@ void Stepstick::set_direction(int8_t dir, bool hysteresys)
   _current_dir = dir;
 
   // make _hyst_steps that are unacounted for in _curent_position
-  if (hysteresys && _hyst_steps > 0) {
+  if (_hyst_steps > 0) {
   hysteresis_comp();
   }
 }

@@ -7,8 +7,8 @@
 #define XDiagPin 6
 #define XEnPin 7
 #define X_DRIVER_ADDRESS 0b10 // TMC2209 Driver address according to MS1 and MS2
-#define Xfastspd 200
-#define Xslowspd 400
+#define Xfastspd 250
+#define Xslowspd 500
 #define XmicroStep 8
 #define XSg_sensitivity_initial 70
 #define XSg_autoeval_divider 2.8  //adjust sensitivity of homing between 2 and 3 
