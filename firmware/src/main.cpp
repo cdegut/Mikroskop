@@ -75,8 +75,8 @@ void setup() {
   Wire.onReceive(receiveData);
   Wire.onRequest(sendData);
 
-  Led1.begin(40000.0f, 0.0f);
-  Led2.begin(40000.0f, 0.0f);
+  Led1.begin(1000000.0f, 0.0f);
+  Led2.begin(1000000.0f, 0.0f);
   neopixelSolidColour(0,0,0);
 
 }
