@@ -4,6 +4,7 @@ from ..position_grid import PositionsGrid
 from ..microscope_param import Xmaxrange, Ymaxrange
 from ..cameracontrol import Microscope_camera
 from time import localtime
+import os
 
 
 plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
@@ -14,14 +15,13 @@ plate_name = "Plate" ##is a place holder to later add a plate type selector, may
 
 class Interface: 
 
-    def __init__(self, Tk_root: CTk, last_window=None, microscope: Microscope =None, grid=None, camera: Microscope_camera = None, parameters=None):
+    def __init__(self, Tk_root: CTk, last_window=None, microscope: Microscope =None, position_grid: PositionsGrid =None, camera: Microscope_camera = None, parameters=None):
         CTkFrame.__init__(self, Tk_root)
         self.Tk_root = Tk_root
         self.microscope = microscope
-        self.grid = grid
+        self.position_grid = position_grid
         self.camera = camera
         self.parameters = parameters
-
         self.last_positions = None
 
     ###########################################
@@ -66,22 +66,22 @@ class Interface:
     ######## update the label to corespond to the actual current position of the microscope
     def update_coordinates_label(self):
         self.microscope.update_real_state()
-        text_coordinates = f"X:  + {self.microscope.XYFposition[0]}\
+        text_coordinates = f"X: {self.microscope.XYFposition[0]}\
  Y: {self.microscope.XYFposition[1]}\
  F: {self.microscope.XYFposition[2]}\
-\nLed 1: {self.microscope.led1pwr}  Led 2:  {self.microscope.led2pwr}"
+\nLed 1: {self.microscope.led1pwr}  Led 2: {self.microscope.led2pwr}"
         
         self.Coordinates.configure(text=text_coordinates)
 
         if hasattr(self, 'well_info'): ## update the well_info atribute if needed
-            self.well_info.configure(text=self.grid.current_grid_position)
+            self.well_info.configure(text=self.position_grid.current_grid_position)
         
         Interface._coordinates_job = self.after(500, self.update_coordinates_label)
 
     
     def save_positions(self,parameter_subset): 
         self.parameters.update_start(self.microscope.XYFposition[0],self.microscope.XYFposition[1], self.microscope.XYFposition[2],parameter_subset)
-        self.grid.generate_grid() 
+        self.position_grid.generate_grid() 
 
     #def guess_parameters_subset(self):
     #    if self.last_window == Interface._freemove_main:
@@ -103,17 +103,19 @@ class Interface:
 
     def snap_grid(self,full_res=False):
         timestamp = self.timestamp()
-        picture_name = timestamp + "_" + str(self.grid.current_grid_position[0]) + "-" + str(self.grid.current_grid_position[1])
+        picture_name = timestamp + "_" + str(self.position_grid.current_grid_position[0]) + "-" + str(self.position_grid.current_grid_position[1])
+        home = os.getenv("HOME")
         data_dir = self.parameters.get()["data_dir"]
-        self.camera.capture_and_save(picture_name, data_dir)
+        self.camera.capture_and_save(picture_name, f"{home}/{data_dir}")
     
     def snap_timestamp(self, full_res=False):
         picture_name = self.timestamp()
         data_dir = self.parameters.get()["data_dir"]
+        home = os.getenv("HOME")
         if not full_res:
-            self.camera.capture_and_save(picture_name, f"{data_dir}/img")
+            self.camera.capture_and_save(picture_name, f"{home}/{data_dir}/img")
         else:
-            self.camera.capture_full_res(picture_name, f"{data_dir}/img")
+            self.camera.capture_full_res(picture_name, f"{home}/{data_dir}/img")
     
     def show_record_label(self):
         if Interface._video_timer:
@@ -246,7 +248,7 @@ if __name__ == "__main__":
     from tkinter import Tk
 
     microscope = Microscope(addr, ready_pin)
-    grid = PositionsGrid(microscope)
+    position_grid = PositionsGrid(microscope)
     #start picamPreview
     camera = picamera2.PiCamera()
     #previewPiCam(camera)

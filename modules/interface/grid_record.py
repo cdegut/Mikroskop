@@ -1,5 +1,6 @@
 from tkinter import Frame, Button, BOTH, Label, StringVar, OptionMenu, Toplevel
 from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N, StringVar, CTkToplevel
+import os
 
 from .super import Interface
 from ..parametersIO import create_folder
@@ -9,8 +10,8 @@ plate_name = "Plate" ##is a place holder to later add a plate type selector, may
 
 class GridRecord(Interface, CTkFrame):
 
-    def __init__(self, Tk_root, microscope, grid, camera, parameters):
-        Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera, parameters=parameters)
+    def __init__(self, Tk_root, microscope, position_grid, camera, parameters):
+        Interface.__init__(self, Tk_root, microscope=microscope, position_grid=position_grid, camera=camera, parameters=parameters)
 
 
         self.repeat = StringVar()
@@ -33,7 +34,7 @@ class GridRecord(Interface, CTkFrame):
             Interface._grid_record.init_window()
         else:
             pass
-            Interface._grid_record = GridRecord(self.Tk_root, self.microscope, self.grid, self.camera, self.parameters)
+            Interface._grid_record = GridRecord(self.Tk_root, self.microscope, self.position_grid, self.camera, self.parameters)
 
     ###########
     ### Generate the window content, called every time window is (re)opened 
@@ -54,7 +55,7 @@ class GridRecord(Interface, CTkFrame):
         column_list = [str(x) for x in range(1, self.parameters["columns"]+1) ]
         line_list = []
         for i in range(0, self.parameters["lines"]):
-            line_list.append(self.grid.line_namespace[i])
+            line_list.append(self.position_grid.line_namespace[i])
         SubwellsList = [str(x) for x in range(1, self.grid.nb_of_subwells+1)]
 
         RepeatLabel = CTkLabel(self, text="Repeat")
@@ -110,7 +111,7 @@ class GridRecord(Interface, CTkFrame):
     def refresh_popup(self, popup, abort): # refresh popup  return True if stop button is clicked
         popup.update_idletasks()
         popup.update()
-        abort.well_info.configure(text=self.grid.current_grid_position)
+        abort.well_info.configure(text=self.position_grid.current_grid_position)
         if abort.stop:
             return True
         return False
@@ -123,7 +124,7 @@ class GridRecord(Interface, CTkFrame):
         start_well = str(self.startline.get()) + str(self.startcolumn.get())
         finish_well = str(self.finishline.get()) + str(self.finishcolumn.get()) 
         grid_subwells = int(self.grid_subwells.get())
-        positions_list = self.grid.generate_position_list(start_well, finish_well, grid_subwells)
+        positions_list = self.position_grid.generate_position_list(start_well, finish_well, grid_subwells)
 
         delay = int(self.delay.get())
         repeat = int(self.repeat.get())
@@ -136,8 +137,8 @@ class GridRecord(Interface, CTkFrame):
         date = str(current_time[0])[2:] + str(current_time[1]).zfill(2) + str(current_time[2]).zfill(2) + "_"  \
             + str(current_time[3]).zfill(2) + str(current_time[4]).zfill(2)
         data_dir= self.parameters.get()["data_dir"]
-
-        grid_folder = data_dir + "grid-" + date + "/"
+        home = os.getenv("HOME")
+        grid_folder = f"{home}/{data_dir}/grid-{date}/"
         create_folder(grid_folder)
 
 
@@ -145,7 +146,7 @@ class GridRecord(Interface, CTkFrame):
             
             #sleep for the apptopriate delay if not the first repeat
             if rep:
-                self.grid.go(positions_list[0][0])
+                self.position_grid.go(positions_list[0][0])
 
                 for t in range(0, delay*10):
                     if self.refresh_popup(popup, abort): 
@@ -161,7 +162,7 @@ class GridRecord(Interface, CTkFrame):
                     popup.destroy()
                     return
 
-                self.grid.go(position[0], position[1])
+                self.position_grid.go(position[0], position[1])
                 time.sleep(0.5)
                 
                 #generate a picture name, accounting for subwells or not

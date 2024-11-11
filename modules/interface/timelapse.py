@@ -3,7 +3,7 @@ from .popup import led_focus_zoom_buttons
 from ..parametersIO import create_folder
 from time import time
 from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N
-
+import os
 
 class Time_lapse_window(Interface, CTkFrame):
         
@@ -73,8 +73,8 @@ class Time_lapse_window(Interface, CTkFrame):
             self.FrameLabel.place(relx=rec_position[0], y=rec_position[1]+40, anchor=N)
 
     def test_image(self):
-        
-        self.camera.capture_param["data_dir"] = f"{self.parameters.get()['data_dir']}/time_lapse/tests"
+        home = os.getenv("HOME")
+        self.camera.capture_param["data_dir"] = f"{home}/{self.parameters.get()['data_dir']}/time_lapse/tests"
         self.camera.capture_param["picture_name"] = self.timestamp()
         self.camera.capture_with_preset()
 
@@ -84,7 +84,8 @@ class Time_lapse_window(Interface, CTkFrame):
         self.timer = int(self.TimerMenu.get())
         self.max_frame = int(60 / self.timer *  int(self.TotalTimeMenu.get()))
         
-        self.camera.capture_param["data_dir"] = f"{self.parameters.get()['data_dir']}/time_lapse/"
+        home = os.getenv("HOME")
+        self.camera.capture_param["data_dir"] = f"{home}/{self.parameters.get()['data_dir']}/time_lapse/"
         self.camera.capture_param["picture_name"] = f"{'0'.zfill(len(str(self.max_frame)))}-{self.timestamp()}"
         self.start_timer = time()
         self.camera.capture_with_preset()     
@@ -134,7 +135,7 @@ if __name__ == "__main__":
     #Tkinter object
     parameters = ParametersSets()
     microscope = Microscope(addr, ready_pin, parameters)
-    grid = PositionsGrid(microscope, parameters)
+    position_grid = PositionsGrid(microscope, parameters)
     micro_cam = None
 
     #Tkinter object

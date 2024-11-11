@@ -5,8 +5,8 @@ from .popup import led_focus_zoom_buttons
 
 class FreeMovementInterface(Interface, CTkFrame):
 
-    def __init__(self, Tk_root, microscope, grid, camera, parameters):
-        Interface.__init__(self, Tk_root, microscope=microscope, grid=grid, camera=camera, parameters=parameters)
+    def __init__(self, Tk_root, microscope, position_grid, camera, parameters):
+        Interface.__init__(self, Tk_root, microscope=microscope, position_grid=position_grid, camera=camera, parameters=parameters)
 
         self.init_window()
         self.start_position = self.parameters.get()["start"]
@@ -19,7 +19,7 @@ class FreeMovementInterface(Interface, CTkFrame):
         if Interface._freemove_main:
             Interface._freemove_main.init_window()
         else:
-            Interface._freemove_main = FreeMovementInterface(self.Tk_root, self.microscope, self.grid, self.camera, self.parameters)
+            Interface._freemove_main = FreeMovementInterface(self.Tk_root, self.microscope, self.position_grid, self.camera, self.parameters)
         
     ###########
     ### Generate the window content, called every time window is (re)opened 
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     #Tkinter object
     parameters = ParametersSets()
     microscope = Microscope(addr, ready_pin, parameters)
-    grid = PositionsGrid(microscope, parameters)
+    position_grid = PositionsGrid(microscope, parameters)
     micro_cam = Microscope_camera()
 
     #Tkinter object
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     Tk_root.geometry("230x560+800+35")   
     
     ### Don't display border if on the RPi display
-    Interface._freemove_main = FreeMovementInterface(Tk_root, microscope=microscope, grid=grid, camera=micro_cam, parameters=parameters)
+    Interface._freemove_main = FreeMovementInterface(Tk_root, microscope=microscope, position_grid=position_grid, camera=micro_cam, parameters=parameters)
 
     Tk_root.mainloop()
 

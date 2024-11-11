@@ -30,33 +30,41 @@ void setup() {
 
 
   neopixelSolidColour(64,0,0);
-  delay(1000); // avoid low crrent on RPi
+  delay(500); // avoid low crrent on RPi
 
-  //while (!Serial) {;} //wait for serial for debugging
+  #ifdef DEBUG_HOMING
+    while (!Serial) {;} //wait for serial for debugging
+  #endif
 
   X.begin();
-  X.setup_TMC(&X_driver, XmicroStep);
+  X.setup_TMC(&X_driver, XmicroStep, X_current);
   X.setup_stallguard(XDiagPin, XSg_sensitivity_initial);
   X.config_coolstep();          
   X.config_speed(Xslowspd,Xfastspd);
+  X.config_range(0,X_MAX_RANGE);
+  delay(500); // avoid low crrent on RPi
 
   Y.begin();
-  Y.setup_TMC(&Y_driver, YmicroStep);
+  Y.setup_TMC(&Y_driver, YmicroStep, Y_current);
   Y.setup_stallguard(YDiagPin, YSg_sensitivity_initial);
   Y.config_coolstep();          
   Y.config_speed(Yslowspd,Yfastspd);
+  Y.config_range(0,Y_MAX_RANGE);
+  delay(500); // avoid low crrent on RPi
 
   Focus.begin();
-  Focus.setup_TMC(&F_driver, FmicroStep);
+  Focus.setup_TMC(&F_driver, FmicroStep, F_current);
   Focus.setup_stallguard(FDiagPin, FSg_sensitivity_initial);
   Focus.config_coolstep();          
   Focus.config_speed(Fslowspd,Ffastspd);
+  Focus.config_range(0,F_MAX_RANGE);
+  delay(500); // avoid low crrent on RPi
 
   home_XYF(4000);
 
   timer = millis();
 
-  X.motion_planner(X_0offset);
+  X.motion_planner(1000);
   Y.motion_planner(1000);
   Focus.motion_planner(1000);
   run_loop(X,Y,Focus);
