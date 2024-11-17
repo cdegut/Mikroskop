@@ -161,7 +161,13 @@ class Microscope_camera(Picamera2):
         self.is_capturing = True
         create_folder(data_dir)
         self.save_data_name = f"{data_dir}/{picture_name}.png"
-        self.capture_image("main", signal_function=self.process_capture_)        
+        self.capture_image("main", signal_function=self.process_capture_)
+
+    def lores_capture(self, picture_name, data_dir):
+        self.is_capturing = True
+        create_folder(data_dir)
+        self.save_data_name = f"{data_dir}/{picture_name}.jpg"
+        self.capture_image("lores", signal_function=self.process_capture_)
 
     def process_capture_(self,capture_job):
         self.qpicamera.signal_done(capture_job)
@@ -184,8 +190,11 @@ class Microscope_camera(Picamera2):
     def create_full_res_array(self):
         self.is_capturing = True
         self.switch_mode(self.full_res_config, signal_function=self.qpicamera.signal_done)
-        self.capture_array( name="main", wait=None, signal_function=self.process_array_)
+        self.create_main_array()
         self.switch_mode(self.running_config, signal_function=self.zoom_back_)
+
+    def create_main_array(self):
+        self.capture_array( name="main", wait=None, signal_function=self.process_array_)
 
     def process_array_(self, array_job):
         self.qpicamera.signal_done(array_job)
@@ -261,6 +270,19 @@ class Microscope_camera(Picamera2):
             self.controls.AwbEnable = False
             self.controls.ColourGains = awbR_fluo,  awbB_fluo
             #camera.controls.Contrast = 10
+        
+        if awb == "Green Fluo 2":
+            self.controls.AwbEnable = False
+            self.controls.ColourGains = awbR_fluo,  0.25
+        
+        if awb == "Green Fluo 3":
+            self.controls.AwbEnable = False
+            self.controls.ColourGains = awbR_fluo,  0.15
+
+        if awb == "Green Fluo 3":
+            self.controls.AwbEnable = False
+            self.controls.ColourGains = awbR_fluo,  0.05
+
         if awb == "auto":
             self.controls.AwbEnable = True
         if awb == "White LED":

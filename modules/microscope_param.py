@@ -4,6 +4,10 @@ Xmaxrange = 70000
 Ymaxrange = 93000
 Fmaxrange = 30000
 
+overshoot_X = -16
+undershoot_X = -4
+overshoot_Y = -100
+undershoot_Y = +40
 #number of retry possible for motor command sent, 10 by default (normal error error rate should not exceed 2 in a row)
 retry = 10
 #number of retry possible for read position, 10 by default (normal error error rate should not exceed 2 in a row)
@@ -34,8 +38,8 @@ F_controller_Switch = 5
 
 #fluorescent gain value
 awbR_fluo = 1
-awbB_fluo = 0.25
-awbR_white = 4.0
+awbB_fluo = 0.35
+awbR_white = 3
 awbB_white = 0.8
 
 #Preview window size

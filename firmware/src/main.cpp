@@ -20,6 +20,8 @@ CRGBArray<NeoPixelCount> NeoPixel;
 long timer;
 
 void setup() {
+  Led1.begin(1000000.0f, 0.0f);
+  Led2.begin(1000000.0f, 0.0f);
   
 
   Serial.begin(250000);
@@ -77,10 +79,8 @@ void setup() {
   Wire.onReceive(receiveData);
   Wire.onRequest(sendData);
 
-  X.config_hyst(25);
-  Y.config_hyst(25);
-  Led1.begin(1000000.0f, 0.0f);
-  Led2.begin(1000000.0f, 0.0f);
+  //X.config_hyst(25);
+  //Y.config_hyst(56);
   neopixelSolidColour(0,64,0);
   delay(500);
   neopixelSolidColour(0,0,0);
