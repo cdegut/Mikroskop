@@ -3,9 +3,11 @@ import time
 from smbus2 import SMBus, i2c_msg
 import RPi.GPIO as GPIO
 from .microscope_param import *
+from .parametersIO import ParametersSets
 
 # Use GPIO numbers not pin numbers
 GPIO.setmode(GPIO.BCM)
+
 
 class Microscope:
 
@@ -38,8 +40,7 @@ class Microscope:
             self.dyn_maxFcs = endstops_dict["dyn_maxFcs"]
             self.safe_Fcs = endstops_dict["safe_Fcs"]
         else:
-            self.dynamic_endstops = False
-      
+            self.dynamic_endstops = False    
 
     def wait_ready(self): # wait until arduino is ready
         while not GPIO.input(self.ready_pin):  
@@ -85,26 +86,21 @@ class Microscope:
                 steps = 255
             data = bytes([steps, steps])
             bus.write_i2c_block_data(self.addr, cmd, data)
-            
-    #def safe_destination_update(self, motor, destination):
-    #           
-    #    destination = self.make_safe(motor, destination) #update destination with max value acccording to set soft endstop if needed      
-        
 
     def move_single_axis(self, motor, destination):
         i = 1
         while i <= retry:
 
             destination = self.make_safe(motor, destination)
-            self.send_motor_cmd(motor, destination)
-            time.sleep(0.1)
 
             if not self.is_ready():
                 return
-            
-            self.update_real_state()
+
+
             if self.XYFposition[motor-1] == destination:
                 return
+            
+            self.send_motor_cmd(motor, destination)
 
             print("At "+ time.strftime("%H:%M:%S", time.localtime()) +" motor did not move as expected, retrying "+str(i)+" of "+ str(retry) +" times") 
             time.sleep(0.5)
@@ -172,6 +168,8 @@ class Microscope:
         with SMBus(1) as bus:
             checksum = (led1pwr + led2pwr) % 256 
             bus.write_i2c_block_data(addr, 4, [ 4 , led1pwr, led2pwr,checksum])
+            self.led1pwr = led1pwr
+            self.led2pwr = led2pwr
 
     def send_simplecmd(self, cmd):
         with SMBus(1) as bus:
@@ -231,3 +229,110 @@ class Microscope:
             checksum = (index + R + G +B ) % 256 
             with SMBus(1) as bus:
                 bus.write_i2c_block_data(addr, 6, [ 6 ,index, R, G, B, checksum])
+
+class MicroscopeManager:
+
+    """Create the manager instead of creating the Microscope class
+        Use request method to set up next movement
+        data will be sent at the next run()
+    """
+    
+    def __init__(self, addr, ready_pin, parameters: ParametersSets =None):
+        self.microscope: Microscope = Microscope(addr, ready_pin, parameters)
+        self.__active_target: list[int,int,int] = None
+        self.__requested_target: list[int,int,int] = None
+        self.__request_leds_pwr: list[int,int] = None
+        self.at_position:bool = True
+        self.XYFposition = self.microscope.XYFposition
+    
+    def run(self):
+        self.microscope.update_real_state()
+        self.XYFposition = self.microscope.XYFposition
+
+        if self.microscope.XYFposition == self.__active_target:
+            self.at_position = True
+
+        if self.__requested_target is not None:
+            self.__activate_target()
+        
+        if self.__request_leds_pwr is not None:
+            self.__set_led_pwr()
+
+    def __activate_target(self):
+        self.__active_target = self.__requested_target 
+        self.microscope.go_absolute(self.__active_target)
+        self.__requested_target = None
+    
+    def __set_led_pwr(self):
+        self.microscope.set_ledspwr(self.__request_leds_pwr[0], self.__request_leds_pwr[1])
+        self.__request_leds_pwr = None
+
+    def request_push_axis(self, axis: str, amount: int):
+        """Push axis by a specific amount in steps
+            will be sent to the microscope at the next exection of run()
+
+        Args:
+            axis (str): X , Y or F
+            amount (int): amount of steps
+        """
+        aX = self.__active_target[0]
+        aY = self.__active_target[1]
+        aF = self.__active_target[2]
+        if axis == "X":
+            self.__requested_target =  [aX + amount, aY, aF]
+
+        if axis == "Y":
+            self.__requested_target =  [aX , aY + amount, aF]
+
+        if axis == "F":
+            self.__requested_target =  [aX , aY , aF + amount]
+        
+    def request_specific_position(self, position: list[int,int,int], trajectory_corection: bool = False):
+        """request a full destination in XYF
+            will be sent to the microscope at the next exection of run()
+
+        Args:
+            position (list[int,int,int]): [DestinationX, Y, F]
+            trajectory_corection: bool = True change the destination to account to microscope error
+
+        """
+        if trajectory_corection:
+            position = self.__corect_trajectory(position)
+
+        self.__requested_target = position
+
+    def request_ledspwr(self, led1pwr: int, led2pwr:int):
+        """request a leds power 0 to 100%
+            will be sent to the microscope at the next exection of run()
+        Args:
+            led1pwr (int): leds 1 power 0 to 100%
+            led2pwr (int): leds 2 power 0 to 100%
+        """
+      
+        self.__request_leds_pwr = [led1pwr, led2pwr]
+
+    
+    def __corect_trajectory(self, position):
+        cX = self.XYFposition[0] # current
+        cY = self.XYFposition[0]
+        cF = self.XYFposition[0]
+
+        rX = position[0] # request
+        rY = position[0]
+        rF = position[0]
+
+        if cX - rX > 0:   
+            tX = rX + overshoot_X  # target
+        elif cX - rX < 0:
+            tX = rX + undershoot_X  # target
+
+        if cY - rY > 0:
+            tY = rY + overshoot_Y  # target
+        elif cY - rY < 0:
+            tY = rY + undershoot_Y  # target
+        
+        tF = rF
+
+        return [tX, tY, tF]
+
+

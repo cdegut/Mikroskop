@@ -6,13 +6,13 @@ from libcamera import Transform
 from time import sleep
 from .interface.picameraQT import PreviewWidget
 from picamera2.previews.qt import QGlPicamera2, QPicamera2
-from.microscope import Microscope
+from.microscope import MicroscopeManager, Microscope
 
 camera_full_resolution = (4056,3040)
 h264_max_resolution = (1664,1248)
 
 class Microscope_camera(Picamera2):
-    def __init__(self, microscope):
+    def __init__(self, microscope: MicroscopeManager):
         Picamera2.__init__(self)
         self.crop_factor = 1
         self.EV_value = 0
@@ -23,7 +23,7 @@ class Microscope_camera(Picamera2):
         self.post_callback = self.post_callback_exec
         self.qpicamera: QPicamera2 | QGlPicamera2 = None
         self.save_data_name = None
-        self.microscope: Microscope = microscope
+        self.microscope: Microscope = microscope.microscope # the camera can bypass the manager for light sync
 
         self.new_config = None
 

@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import  QApplication
 from PyQt5 import QtCore
 
 from modules.cameracontrol import Microscope_camera
-from modules.microscope import Microscope
+from modules.microscope import MicroscopeManager
 from modules.position_grid import PositionsGrid
 from modules.physical_controller import encoder_read, controller_startup
 from modules.interface.main_menu import *
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     encoder_X, encoder_Y, encoder_F = controller_startup()                
     ### Object for microscope to run
     parameters = ParametersSets()
-    microscope = Microscope(addr, ready_pin, parameters)
+    microscope = MicroscopeManager(addr, ready_pin, parameters)
     position_grid = PositionsGrid(microscope, parameters)
     micro_cam = Microscope_camera(microscope)
     
@@ -63,9 +63,9 @@ if __name__ == "__main__":
     micro_cam.qpicamera = preview_window.main_widget.qpicamera2 
 
     # run the old Tk interace in a Qt timer
-    timer = QtCore.QTimer()
-    timer.timeout.connect(tk_loop)
-    timer.start(10)
+    tk_timer = QtCore.QTimer()
+    tk_timer.timeout.connect(tk_loop)
+    tk_timer.start(10)
 
     sys.exit(app.exec_())
 

@@ -1,7 +1,8 @@
 from .encoder_class import Encoder
+from .microscope import MicroscopeManager
 
 
-def encoder_read(microscope, encoder, axis, short_steps, long_steps):
+def encoder_read(microscope: MicroscopeManager, encoder, axis, short_steps, long_steps):
     value = encoder.internal_counter
     if value == 0:
         return
@@ -11,7 +12,7 @@ def encoder_read(microscope, encoder, axis, short_steps, long_steps):
     else:
         steps = long_steps * value
 
-    microscope.push_axis(axis , steps)
+    microscope.request_push_axis(axis , steps)
     encoder.internal_counter = 0
 
 def controller_startup():
