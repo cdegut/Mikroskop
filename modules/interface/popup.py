@@ -188,6 +188,21 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
             self.AWB_button.configure(text=f"AWB: {self.awb_value}")
 
         elif self.awb_value == "Green Fluo":
+            self.awb_value = "Green Fluo 2"
+            self.camera.awb_preset("Green Fluo 2")
+            self.AWB_button.configure(text=f"AWB: {self.awb_value}")
+
+        elif self.awb_value == "Green Fluo 2":
+            self.awb_value = "Green Fluo 3"
+            self.camera.awb_preset("Green Fluo 3")
+            self.AWB_button.configure(text=f"AWB: {self.awb_value}")
+
+        elif self.awb_value == "Green Fluo 3":
+            self.awb_value = "Green Fluo 4"
+            self.camera.awb_preset("Green Fluo 4")
+            self.AWB_button.configure(text=f"AWB: {self.awb_value}")
+
+        elif self.awb_value == "Green Fluo 4":
             self.awb_value = "White LED"
             self.camera.awb_preset("White LED")
             self.AWB_button.configure(text=f"AWB: {self.awb_value}")
@@ -276,6 +291,9 @@ class Focus_popup(Interface, CTkFrame):
         self.pack(fill=BOTH, expand=1)
         self.show_record_label()
 
+        Fp1000 = CTkButton(self, width=80, text="Fcs +1000", command=lambda: self.microscope.move_1axis(3,1000))
+        Fm1000 = CTkButton(self, width=80,text="Fcs -1000", command=lambda: self.microscope.move_1axis(3,-1000))
+
         Fp100 = CTkButton(self, width=80, text="Fcs +200", command=lambda: self.microscope.move_1axis(3,200))
         Fm100 = CTkButton(self, width=80,text="Fcs -200", command=lambda: self.microscope.move_1axis(3,-200))
 
@@ -290,7 +308,9 @@ class Focus_popup(Interface, CTkFrame):
         
         ObjOn = CTkButton(self, width=80, text="ObjOn", command=lambda:  self.microscope.move_focus(self.parameters.get()["start"][2] - 600 ))
         ObjOff = CTkButton(self, width=80, text="ObjOff", command=lambda: self.microscope.move_focus(0))
-        
+
+        Fp1000.place(x=10, y=155)
+        Fm1000.place(x=100, y=155)       
         Fp100.place(x=10, y=200)
         Fm100.place(x=100, y=200)
         Fp25.place(x=10, y=245)
