@@ -1,78 +1,23 @@
-#!/usr/bin/python3
+from dataclasses import dataclass
 
-import numpy as np
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import (QApplication, QCheckBox, QHBoxLayout, QLabel,
-                             QPushButton, QVBoxLayout, QWidget)
+@dataclass
+class LED:
+    index: int = 0 
+    R: int = 0
+    G: int = 0
+    B: int = 0
 
-from picamera2 import Picamera2
-from picamera2.previews.qt import QPicamera2
-
-def request_callback(request):
-    label.setText(''.join(f"{k}: {v}\n" for k, v in request.get_metadata().items()))
-
-
-def cleanup():
-    picam2.post_callback = None
-
-
-picam2 = Picamera2()
-picam2.post_callback = request_callback
-picam2.configure(picam2.create_preview_configuration(main={"size": (800, 600)}))
-app = QApplication([])
+class LEDArray:
+    def __init__(self, R=0,G=0,B=0, num = 16):
+        self.leds = [LED(i, R,G,B) for i in range(num)]
+    def half(self,R,G,B, start: int=0):
+        for led in self.leds[start:start + len(self.leds)/2]:
+            led.R , led.G , led.B = R,G,B
+    def quarter(self,R,G,B, start:int =0):
+        for led in self.leds[start:start + int(len(self.leds)/4)]:
+            led.R , led.G , led.B = R,G,B
 
 
-def on_button_clicked():
-    button.setEnabled(False)
-    cfg = picam2.create_still_configuration()
-    picam2.switch_mode_and_capture_file(cfg, "test.jpg", signal_function=qpicamera2.signal_done)
 
-
-def capture_done(job):
-    picam2.wait(job)
-    button.setEnabled(True)
-
-
-overlay = np.zeros((300, 400, 4), dtype=np.uint8)
-overlay[:150, 200:] = (255, 0, 0, 64)
-overlay[150:, :200] = (0, 255, 0, 64)
-overlay[150:, 200:] = (0, 0, 255, 64)
-
-
-def on_checkbox_toggled(checked):
-    if checked:
-        qpicamera2.set_overlay(overlay)
-    else:
-        qpicamera2.set_overlay(None)
-
-
-# Either camera widget implementation should work:
-# qpicamera2 = QPicamera2(picam2, width=800, height=600)
-# or:
-qpicamera2 = QPicamera2(picam2, width=800, height=600)
-qpicamera2.done_signal.connect(capture_done)
-
-button = QPushButton("Click to capture JPEG")
-button.clicked.connect(on_button_clicked)
-label = QLabel()
-checkbox = QCheckBox("Set Overlay", checked=False)
-checkbox.toggled.connect(on_checkbox_toggled)
-window = QWidget()
-window.setWindowTitle("Qt Picamera2 App")
-
-label.setFixedWidth(400)
-label.setAlignment(QtCore.Qt.AlignTop)
-layout_h = QHBoxLayout()
-layout_v = QVBoxLayout()
-layout_v.addWidget(label)
-layout_v.addWidget(checkbox)
-layout_v.addWidget(button)
-layout_h.addWidget(qpicamera2, 80)
-layout_h.addLayout(layout_v, 20)
-window.resize(1200, 600)
-window.setLayout(layout_h)
-
-picam2.start()
-window.show()
-app.exec()
-picam2.stop()
+array = LEDArray(128,52,12)
+array.quarter(128,0,0)

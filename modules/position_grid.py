@@ -48,7 +48,7 @@ class PositionsGrid:
         return absolute_grid
     
     def go(self, well, subwell=1):
-        self.microscope.request_specific_position(self.absolute_grid[well][subwell])
+        self.microscope.request_XYF_travel(self.absolute_grid[well][subwell], trajectory_corection=True)
         self.current_grid_position = [well, subwell]
     
     def at_position(self):
@@ -78,9 +78,14 @@ class PositionsGrid:
     def find_current_position(self):
         #iterate through all the possible well position to find a match
 
+        X_range = range(self.microscope.XYFposition[0] + undershoot_X , self.microscope.XYFposition[0] + overshoot_X+1)
+        Y_range = range(self.microscope.XYFposition[1] + undershoot_Y , self.microscope.XYFposition[1] + overshoot_Y+1)
+        F_range = range(self.microscope.XYFposition[2] - 15 , self.microscope.XYFposition[2] + 15)
+
         for well in self.absolute_grid:
             for subwell in self.absolute_grid[well]:
-                if self.absolute_grid[well][subwell] == self.microscope.XYFposition:
+                if self.absolute_grid[well][subwell][0] in (X_range) and self.absolute_grid[well][subwell][1] in (Y_range):
+
                     self.current_grid_position = [well, subwell]
                     return [well, subwell]
         

@@ -120,30 +120,3 @@ class Time_lapse_window(Interface, CTkFrame):
         self.open()
 
 
-
-#main loop
-if __name__ == "__main__": 
-    from modules.cameracontrol import Microscope_camera
-    from modules.microscope import Microscope
-    from modules.position_grid import PositionsGrid
-    from modules.interface.main_menu import *
-    from modules.microscope_param import *
-    from modules.parametersIO import ParametersSets, create_folder
-    import customtkinter
-    ### Object for microscope to run
-
-    #Tkinter object
-    parameters = ParametersSets()
-    microscope = Microscope(addr, ready_pin, parameters)
-    position_grid = PositionsGrid(microscope, parameters)
-    micro_cam = None
-
-    #Tkinter object
-    customtkinter.set_appearance_mode("dark")
-    Tk_root = customtkinter.CTk()
-    Tk_root.geometry("230x560+800+35")   
-    
-    ### Don't display border if on the RPi display
-    Interface._time_lapse = Time_lapse_window(Tk_root, microscope=microscope,camera=micro_cam, parameters=parameters)
-
-    Tk_root.mainloop()

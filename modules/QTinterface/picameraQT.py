@@ -4,11 +4,12 @@ from picamera2.previews.qt import QGlPicamera2, QPicamera2
 from PyQt5 import QtCore
 from ..microscope_param import preview_resolution
 from libcamera import Transform
+from ..microscope import MicroscopeManager
 import sys
 
 class MainApp(QMainWindow):
 
-    def __init__(self, micro_cam, microscope, export=False):
+    def __init__(self, micro_cam, microscope:MicroscopeManager, export=False):
         super().__init__()
         self.setGeometry(0, 0, 1024, 580)
         self.export = export
@@ -22,7 +23,8 @@ class MainApp(QMainWindow):
 
 class ScrollButton(QPushButton):
 
-    def __init__(self, text, position, size, style, direction, coarse, fine, microscope, parent):
+    def __init__(self, text:str, position: list[int,int], size:int, style:str, direction:str, 
+                 coarse:int, fine:int, microscope:MicroscopeManager, parent:QWidget):
         super().__init__(parent)
         self.scrollTimer = QtCore.QTimer()
         self.setText(text)
@@ -37,8 +39,8 @@ class ScrollButton(QPushButton):
         self.fine_move = False
 
     def start_scroll(self):
-        self.microscope.push_axis(self.movement[0] , self.movement[1])
-        self.scrollTimer.timeout.connect(lambda: self.microscope.push_axis(self.movement[0] , self.movement[1]))
+        self.microscope.request_push_axis(self.movement[0] , self.movement[1])
+        self.scrollTimer.timeout.connect(lambda: self.microscope.request_push_axis(self.movement[0] , self.movement[1]))
         self.scrollTimer.start(100)
 
     def stop_scroll(self):
@@ -57,7 +59,7 @@ class ScrollButton(QPushButton):
 
 class PreviewWidget(QWidget): 
         
-    def __init__(self, parent, micro_cam, microscope, export):
+    def __init__(self, parent, micro_cam, microscope: MicroscopeManager, export):
         super(QWidget, self).__init__(parent)
         self.micro_cam = micro_cam
         self.microscope = microscope
@@ -100,12 +102,12 @@ class PreviewWidget(QWidget):
         self.Fine.clicked.connect(self.fine_toggle)
         self.Fine.setText("Coarse")
 
-        Up = ScrollButton("X+", (int(preview_resolution[0]/2)-half,0), button_size, button_style, 1, 100, 10, self.microscope, self)
-        Down = ScrollButton("X-", (int(preview_resolution[0]/2)-half, 580 - button_size -15), button_size, button_style, 1, -100, -10, self.microscope, self)
-        Left = ScrollButton("Y-", (0,int(preview_resolution[1]/2)-half), button_size, button_style, 2, -100, -10, self.microscope, self)
-        Right = ScrollButton("Y+", (preview_resolution[0] - button_size -5,int(preview_resolution[1]/2)-half), button_size, button_style, 2, 100, 10, self.microscope, self)
-        Fplus = ScrollButton("F+", (0,0), button_size, focus_button_style, 3, 50, 5, self.microscope, self)
-        Fminus = ScrollButton("F-", (0,button_size +10), button_size, focus_button_style, 3, -50, -5, self.microscope, self)
+        Up = ScrollButton("X+", (int(preview_resolution[0]/2)-half,0), button_size, button_style, "X", 100, 10, self.microscope, self)
+        Down = ScrollButton("X-", (int(preview_resolution[0]/2)-half, 580 - button_size -15), button_size, button_style, "X", -100, -10, self.microscope, self)
+        Left = ScrollButton("Y-", (0,int(preview_resolution[1]/2)-half), button_size, button_style, "Y", -100, -10, self.microscope, self)
+        Right = ScrollButton("Y+", (preview_resolution[0] - button_size -5,int(preview_resolution[1]/2)-half), button_size, button_style, "Y", 100, 10, self.microscope, self)
+        Fplus = ScrollButton("F+", (0,0), button_size, focus_button_style, "F", 50, 5, self.microscope, self)
+        Fminus = ScrollButton("F-", (0,button_size +10), button_size, focus_button_style, "F", -50, -5, self.microscope, self)
         self.scrollable = [Up, Down, Left, Right, Fplus, Fminus]
     
     def fine_toggle(self):

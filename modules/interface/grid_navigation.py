@@ -102,9 +102,8 @@ class MainGridInterface(Interface, CTkFrame): #main GUI window
     def go_start(self):
         start_position = self.parameters.get()["start"]
         led = self.parameters.get()["led"]
-        self.microscope.go_absolute(start_position) #this function return only after arduin is ready
-        self.microscope.set_ledpwr(led[0])
-        self.microscope.set_led_state(led[1])
+        self.microscope.request_XYF_travel(start_position, trajectory_corection=True) #this function return only after arduin is ready
+
 
 
 #main loop

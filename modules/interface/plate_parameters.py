@@ -1,13 +1,13 @@
 from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N, StringVar, CTk
 from .super import Interface
-from ..microscope import Microscope
+from ..microscope import MicroscopeManager
 from ..parametersIO import ParametersSets
 from ..position_grid import PositionsGrid
 from .popup import led_focus_zoom_buttons
 
 
 class Plate_parameters(Interface,CTkFrame):
-    def __init__(self, Tk_root, microscope, position_grid, camera, parameters: ParametersSets):
+    def __init__(self, Tk_root, microscope:MicroscopeManager , position_grid, camera, parameters: ParametersSets):
         Interface.__init__(self, Tk_root, microscope=microscope, position_grid=position_grid, camera=camera, parameters=parameters)
         self._param_config = ParametersConfig(self.Tk_root, self, self.microscope, self.position_grid, self.parameters, self.camera)
         self.init_window()
@@ -121,7 +121,7 @@ class Plate_parameters(Interface,CTkFrame):
         self.parameters.select(new_param)
         self.position_grid.generate_grid()
         endstops_dict = self.parameters.get()["dyn_endstops"] ## Load the specific dynamic endstops
-        self.microscope.set_dynamic_endsotop(endstops_dict)
+        self.microscope.__microscope.set_dynamic_endsotop(endstops_dict)
         self.clear_frame()
         self.init_window()
 
@@ -309,11 +309,11 @@ class ParametersConfig(Interface, CTkFrame):
         saveXskew.place(x=menus_position[0]+ w +20 + offset,y=menus_position[1]+250)
 
 
-        Fp25 = CTkButton(self, width=80,text="Fcs +25 ", command=lambda: self.microscope.move_1axis(3,25))
-        Fm25 = CTkButton(self, width=80,text="Fcs -25 ", command=lambda: self.microscope.move_1axis(3,-25))
+        Fp25 = CTkButton(self, width=80,text="Fcs +25 ", command=lambda: self.microscope.request_push_axis("F",25))
+        Fm25 = CTkButton(self, width=80,text="Fcs -25 ", command=lambda: self.microscope.request_push_axis("F",-25))
 
-        Fp5 = CTkButton(self, width=80,text="Fcs +5  ", command=lambda: self.microscope.move_1axis(3,5))
-        Fm5 = CTkButton(self, width=80,text="Fcs -5  ", command=lambda: self.microscope.move_1axis(3,-5))
+        Fp5 = CTkButton(self, width=80,text="Fcs +5  ", command=lambda: self.microscope.request_push_axis("F",5))
+        Fm5 = CTkButton(self, width=80,text="Fcs -5  ", command=lambda: self.microscope.request_push_axis("F",-5))
 
         Fp25.place(x=menus_position[0],y=menus_position[1]+350)
         Fm25.place(x=menus_position[0]+100,y=menus_position[1]+350)

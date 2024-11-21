@@ -1,11 +1,11 @@
 from customtkinter import CTkFrame, CTkButton, BOTH
 from .super import Interface
 from .popup import led_focus_zoom_buttons
-
+from ..microscope import MicroscopeManager
 
 class FreeMovementInterface(Interface, CTkFrame):
 
-    def __init__(self, Tk_root, microscope, position_grid, camera, parameters):
+    def __init__(self, Tk_root, microscope: MicroscopeManager, position_grid, camera, parameters):
         Interface.__init__(self, Tk_root, microscope=microscope, position_grid=position_grid, camera=camera, parameters=parameters)
 
         self.init_window()
@@ -55,8 +55,7 @@ class FreeMovementInterface(Interface, CTkFrame):
  
     def go_start(self):
         start_position = self.parameters.get()["start"]
-        led = self.parameters.get()["led"]
-        self.microscope.go_absolute(start_position) #this function return only after arduin is ready
+        self.microscope.request_XYF_travel(start_position, trajectory_corection=True) #this function return only after arduin is ready
         
 
 

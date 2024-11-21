@@ -1,5 +1,5 @@
 from customtkinter import CTkFrame, CTkButton, CTkLabel, N, CTkSlider, IntVar, CENTER, CTk
-from ..microscope import Microscope
+from ..microscope import MicroscopeManager
 from ..position_grid import PositionsGrid
 from ..microscope_param import Xmaxrange, Ymaxrange
 from ..cameracontrol import Microscope_camera
@@ -15,7 +15,7 @@ plate_name = "Plate" ##is a place holder to later add a plate type selector, may
 
 class Interface: 
 
-    def __init__(self, Tk_root: CTk, last_window=None, microscope: Microscope =None, position_grid: PositionsGrid =None, camera: Microscope_camera = None, parameters=None):
+    def __init__(self, Tk_root: CTk, last_window=None, microscope: MicroscopeManager =None, position_grid: PositionsGrid =None, camera: Microscope_camera = None, parameters=None):
         CTkFrame.__init__(self, Tk_root)
         self.Tk_root = Tk_root
         self.microscope = microscope
@@ -31,8 +31,8 @@ class Interface:
     _current_parameters_set = None
 
     def go_centerXY(self):
-        X_center = self.microscope.dyn_Ymin + (self.microscope.dyn_Xmax - self.microscope.dyn_Xmin)/2
-        Y_center = self.microscope.dyn_Ymin + (self.microscope.dyn_Ymax - self.microscope.dyn_Ymin)/2
+        X_center = self.microscope.microscope.dyn_Ymin + (self.microscope.microscope.dyn_Xmax - self.microscope.microscope.dyn_Xmin)/2
+        Y_center = self.microscope.microscope.dyn_Ymin + (self.microscope.microscope.dyn_Ymax - self.microscope.microscope.dyn_Ymin)/2
         self.microscope.move_X_Y(X_center,Y_center) 
 
 
@@ -66,7 +66,6 @@ class Interface:
 
     ######## update the label to corespond to the actual current position of the microscope
     def update_coordinates_label(self):
-        self.microscope.update_real_state()
         text_coordinates = f"X: {self.microscope.XYFposition[0]}\
  Y: {self.microscope.XYFposition[1]}\
  F: {self.microscope.XYFposition[2]}\
@@ -203,8 +202,8 @@ class Interface:
         self.Xlabel = CTkLabel(self, text="##", font=("arial", 22))
         self.Ylabel = CTkLabel(self, text="##", font=("arial", 22))
 
-        GoX =  CTkButton(self, text="Go X", width=80, height=40, command=lambda: self.microscope.move_single_axis(1, self.Xvar.get()*1000))
-        GoY =  CTkButton(self, text="Go Y", width=80, height=40, command=lambda: self.microscope.move_single_axis(2, self.Yvar.get()*1000))
+        GoX =  CTkButton(self, text="Go X", width=80, height=40, command=lambda: self.microscope.request_XYF_travel([self.Xvar.get()*1000,-1,-1]))
+        GoY =  CTkButton(self, text="Go Y", width=80, height=40, command=lambda: self.microscope.request_XYF_travel([-1, self.Yvar.get()*1000, -1]))
     
         Xaxis.place(x=position[0], y=position[1], anchor=N)
         Yaxis.place(x=position[0]+120, y=position[1], anchor=N)
@@ -233,40 +232,4 @@ class Interface:
         self.Ylabel.place(x=position[0]+75, y=Ylabel_scale, anchor=CENTER)
         self.last_positions = positions
         Interface._scale_job = self.after(100,lambda: self.set_scale(position, l))
-
-
-    
-
-       
-
-    
-#main loop
-if __name__ == "__main__": 
-
-    import picamera2
-    from ..microscope import *
-    from ..position_grid import *
-    from tkinter import Tk
-
-    microscope = Microscope(addr, ready_pin)
-    position_grid = PositionsGrid(microscope)
-    #start picamPreview
-    camera = picamera2.PiCamera()
-    #previewPiCam(camera)
-
-    #create tkinter objects
-    Tk_root = Tk()
-    #interface = MainWindow(Tk_root, microscope=microscope, grid=grid, camera=camera)
-    #initialise interface
-
-    #interface.set_scale()
-    #interface.get_current_coordinates()
-    #Tkinter mainloop
-    while not Interface._exit:
-
-        #Tkinter mainloop
-        Tk_root.update_idletasks()
-        Tk_root.update()
-        if Interface._exit:
-            Tk_root.destroy()
 

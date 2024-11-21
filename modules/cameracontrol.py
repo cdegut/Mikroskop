@@ -4,9 +4,9 @@ from threading import Thread, Event
 from .microscope_param import awbR_fluo, awbB_fluo, awbR_white, awbB_white, preview_resolution
 from libcamera import Transform
 from time import sleep
-from .interface.picameraQT import PreviewWidget
+#from .QTinterface.picameraQT import PreviewWidget
 from picamera2.previews.qt import QGlPicamera2, QPicamera2
-from.microscope import MicroscopeManager, Microscope
+from.microscope import MicroscopeManager
 
 camera_full_resolution = (4056,3040)
 h264_max_resolution = (1664,1248)
@@ -23,7 +23,7 @@ class Microscope_camera(Picamera2):
         self.post_callback = self.post_callback_exec
         self.qpicamera: QPicamera2 | QGlPicamera2 = None
         self.save_data_name = None
-        self.microscope: Microscope = microscope.microscope # the camera can bypass the manager for light sync
+        self.microscope: MicroscopeManager = microscope
 
         self.new_config = None
 
@@ -252,11 +252,14 @@ class Microscope_camera(Picamera2):
              self.awb_preset("auto")
              self.auto_exp_enable(True)
              self.set_EV(0)
-             self.microscope.set_ledspwr(25,0)
+             self.microscope.request_ledspwr(25,0)
+             self.microscope.run() # do not wait for next microscope runtime
+
              return
 
         self.awb_preset(preset["awb"])
-        self.microscope.set_ledspwr(preset["led1pwr"],preset["led2pwr"])
+        self.microscope.request_ledspwr(preset["led1pwr"],preset["led2pwr"])
+        self.microscope.run() # do not wait for next microscope runtime
 
         if preset["auto_exp"] == "auto":
             self.auto_exp_enable(True)

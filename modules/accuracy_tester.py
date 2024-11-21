@@ -1,24 +1,17 @@
-from RPi import GPIO
-from os import environ
-from PyQt5.QtWidgets import  QApplication 
 from PyQt5 import QtCore
-
 from modules.cameracontrol import Microscope_camera
 from modules.microscope import Microscope
 from modules.position_grid import PositionsGrid
-from modules.physical_controller import encoder_read, controller_startup
 import time
 import os
-from modules.interface.main_menu import *
-from modules.microscope_param import *
 from modules.parametersIO import ParametersSets, create_folder
 import random
 import numpy as np
-#from modules.interface.control_overlay import Overlay
-from modules.QTinterface.picameraQT import MainApp
-import customtkinter
-import sys
 import cv2
+import pandas as pd
+
+repeat_before_tune = 50
+
 
 def multiscale_ecc_alignment(image1, image2, num_scales=3):
     # Create a list to store downscaled versions of the images
@@ -49,14 +42,18 @@ def multiscale_ecc_alignment(image1, image2, num_scales=3):
 
 class Accuracy_tester():
     def __init__(self, microscope: Microscope, position_grid: PositionsGrid, camera: Microscope_camera,  parameters: ParametersSets):
-        self.microscope = microscope
-        self.position_grid = position_grid
-        self.camera = camera
-        self.parameters = parameters
+        self.microscope: Microscope = microscope
+        self.position_grid: PositionsGrid = position_grid
+        self.camera: Microscope_camera = camera
+        self.parameters: ParametersSets = parameters
 
-        self.execute_function = self.testing_loop
         self.camera.switch_mode(self.camera.full_res_config, signal_function=self.camera.qpicamera.signal_done)
         self.loop_progress = 'init'
+
+        # run the old Tk interace in a Qt timer
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.testing_loop)
+        self.timer.start(10)
 
         #Grid Recording parameters
         self.positions_list = None
@@ -82,6 +79,11 @@ class Accuracy_tester():
         self.start_image = None
         self.current_image = None
         self.last_image = None
+
+        self.overshoot_X = 0
+        self.undershoot_X = 0
+        self.overshoot_Y = 0
+        self.undershoot_Y = 0
 
 
         self.start = self.parameters.get()["start"]
@@ -113,9 +115,12 @@ class Accuracy_tester():
 
 
         open(f"{self.test_data_folder}/data.txt", "x")
-
         with open(f"{self.test_data_folder}/data.txt", "a") as data_file:
-            data_file.write("Repeat\tX error(first image)\tX drift(last image)\tX distance\tY error(first image)\tY drift(last image)\tY distance\n")
+            data_file.write("Repeat\tX error(first image)\tX variability(last image)\tX distance\tY error(first image)\tY variability(last image)\tY distance\n")
+        
+        open(f"{self.test_data_folder}/autotune.txt", "x")
+        with open(f"{self.test_data_folder}/autotune.txt", "a") as data_file:
+            data_file.write("Repeat\tX overshoot\tX undershoot\tX std error\tX std variability\tY overshoot\tY undershoot\tY std error\tY std variability\n")
 
 
     def at_position(self)  -> bool:
@@ -161,6 +166,7 @@ class Accuracy_tester():
         
         with open(f"{self.test_data_folder}/data.txt", "a") as data_file:
             data_file.write(data)
+
         
         print(f"\nRepeat n {self.done_repeat}")
         print(f"Translation error in pixels X axis: {X_error:.2f} for this image, and drift {X_drift:.2f} from last image")
@@ -169,8 +175,35 @@ class Accuracy_tester():
         self.last_X_error = X_error
         self.last_Y_error = Y_error
 
+    def self_tune(self):
+
+        pixel_size = 0.56
+        um_per_steps = 1.25
+        data = pd.read_csv(f"{self.test_data_folder}/data.txt", sep='\t')
+        df_sliced = data.loc[self.done_repeat - repeat_before_tune: self.done_repeat]
+        median_X_positive = df_sliced[df_sliced['X distance'] > 0]['X error(first image)'].median() * pixel_size /um_per_steps
+        median_X_negative = df_sliced[df_sliced['X distance'] < 0]['X error(first image)'].median() * pixel_size /um_per_steps
+        median_Y_positive = df_sliced[df_sliced['Y distance'] > 0]['Y error(first image)'].median() * pixel_size /um_per_steps
+        median_Y_negative = df_sliced[df_sliced['Y distance'] < 0]['Y error(first image)'].median() * pixel_size /um_per_steps
 
 
+        std_error_X = df_sliced['X error(first image)'].std()
+        std_variability_X = df_sliced['X variability(last image'].std()
+        std_error_Y = df_sliced['Y error(first image)'].std()
+        std_variability_Y = df_sliced['Y variability(last image'].std()
+        data = f"{self.done_repeat}\t{self.overshoot_X}\t{self.undershoot_X}\t{std_error_X}\t{std_variability_X }\t" + \
+        f"{self.overshoot_Y}\t{self.undershoot_Y}\t{std_error_Y}\t{std_variability_Y }\n"
+
+        print(f"Medians of errors in steps X+ {median_X_positive:.2f}, X- {median_X_negative:.2f}, Y+ {median_Y_positive:.2f}, Y- {median_Y_negative:.2f},")
+        self.overshoot_X = self.overshoot_X + int(median_X_positive /2)
+        self.undershoot_X = self.undershoot_X + int(median_X_negative /2)
+        self.overshoot_Y = self.overshoot_Y + int(median_Y_positive /2)
+        self.undershoot_Y = self.undershoot_Y + int(median_Y_negative /2)
+
+
+
+        with open(f"{self.test_data_folder}/autotune.txt", "a") as data_file:
+            data_file.write(data)
 
     
     def testing_loop(self):   
@@ -228,6 +261,10 @@ class Accuracy_tester():
             case "main loop":
 
                 if self.back_to_start == True:
+
+                    if self.done_repeat != 0 and self.done_repeat%repeat_before_tune == 0:
+                        self.self_tune()
+
                     new_X = random.randrange(10000, 60000)
                     new_Y = random.randrange(10000, 80000)
                     new_F = self.start[2]
@@ -242,16 +279,16 @@ class Accuracy_tester():
                     self.pre_pic_timer = 0
 
                     if self.distance_X > 0 :
-                        X_corrected = self.start [0] + overshoot_X
+                        X_corrected = self.start [0] + self.overshoot_X
                     elif self.distance_X < 0:
-                        X_corrected = self.start [0] + undershoot_X
+                        X_corrected = self.start [0] + self.undershoot_X
                     else:
                         X_corrected = self.start [0]
 
                     if self.distance_Y > 0 :
-                        Y_corrected = self.start [1] + overshoot_Y
+                        Y_corrected = self.start [1] + self.overshoot_Y
                     elif self.distance_Y < 0:
-                        Y_corrected = self.start [1] + undershoot_Y
+                        Y_corrected = self.start [1] + self.undershoot_Y
                     else:
                         Y_corrected = self.start [1]
                     self.back_to_start = True
@@ -260,49 +297,3 @@ class Accuracy_tester():
                     self.done_repeat += 1 
                     self.microscope.go_absolute(self.target_position)
                     self.loop_progress = "take image"
-
-if __name__ == "__main__": 
-
-    encoder_X, encoder_Y, encoder_F = controller_startup()                
-    ### Object for microscope to run
-    parameters = ParametersSets()
-    microscope = Microscope(addr, ready_pin, parameters)
-    position_grid = PositionsGrid(microscope, parameters)
-    micro_cam = Microscope_camera(microscope)
-    
-    #Tkinter object
-    customtkinter.set_appearance_mode("dark")
-    Tk_root = customtkinter.CTk()
-    Tk_root.geometry("230x564+804+36")
-
-    ### Don't display border if on the RPi display
-    display = environ.get('DISPLAY')
-    if display == ":0.0" or display == ":0": ## :0.0 in terminal and :0 without terminal
-        Tk_root.overrideredirect(1)
-        export = False
-    else:
-        export = True
-
-    ## this avoid an error with CV2 and Qt, it clear all the env starting with QT_
-    for k, v in environ.items():
-        if k.startswith("QT_") and "cv2" in v:
-            del environ[k]   
-    
-    Interface._main_menu = MainMenu(Tk_root, microscope=microscope, position_grid=position_grid, camera=micro_cam,  parameters=parameters)
-    
-    app = QApplication(sys.argv)
-    preview_window = MainApp(micro_cam, microscope, export)
-
-    #access neede to interact with preview when doing captures
-    micro_cam.qpicamera = preview_window.main_widget.qpicamera2 
-
-    # run the old Tk interace in a Qt timer
-    timer = QtCore.QTimer()
-    tester = Accuracy_tester(microscope=microscope, position_grid=position_grid, camera=micro_cam,  parameters=parameters)
-    timer.timeout.connect(tester.execute_function)
-    timer.start(10)
-
-    sys.exit(app.exec_())
-
-    #GPIO cleanup
-    GPIO.cleanup()
