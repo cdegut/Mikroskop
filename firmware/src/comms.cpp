@@ -171,6 +171,7 @@ void receiveData(int numberofbyte) {
 
     }
   emptyWire();
+  digitalWrite(ReadyPin, HIGH);
   // empty the wire buffer if it overflowed
   //Serial.println(micros() - start_timer); 
 }
@@ -183,6 +184,7 @@ long send_time;
 bool new_time;
 
 void sendData() {
+  digitalWrite(ReadyPin, LOW);
 
   long X_pos = X.get_position();
   long Y_pos = Y.get_position();
@@ -214,6 +216,6 @@ void sendData() {
     }
   message[14] = sum;
   Wire.write(message, 15); 
-
+  digitalWrite(ReadyPin, HIGH);
 }
 

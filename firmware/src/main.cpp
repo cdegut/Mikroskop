@@ -85,21 +85,18 @@ void setup() {
   delay(500);
   neopixelSolidColour(0,0,0);
 
+  digitalWrite(ReadyPin, HIGH);
+
 }
 
 
 void loop() {
-
+    digitalWrite(ReadyPin, LOW);
     X.run();
     Y.run();
     Focus.run();
+    digitalWrite(ReadyPin, HIGH);
+    
 
-    if ( (X.get_state() == OFF) && (Y.get_state() == OFF) && (Focus.get_state() == OFF)) {
-      digitalWrite(ReadyPin, HIGH);
-    }
-    else {
-       digitalWrite(ReadyPin, LOW);
-    }
-
-    delayMicroseconds(1);
+    delayMicroseconds(10);
 } 

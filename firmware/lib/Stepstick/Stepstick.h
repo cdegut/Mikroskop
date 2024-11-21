@@ -92,6 +92,7 @@ class Stepstick {
     void use_pin_mode(); // fallback to pin methods instead of port manipulation
     uint8_t pulse_width = 4; //fast steps pulse width in us
     int32_t timing = -1; // timing for timed steps, set at -1 will disable 
+    int acceleration_multiplier = 2;
 
  private:
     void hysteresis_comp();

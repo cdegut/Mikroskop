@@ -129,7 +129,7 @@ void Stepstick::run() {
         }
       if (timed_step() == true) {
       _acceleration_counter++;
-      if (_acceleration_counter == _microsteps) {
+      if (_acceleration_counter == _microsteps *acceleration_multiplier) {
         timing--;
         _acceleration_counter =0;
         }

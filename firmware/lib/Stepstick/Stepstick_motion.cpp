@@ -23,8 +23,8 @@ void Stepstick::motion_planner(int32_t destination) {
         } 
         else {
         _decelerate_switch = destination - acceleration_length * get_direction();
-        acceleration_length = (timing - _fast_spd_timing) * _microsteps;
-        _go_fast_switch = _current_pos +  acceleration_length;
+        acceleration_length = (timing - _fast_spd_timing) * _microsteps * acceleration_multiplier;
+        _go_fast_switch = _current_pos +  acceleration_length * get_direction();
         return;
         }
     }
@@ -40,7 +40,7 @@ void Stepstick::motion_planner(int32_t destination) {
     }
 
 
-    if (distance_from_end < (acceleration_length*2)) { 
+    if (distance_from_end < (acceleration_length*(acceleration_multiplier +1))) { 
         //_go_fast_switch = _current_pos + (distance_from_end / 2) * new_dir;
         //_decelerate_switch =  _go_fast_switch + new_dir;
         timing = _slow_spd_timing*4;
@@ -50,7 +50,7 @@ void Stepstick::motion_planner(int32_t destination) {
     }
 
     else { // general case
-    _go_fast_switch = _current_pos + acceleration_length * new_dir;
+    _go_fast_switch = _current_pos + acceleration_length * acceleration_multiplier * new_dir;
     _decelerate_switch = _destination - acceleration_length * new_dir;
     }
 
