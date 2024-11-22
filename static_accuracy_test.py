@@ -19,9 +19,6 @@ from modules.interface.picameraQT import MainApp
 import customtkinter
 import sys
 import cv2
-import pandas as pd
-
-repeat_before_tune = 50
 
 def multiscale_ecc_alignment(image1, image2, num_scales=3):
     # Create a list to store downscaled versions of the images
@@ -86,11 +83,6 @@ class Accuracy_tester():
         self.current_image = None
         self.last_image = None
 
-        self.overshoot_X = 0
-        self.undershoot_X = 0
-        self.overshoot_Y = 0
-        self.undershoot_Y = 0
-
 
         self.start = self.parameters.get()["start"]
         self.target_position = self.parameters.get()["start"]
@@ -121,12 +113,9 @@ class Accuracy_tester():
 
 
         open(f"{self.test_data_folder}/data.txt", "x")
+
         with open(f"{self.test_data_folder}/data.txt", "a") as data_file:
-            data_file.write("Repeat\tX error(first image)\tX variability(last image)\tX distance\tY error(first image)\tY variability(last image)\tY distance\n")
-        
-        open(f"{self.test_data_folder}/autotune.txt", "x")
-        with open(f"{self.test_data_folder}/autotune.txt", "a") as data_file:
-            data_file.write("Repeat\tX overshoot\tX undershoot\tX std error\tX std variability\tY overshoot\tY undershoot\tY std error\tY std variability\n")
+            data_file.write("Repeat\tX error(first image)\tX drift(last image)\tX distance\tY error(first image)\tY drift(last image)\tY distance\n")
 
 
     def at_position(self)  -> bool:
@@ -157,28 +146,6 @@ class Accuracy_tester():
         X_error = warp_matrix[1, 2]
         return round(X_error,1), round(Y_error,1)
 
-    def wiggle(self):
-        i = 0
-        while i < 5:
-            n = 0
-            while n < 2:
-                self.microscope.push_axis(1,100)
-                self.microscope.push_axis(2,100)
-                n +=1
-            time.sleep(1)
-            n = 0
-            while n < 4:
-                self.microscope.push_axis(1,-100)
-                self.microscope.push_axis(2,-100)
-                n +=1
-            n = 0
-            while n < 2:
-                self.microscope.push_axis(1,100)
-                self.microscope.push_axis(2,100)
-                n +=1
-            print("wiggle")
-            i +=1
-
     def process_difference(self):
         
         X_error, Y_error = self.get_X_Y_error(self.start_image, self.current_image)
@@ -194,7 +161,6 @@ class Accuracy_tester():
         
         with open(f"{self.test_data_folder}/data.txt", "a") as data_file:
             data_file.write(data)
-
         
         print(f"\nRepeat n {self.done_repeat}")
         print(f"Translation error in pixels X axis: {X_error:.2f} for this image, and drift {X_drift:.2f} from last image")
@@ -203,35 +169,8 @@ class Accuracy_tester():
         self.last_X_error = X_error
         self.last_Y_error = Y_error
 
-    def self_tune(self):
-
-        pixel_size = 0.56
-        um_per_steps = 1.25
-        data = pd.read_csv(f"{self.test_data_folder}/data.txt", sep='\t')
-        df_sliced = data.loc[self.done_repeat - repeat_before_tune: self.done_repeat]
-        median_X_positive = df_sliced[df_sliced['X distance'] > 0]['X error(first image)'].median() * pixel_size /um_per_steps
-        median_X_negative = df_sliced[df_sliced['X distance'] < 0]['X error(first image)'].median() * pixel_size /um_per_steps
-        median_Y_positive = df_sliced[df_sliced['Y distance'] > 0]['Y error(first image)'].median() * pixel_size /um_per_steps
-        median_Y_negative = df_sliced[df_sliced['Y distance'] < 0]['Y error(first image)'].median() * pixel_size /um_per_steps
 
 
-        std_error_X = df_sliced['X error(first image)'].std()
-        std_variability_X = df_sliced['X variability(last image)'].std()
-        std_error_Y = df_sliced['Y error(first image)'].std()
-        std_variability_Y = df_sliced['Y variability(last image)'].std()
-        data = f"{self.done_repeat}\t{self.overshoot_X}\t{self.undershoot_X}\t{std_error_X}\t{std_variability_X }\t" + \
-        f"{self.overshoot_Y}\t{self.undershoot_Y}\t{std_error_Y}\t{std_variability_Y }\n"
-
-        print(f"Medians of errors in steps X+ {median_X_positive:.2f}, X- {median_X_negative:.2f}, Y+ {median_Y_positive:.2f}, Y- {median_Y_negative:.2f},")
-        self.overshoot_X = self.overshoot_X + int(median_X_positive /2)
-        self.undershoot_X = self.undershoot_X + int(median_X_negative /2)
-        self.overshoot_Y = self.overshoot_Y + int(median_Y_positive /2)
-        self.undershoot_Y = self.undershoot_Y + int(median_Y_negative /2)
-
-
-
-        with open(f"{self.test_data_folder}/autotune.txt", "a") as data_file:
-            data_file.write(data)
 
     
     def testing_loop(self):   
@@ -242,10 +181,6 @@ class Accuracy_tester():
         match self.loop_progress :
 
             case 'init':
-                self.wiggle()
-                self.loop_progress = "first image"
-        
-            case 'first image':
                 if self.pic_taken == False and self.pre_pic_timer < 100:        
                     self.pre_pic_timer += 1
                     return
@@ -254,7 +189,6 @@ class Accuracy_tester():
                     self.camera.auto_exp_enable(False)
 
                     self.loop_progress = "save start array"
-                    #self.back_to_start == True
                     return
                 
             case "save start array":
@@ -272,6 +206,7 @@ class Accuracy_tester():
                     self.current_image = self.camera.full_image_array.copy()
                     self.camera.full_image_array = None
                     self.loop_progress = "process difference"
+                    self.pre_pic_timer = 0
                     return
 
             case "process difference":
@@ -281,54 +216,24 @@ class Accuracy_tester():
             
             case "take image":
 
-                ### pre image delay 10s
-                if self.pic_taken == False and self.pre_pic_timer < 30:        
+                ### pre image delay 3s
+                if self.pic_taken == False and self.pre_pic_timer < 60000:        
                     self.pre_pic_timer += 1
                     return
                 
                 self.camera.create_main_array()
                 self.loop_progress = "save current array"
                 self.pic_taken = True
+                self.done_repeat +=1
+                self.pre_pic_timer = 0
                 return
             
             case "main loop":
 
                 if self.back_to_start == True:
-
-                    if self.done_repeat != 0 and self.done_repeat%repeat_before_tune == 0:
-                        self.self_tune()
-
-                    new_X = random.randrange(10000, 60000)
-                    new_Y = random.randrange(10000, 80000)
-                    new_F = self.start[2]
-                    self.distance_X =  new_X - self.start[0]
-                    self.distance_Y =  new_Y - self.start[1]
-                    self.target_position = [new_X,new_Y,new_F]
-                    self.microscope.go_absolute(self.target_position)
                     self.back_to_start = False
 
                 else:
-                    self.pic_taken = False
-                    self.pre_pic_timer = 0
-
-                    if self.distance_X > 0 :
-                        X_corrected = self.start [0] + self.overshoot_X
-                    elif self.distance_X < 0:
-                        X_corrected = self.start [0] + self.undershoot_X
-                    else:
-                        X_corrected = self.start [0]
-
-                    if self.distance_Y > 0 :
-                        Y_corrected = self.start [1] + self.overshoot_Y
-                    elif self.distance_Y < 0:
-                        Y_corrected = self.start [1] + self.undershoot_Y
-                    else:
-                        Y_corrected = self.start [1]
-                    self.back_to_start = True
-
-                    self.target_position = [X_corrected, Y_corrected, self.start[2]]
-                    self.done_repeat += 1 
-                    self.microscope.go_absolute(self.target_position)
                     self.loop_progress = "take image"
 
 if __name__ == "__main__": 

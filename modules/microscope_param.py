@@ -4,10 +4,10 @@ Xmaxrange = 70000
 Ymaxrange = 93000
 Fmaxrange = 30000
 
-overshoot_X = -16
-undershoot_X = -4
-overshoot_Y = -100
-undershoot_Y = +40
+overshoot_X = -59
+undershoot_X = -23
+overshoot_Y = -62
+undershoot_Y = +61
 #number of retry possible for motor command sent, 10 by default (normal error error rate should not exceed 2 in a row)
 retry = 10
 #number of retry possible for read position, 10 by default (normal error error rate should not exceed 2 in a row)
