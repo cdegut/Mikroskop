@@ -1,9 +1,11 @@
 from .super import Interface
 from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N, StringVar
 import os
-from ..cameracontrol import start_recording
 from time import time
 from .popup import led_focus_zoom_buttons
+
+from modules.controllers import *
+from modules.controllers.microscope_param import *
 
 
 class Video_record_window(Interface, CTkFrame):

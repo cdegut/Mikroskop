@@ -1,7 +1,7 @@
 from customtkinter import CTkFrame, CTkButton, BOTH
 from .super import Interface
 from .popup import led_focus_zoom_buttons
-from ..microscope import MicroscopeManager
+from modules.controllers import MicroscopeManager
 
 class FreeMovementInterface(Interface, CTkFrame):
 
@@ -56,34 +56,3 @@ class FreeMovementInterface(Interface, CTkFrame):
     def go_start(self):
         start_position = self.parameters.get()["start"]
         self.microscope.request_XYF_travel(start_position, trajectory_corection=True) #this function return only after arduin is ready
-        
-
-
-#main loop
-if __name__ == "__main__": 
-    from modules.cameracontrol import Microscope_camera
-    from modules.microscope import Microscope
-    from modules.position_grid import PositionsGrid
-    from modules.physical_controller import encoder_read, controller_startup
-    from modules.interface.main_menu import *
-    from modules.microscope_param import *
-    from modules.parametersIO import ParametersSets, create_folder
-    import customtkinter
-    ### Object for microscope to run
-
-    #Tkinter object
-    parameters = ParametersSets()
-    microscope = Microscope(addr, ready_pin, parameters)
-    position_grid = PositionsGrid(microscope, parameters)
-    micro_cam = Microscope_camera()
-
-    #Tkinter object
-    customtkinter.set_appearance_mode("dark")
-    Tk_root = customtkinter.CTk()
-    Tk_root.geometry("230x560+800+35")   
-    
-    ### Don't display border if on the RPi display
-    Interface._freemove_main = FreeMovementInterface(Tk_root, microscope=microscope, position_grid=position_grid, camera=micro_cam, parameters=parameters)
-
-    Tk_root.mainloop()
-

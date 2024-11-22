@@ -3,15 +3,10 @@ from os import environ
 from PyQt5.QtWidgets import  QApplication 
 from PyQt5 import QtCore
 
-from modules.cameracontrol import Microscope_camera
-from modules.microscope import MicroscopeManager
-from modules.position_grid import PositionsGrid
-from modules.physical_controller import PhysicalController
+from modules.controllers import *
 from modules.interface.main_menu import *
-from modules.microscope_param import *
-from modules.parametersIO import ParametersSets
-#from modules.interface.control_overlay import Overlay
-from modules.QTinterface.picameraQT import MainApp
+from modules.controllers.microscope_param import *
+from modules.QTinterface.main_app import MainApp
 import customtkinter
 import sys
 
@@ -24,7 +19,6 @@ def tk_loop():
 
 if __name__ == "__main__": 
             
-
     
     #Tkinter object
     customtkinter.set_appearance_mode("dark")
@@ -39,7 +33,6 @@ if __name__ == "__main__":
     else:
         export = True
 
-
     ## this avoid an error with CV2 and Qt, it clear all the env starting with QT_
     for k, v in environ.items():
         if k.startswith("QT_") and "cv2" in v:
@@ -52,12 +45,10 @@ if __name__ == "__main__":
     position_grid = PositionsGrid(microscope, parameters)
     micro_cam = Microscope_camera(microscope)
     controller = PhysicalController(microscope)
-    preview_window = MainApp(micro_cam, microscope, export)
+    preview_window = MainApp(microscope=microscope, position_grid=position_grid, camera=micro_cam,parameters=parameters, export=export)
 
     Interface._main_menu = MainMenu(Tk_root, microscope=microscope, position_grid=position_grid, camera=micro_cam,  parameters=parameters)
     
-
-
     #access neede to interact with preview when doing captures
     micro_cam.qpicamera = preview_window.main_widget.qpicamera2 
 

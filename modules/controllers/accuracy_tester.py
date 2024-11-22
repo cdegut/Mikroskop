@@ -1,14 +1,11 @@
 from PyQt5 import QtCore
-from modules.cameracontrol import Microscope_camera
-from modules.microscope import Microscope
-from modules.position_grid import PositionsGrid
 import time
 import os
-from modules.parametersIO import ParametersSets, create_folder
 import random
 import numpy as np
 import cv2
 import pandas as pd
+from controllers import *
 
 repeat_before_tune = 50
 
@@ -40,9 +37,9 @@ def multiscale_ecc_alignment(image1, image2, num_scales=3):
     
     return warp_matrix
 
-class Accuracy_tester():
-    def __init__(self, microscope: Microscope, position_grid: PositionsGrid, camera: Microscope_camera,  parameters: ParametersSets):
-        self.microscope: Microscope = microscope
+class AccuracyTester():
+    def __init__(self, microscope: MicroscopeManager, position_grid: PositionsGrid, camera: Microscope_camera,  parameters: ParametersSets):
+        self.microscope: MicroscopeManager = microscope
         self.position_grid: PositionsGrid = position_grid
         self.camera: Microscope_camera = camera
         self.parameters: ParametersSets = parameters

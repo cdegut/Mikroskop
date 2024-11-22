@@ -7,7 +7,7 @@ from .grid_record import GridRecord
 from .video import Video_record_window
 from .timelapse import Time_lapse_window
 #from .popup import Zoom_popup
-from ..microscope_param import Xmaxrange, Ymaxrange
+from modules.controllers.microscope_param import *
 
 
 class MainMenu(Interface, CTkFrame):

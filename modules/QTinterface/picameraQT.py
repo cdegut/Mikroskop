@@ -1,25 +1,12 @@
 import sys, os
-from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, QLabel, QCheckBox, QWidget, QTabWidget, QVBoxLayout, QGridLayout)
+from PyQt5.QtWidgets import QApplication, QPushButton,  QWidget, QVBoxLayout, QMainWindow
 from picamera2.previews.qt import QGlPicamera2, QPicamera2
 from PyQt5 import QtCore
-from ..microscope_param import preview_resolution
 from libcamera import Transform
-from ..microscope import MicroscopeManager
 import sys
 
-class MainApp(QMainWindow):
-
-    def __init__(self, micro_cam, microscope:MicroscopeManager, export=False):
-        super().__init__()
-        self.setGeometry(0, 0, 1024, 580)
-        self.export = export
-        self.setWindowTitle("PiCameraPreview")
-        self.main_widget = PreviewWidget(self, micro_cam, microscope, export)
-        self.main_widget.resize(preview_resolution[0], preview_resolution[1])
-        self.setCentralWidget(self.main_widget)
-        if not export:
-            self.setWindowFlags(QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint));             
-        self.show()
+from modules.controllers import *
+from modules.controllers.microscope_param import *
 
 class ScrollButton(QPushButton):
 
@@ -55,11 +42,9 @@ class ScrollButton(QPushButton):
             self.movement[1] = self.fine
             self.fine_move = True
 
-
-
 class PreviewWidget(QWidget): 
         
-    def __init__(self, parent, micro_cam, microscope: MicroscopeManager, export):
+    def __init__(self, parent: QMainWindow, micro_cam: Microscope_camera, microscope: MicroscopeManager):
         super(QWidget, self).__init__(parent)
         self.micro_cam = micro_cam
         self.microscope = microscope
@@ -125,10 +110,7 @@ class PreviewWidget(QWidget):
 
 if __name__ == '__main__':
     from os import environ
-    from ..microscope import Microscope
-    from ..microscope_param import *
-    from ..parametersIO import ParametersSets
-    from PyQt5 import QtCore
+
 
 
     from picamera2 import Picamera2
@@ -146,12 +128,14 @@ if __name__ == '__main__':
     
     micro_cam =  Picamera2()
     parameters = ParametersSets()
-    microscope = Microscope(addr, ready_pin, parameters)
+    microscope = MicroscopeManager(addr, ready_pin, parameters)
 
     ## this avoid an error with CV2 and Qt, it clear all the env starting with QT_
     for k, v in os.environ.items():
         if k.startswith("QT_") and "cv2" in v:
             del os.environ[k]
+
+    from .main_app import MainApp
 
     app = QApplication([])
     ex = MainApp(micro_cam, microscope, export)

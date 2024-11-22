@@ -1,7 +1,7 @@
-from .encoder_class import Encoder
-from .microscope import MicroscopeManager
-from .microscope_param import *
 from PyQt5 import QtCore
+from .encoder_class import Encoder
+from modules.controllers import MicroscopeManager
+from .microscope_param import *
 
 class PhysicalController:
 

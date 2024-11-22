@@ -1,6 +1,6 @@
 #generate a list of named absolute position as dictionary
-from .parametersIO import *
-from .microscope import *
+from modules.controllers import *
+from .microscope_param import *
 
 class PositionsGrid:
 

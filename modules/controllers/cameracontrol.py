@@ -1,12 +1,11 @@
 from picamera2 import Picamera2,Preview
-from .parametersIO import create_folder
 from threading import Thread, Event
-from .microscope_param import awbR_fluo, awbB_fluo, awbR_white, awbB_white, preview_resolution
 from libcamera import Transform
 from time import sleep
 #from .QTinterface.picameraQT import PreviewWidget
 from picamera2.previews.qt import QGlPicamera2, QPicamera2
-from.microscope import MicroscopeManager
+from modules.controllers import MicroscopeManager , create_folder
+from .microscope_param import *
 
 camera_full_resolution = (4056,3040)
 h264_max_resolution = (1664,1248)

@@ -1,13 +1,11 @@
 # import the necessary packages
 import time
-from typing import Self
-from attr import dataclass
-from smbus2 import SMBus, i2c_msg
+from smbus2 import SMBus
 import RPi.GPIO as GPIO
 from .microscope_param import *
-from .parametersIO import ParametersSets
 from PyQt5 import QtCore
 from dataclasses import dataclass
+from modules.controllers import ParametersSets
 
 # Use GPIO numbers not pin numbers
 GPIO.setmode(GPIO.BCM)

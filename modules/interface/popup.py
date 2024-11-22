@@ -1,7 +1,7 @@
 from tests.test import LEDArray
 from .super import Interface
 from customtkinter import CTkFrame, CTkButton, CTkLabel, CTkSlider, BOTH, HORIZONTAL, N
-from ..microscope import MicroscopeManager, LEDArray
+from modules.controllers import *
 
 
 def led_focus_zoom_buttons(self, position=400):
@@ -380,32 +380,3 @@ class Zoom_popup(Interface, CTkFrame): #widget to fill popup window, show an sto
             Interface._zoom_popup.init_window(self)
         else:
             Interface._zoom_popup = Zoom_popup(self.Tk_root, last_window=self, microscope=self.microscope, parameters=self.parameters, camera=self.camera)
-
-if __name__ == "__main__": 
-    from modules.cameracontrol import Microscope_camera
-    from modules.microscope import Microscope
-    from modules.position_grid import PositionsGrid
-    from modules.physical_controller import encoder_read, controller_startup
-    from modules.interface.main_menu import *
-    from modules.microscope_param import *
-    from modules.parametersIO import ParametersSets, create_folder
-    import customtkinter
-    ### Object for microscope to run
-
-    #Tkinter object
-    parameters = ParametersSets()
-    microscope = Microscope(addr, ready_pin, parameters)
-    position_grid = PositionsGrid(microscope, parameters)
-    micro_cam = Microscope_camera(microscope)
-    micro_cam.initialise()
-
-    #Tkinter object
-    customtkinter.set_appearance_mode("dark")
-    Tk_root = customtkinter.CTk()
-    Tk_root.geometry("230x560+800+35")   
-    
-    ### Don't display border if on the RPi display
-    Interface._freemove_main = FreeMovementInterface(Tk_root, microscope=microscope, position_grid=position_grid, camera=micro_cam, parameters=parameters)
-
-
-    Tk_root.mainloop()

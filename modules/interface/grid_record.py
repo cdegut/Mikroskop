@@ -1,10 +1,9 @@
 from tkinter import Frame, Button, BOTH, Label, StringVar, OptionMenu, Toplevel
 from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N, StringVar, CTkToplevel
 import os
-
 from .super import Interface
-from ..parametersIO import create_folder
 import time
+from modules.controllers import create_folder
 
 plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
 

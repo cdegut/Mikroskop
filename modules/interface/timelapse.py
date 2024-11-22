@@ -1,9 +1,11 @@
 from .super import Interface
 from .popup import led_focus_zoom_buttons
-from ..parametersIO import create_folder
 from time import time
 from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N
 import os
+
+from modules.controllers import *
+from modules.controllers.microscope_param import *
 
 class Time_lapse_window(Interface, CTkFrame):
         
