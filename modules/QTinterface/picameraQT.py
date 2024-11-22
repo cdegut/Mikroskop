@@ -1,28 +1,17 @@
 import sys, os
-from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, QLabel, QCheckBox, QWidget, QTabWidget, QVBoxLayout, QGridLayout)
+from PyQt5.QtWidgets import QApplication, QPushButton,  QWidget, QVBoxLayout, QMainWindow
 from picamera2.previews.qt import QGlPicamera2, QPicamera2
 from PyQt5 import QtCore
-from ..microscope_param import preview_resolution
 from libcamera import Transform
 import sys
 
-class MainApp(QMainWindow):
-
-    def __init__(self, micro_cam, microscope, export=False):
-        super().__init__()
-        self.setGeometry(0, 0, 1024, 580)
-        self.export = export
-        self.setWindowTitle("PiCameraPreview")
-        self.main_widget = PreviewWidget(self, micro_cam, microscope, export)
-        self.main_widget.resize(preview_resolution[0], preview_resolution[1])
-        self.setCentralWidget(self.main_widget)
-        if not export:
-            self.setWindowFlags(QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint));             
-        self.show()
+from modules.controllers import *
+from modules.controllers.microscope_param import *
 
 class ScrollButton(QPushButton):
 
-    def __init__(self, text, position, size, style, direction, coarse, fine, microscope, parent):
+    def __init__(self, text:str, position: list[int,int], size:int, style:str, direction:str, 
+                 coarse:int, fine:int, microscope:MicroscopeManager, parent:QWidget):
         super().__init__(parent)
         self.scrollTimer = QtCore.QTimer()
         self.setText(text)
@@ -37,8 +26,8 @@ class ScrollButton(QPushButton):
         self.fine_move = False
 
     def start_scroll(self):
-        self.microscope.push_axis(self.movement[0] , self.movement[1])
-        self.scrollTimer.timeout.connect(lambda: self.microscope.push_axis(self.movement[0] , self.movement[1]))
+        self.microscope.request_push_axis(self.movement[0] , self.movement[1])
+        self.scrollTimer.timeout.connect(lambda: self.microscope.request_push_axis(self.movement[0] , self.movement[1]))
         self.scrollTimer.start(100)
 
     def stop_scroll(self):
@@ -53,11 +42,9 @@ class ScrollButton(QPushButton):
             self.movement[1] = self.fine
             self.fine_move = True
 
-
-
 class PreviewWidget(QWidget): 
         
-    def __init__(self, parent, micro_cam, microscope, export):
+    def __init__(self, parent: QMainWindow, micro_cam: Microscope_camera, microscope: MicroscopeManager):
         super(QWidget, self).__init__(parent)
         self.micro_cam = micro_cam
         self.microscope = microscope
@@ -100,12 +87,12 @@ class PreviewWidget(QWidget):
         self.Fine.clicked.connect(self.fine_toggle)
         self.Fine.setText("Coarse")
 
-        Up = ScrollButton("X+", (int(preview_resolution[0]/2)-half,0), button_size, button_style, 1, 100, 10, self.microscope, self)
-        Down = ScrollButton("X-", (int(preview_resolution[0]/2)-half, 580 - button_size -15), button_size, button_style, 1, -100, -10, self.microscope, self)
-        Left = ScrollButton("Y-", (0,int(preview_resolution[1]/2)-half), button_size, button_style, 2, -100, -10, self.microscope, self)
-        Right = ScrollButton("Y+", (preview_resolution[0] - button_size -5,int(preview_resolution[1]/2)-half), button_size, button_style, 2, 100, 10, self.microscope, self)
-        Fplus = ScrollButton("F+", (0,0), button_size, focus_button_style, 3, 50, 5, self.microscope, self)
-        Fminus = ScrollButton("F-", (0,button_size +10), button_size, focus_button_style, 3, -50, -5, self.microscope, self)
+        Up = ScrollButton("X+", (int(preview_resolution[0]/2)-half,0), button_size, button_style, "X", 100, 10, self.microscope, self)
+        Down = ScrollButton("X-", (int(preview_resolution[0]/2)-half, 580 - button_size -15), button_size, button_style, "X", -100, -10, self.microscope, self)
+        Left = ScrollButton("Y-", (0,int(preview_resolution[1]/2)-half), button_size, button_style, "Y", -100, -10, self.microscope, self)
+        Right = ScrollButton("Y+", (preview_resolution[0] - button_size -5,int(preview_resolution[1]/2)-half), button_size, button_style, "Y", 100, 10, self.microscope, self)
+        Fplus = ScrollButton("F+", (0,0), button_size, focus_button_style, "F", 50, 5, self.microscope, self)
+        Fminus = ScrollButton("F-", (0,button_size +10), button_size, focus_button_style, "F", -50, -5, self.microscope, self)
         self.scrollable = [Up, Down, Left, Right, Fplus, Fminus]
     
     def fine_toggle(self):
@@ -123,10 +110,7 @@ class PreviewWidget(QWidget):
 
 if __name__ == '__main__':
     from os import environ
-    from ..microscope import Microscope
-    from ..microscope_param import *
-    from ..parametersIO import ParametersSets
-    from PyQt5 import QtCore
+
 
 
     from picamera2 import Picamera2
@@ -144,12 +128,14 @@ if __name__ == '__main__':
     
     micro_cam =  Picamera2()
     parameters = ParametersSets()
-    microscope = Microscope(addr, ready_pin, parameters)
+    microscope = MicroscopeManager(addr, ready_pin, parameters)
 
     ## this avoid an error with CV2 and Qt, it clear all the env starting with QT_
     for k, v in os.environ.items():
         if k.startswith("QT_") and "cv2" in v:
             del os.environ[k]
+
+    from .main_app import MainApp
 
     app = QApplication([])
     ex = MainApp(micro_cam, microscope, export)

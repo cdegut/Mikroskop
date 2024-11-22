@@ -1,10 +1,10 @@
 #generate a list of named absolute position as dictionary
-from .parametersIO import *
-from .microscope import *
+from modules.controllers import *
+from .microscope_param import *
 
 class PositionsGrid:
 
-    def __init__(self, microscope: Microscope, parameters: ParametersSets):
+    def __init__(self, microscope: MicroscopeManager, parameters: ParametersSets):
         self.microscope = microscope
         self.current_grid_position = ["##",1]
         self.line_namespace = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -48,17 +48,12 @@ class PositionsGrid:
         return absolute_grid
     
     def go(self, well, subwell=1):
-        self.microscope.go_absolute(self.absolute_grid[well][subwell])
+        self.microscope.request_XYF_travel(self.absolute_grid[well][subwell], trajectory_corection=True)
         self.current_grid_position = [well, subwell]
     
     def at_position(self):
-        self.microscope.update_real_state()
-        target = self.absolute_grid[self.current_grid_position[0]][self.current_grid_position[1]]
-        if self.microscope.XYFposition == target:
-            return True
-        else:
-            return False
-    
+        return self.microscope.at_position
+ 
     def go_next_well(self, direction="line", value_move=1):
 
         self.find_current_position()
@@ -82,11 +77,15 @@ class PositionsGrid:
     
     def find_current_position(self):
         #iterate through all the possible well position to find a match
-        self.microscope.update_real_state()
+
+        X_range = range(self.microscope.XYFposition[0] + undershoot_X , self.microscope.XYFposition[0] + overshoot_X+1)
+        Y_range = range(self.microscope.XYFposition[1] + undershoot_Y , self.microscope.XYFposition[1] + overshoot_Y+1)
+        F_range = range(self.microscope.XYFposition[2] - 15 , self.microscope.XYFposition[2] + 15)
 
         for well in self.absolute_grid:
             for subwell in self.absolute_grid[well]:
-                if self.absolute_grid[well][subwell] == self.microscope.XYFposition:
+                if self.absolute_grid[well][subwell][0] in (X_range) and self.absolute_grid[well][subwell][1] in (Y_range):
+
                     self.current_grid_position = [well, subwell]
                     return [well, subwell]
         

@@ -1,13 +1,11 @@
 from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N, StringVar, CTk
 from .super import Interface
-from ..microscope import Microscope
-from ..parametersIO import ParametersSets
-from ..position_grid import PositionsGrid
 from .popup import led_focus_zoom_buttons
+from modules.controllers import *
 
 
 class Plate_parameters(Interface,CTkFrame):
-    def __init__(self, Tk_root, microscope, position_grid, camera, parameters: ParametersSets):
+    def __init__(self, Tk_root, microscope:MicroscopeManager , position_grid, camera, parameters: ParametersSets):
         Interface.__init__(self, Tk_root, microscope=microscope, position_grid=position_grid, camera=camera, parameters=parameters)
         self._param_config = ParametersConfig(self.Tk_root, self, self.microscope, self.position_grid, self.parameters, self.camera)
         self.init_window()
@@ -121,7 +119,7 @@ class Plate_parameters(Interface,CTkFrame):
         self.parameters.select(new_param)
         self.position_grid.generate_grid()
         endstops_dict = self.parameters.get()["dyn_endstops"] ## Load the specific dynamic endstops
-        self.microscope.set_dynamic_endsotop(endstops_dict)
+        self.microscope.__microscope.set_dynamic_endsotop(endstops_dict)
         self.clear_frame()
         self.init_window()
 
@@ -309,11 +307,11 @@ class ParametersConfig(Interface, CTkFrame):
         saveXskew.place(x=menus_position[0]+ w +20 + offset,y=menus_position[1]+250)
 
 
-        Fp25 = CTkButton(self, width=80,text="Fcs +25 ", command=lambda: self.microscope.move_1axis(3,25))
-        Fm25 = CTkButton(self, width=80,text="Fcs -25 ", command=lambda: self.microscope.move_1axis(3,-25))
+        Fp25 = CTkButton(self, width=80,text="Fcs +25 ", command=lambda: self.microscope.request_push_axis("F",25))
+        Fm25 = CTkButton(self, width=80,text="Fcs -25 ", command=lambda: self.microscope.request_push_axis("F",-25))
 
-        Fp5 = CTkButton(self, width=80,text="Fcs +5  ", command=lambda: self.microscope.move_1axis(3,5))
-        Fm5 = CTkButton(self, width=80,text="Fcs -5  ", command=lambda: self.microscope.move_1axis(3,-5))
+        Fp5 = CTkButton(self, width=80,text="Fcs +5  ", command=lambda: self.microscope.request_push_axis("F",5))
+        Fm5 = CTkButton(self, width=80,text="Fcs -5  ", command=lambda: self.microscope.request_push_axis("F",-5))
 
         Fp25.place(x=menus_position[0],y=menus_position[1]+350)
         Fm25.place(x=menus_position[0]+100,y=menus_position[1]+350)
@@ -408,32 +406,3 @@ class ParametersConfig(Interface, CTkFrame):
         self.clear_jobs()
         self.clear_frame()
         Interface._plate_parameters.init_window()
-
-#main loop for testing only
-#main loop
-if __name__ == "__main__": 
-    from modules.cameracontrol import Microscope_camera
-    from modules.microscope import Microscope
-    from modules.position_grid import PositionsGrid
-    from modules.physical_controller import encoder_read, controller_startup
-    from modules.interface.main_menu import *
-    from modules.microscope_param import *
-    from modules.parametersIO import ParametersSets, create_folder
-    import customtkinter
-    ### Object for microscope to run
-
-    #Tkinter object
-    parameters = ParametersSets()
-    microscope = Microscope(addr, ready_pin, parameters)
-    position_grid = PositionsGrid(microscope, parameters)
-    micro_cam = Microscope_camera(microscope)
-
-    #Tkinter object
-    customtkinter.set_appearance_mode("dark")
-    Tk_root = customtkinter.CTk()
-    Tk_root.geometry("230x560+800+35")   
-    
-    ### Don't display border if on the RPi display
-    Interface._plate_parameters = Plate_parameters(Tk_root, microscope=microscope, position_grid=position_grid, parameters=parameters, camera=micro_cam)
-    Tk_root.mainloop()
-

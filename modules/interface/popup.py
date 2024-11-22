@@ -1,5 +1,7 @@
+from tests.test import LEDArray
 from .super import Interface
 from customtkinter import CTkFrame, CTkButton, CTkLabel, CTkSlider, BOTH, HORIZONTAL, N
+from modules.controllers import *
 
 
 def led_focus_zoom_buttons(self, position=400):
@@ -12,7 +14,7 @@ def led_focus_zoom_buttons(self, position=400):
 
 class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop button and a modifiable label
 
-    def __init__(self, Tk_root, last_window, microscope, parameters, camera):
+    def __init__(self, Tk_root, last_window, microscope: MicroscopeManager, parameters, camera):
 
         Interface.__init__(self, Tk_root, last_window, microscope, parameters=parameters, camera=camera)
         self.auto_exp_value = "auto"
@@ -118,28 +120,35 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
             match self.darkfield_type:
     
                 case "Normal":
-                    self.microscope.adressable_LED_solid_color(255,255,80)
+                    self.microscope.request_led_array(LEDArray(255,255,80))
+                    return    
 
                 case "Blue":
-                    self.microscope.adressable_LED_solid_color(0,0,255)
+                    self.microscope.request_led_array(LEDArray(0,0,255))
+                    return    
                 
-                case "Red":
-                    self.microscope.adressable_LED_solid_color(255,0,0)
-
-                case "Green":
-                    self.microscope.adressable_LED_solid_color(0,255,0)
+                case "Blue-Red":
+                    bluered = LEDArray(255,0,0)
+                    bluered.half(0,0,128, 8)
+                    self.microscope.request_led_array(bluered)
+                    return        
         
                 case "Half":
-                    for i in range(0,9):
-                        self.microscope.adressable_LED_indexLed(int(i),int(255),int(255),int(80))
+                    half = LEDArray(255,255,80)
+                    half.half(0,0,0, 8)
+                    self.microscope.request_led_array(half)
+                    return          
 
                 case "Quarter":
-                    for i in range(0,5):
-                        self.microscope.adressable_LED_indexLed(int(i),int(255),int(255),int(80))
+                    quart = LEDArray(0,0,0)
+                    quart.quarter(255,255,80, 0)
+                    self.microscope.request_led_array(quart)
+                    return      
+
       
         else:
 
-            self.microscope.adressable_LED_solid_color(0,0,0)
+            self.microscope.request_led_array(LEDArray(0,0,0))
             self.darkField_status = "Off"
             self.DarkField_button.configure(text = f"Darkfield: {self.darkField_status}")
     
@@ -149,12 +158,9 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
                 self.darkfield_type = "Blue"
 
             case "Blue":
-                self.darkfield_type = "Red"
+                self.darkfield_type = "Blue-Red"
             
-            case "Red":
-                self.darkfield_type = "Green"
-
-            case "Green":
+            case "Blue-Red":
                 self.darkfield_type = "Half"
     
             case "Half":
@@ -225,7 +231,7 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
         if pwr_1 != self.microscope.led1pwr or pwr_2 != self.microscope.led2pwr:
             self.microscope.led1pwr = pwr_1
             self.microscope.led2pwr = pwr_2
-            self.microscope.set_ledspwr(pwr_1, pwr_2)
+            self.microscope.request_ledspwr(pwr_1, pwr_2)
         Interface._job1 = self.after(100, self.set_led)
     
     def set_exp_and_gain(self): ## Read the scale and set the led at the proper power
@@ -259,14 +265,6 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
 
         Interface._job2 = self.after(200, self.set_exp_and_gain)
          
-
-    def set_default(self): ## Read led power from Default parameter set
-        led = self.parameters.get("Default")["led"]
-        self.microscope.set_ledpwr(led[0])
-        self.microscope.positions[3] = led[0]
-        self.microscope.set_led_state(led[1])
-        self.Led_scale.set(self.microscope.positions[3])
-    
     def open(self):
         self.clear_jobs()
         self.clear_frame()
@@ -278,7 +276,7 @@ class Led_popup(Interface, CTkFrame): #widget to fill popup window, show an stop
 
 class Focus_popup(Interface, CTkFrame):
 
-    def __init__(self, Tk_root, last_window, microscope,  position_grid, parameters):
+    def __init__(self, Tk_root, last_window, microscope: MicroscopeManager,  position_grid, parameters):
         Interface.__init__(self, Tk_root, last_window=self, microscope=microscope, position_grid=position_grid, parameters=parameters)    
         self.init_window(last_window)
 
@@ -291,23 +289,23 @@ class Focus_popup(Interface, CTkFrame):
         self.pack(fill=BOTH, expand=1)
         self.show_record_label()
 
-        Fp1000 = CTkButton(self, width=80, text="Fcs +1000", command=lambda: self.microscope.move_1axis(3,1000))
-        Fm1000 = CTkButton(self, width=80,text="Fcs -1000", command=lambda: self.microscope.move_1axis(3,-1000))
+        Fp1000 = CTkButton(self, width=80, text="Fcs +1000", command=lambda: self.microscope.request_push_axis("F",1000))
+        Fm1000 = CTkButton(self, width=80,text="Fcs -1000", command=lambda: self.microscope.request_push_axis("F",-1000))
 
-        Fp100 = CTkButton(self, width=80, text="Fcs +200", command=lambda: self.microscope.move_1axis(3,200))
-        Fm100 = CTkButton(self, width=80,text="Fcs -200", command=lambda: self.microscope.move_1axis(3,-200))
+        Fp100 = CTkButton(self, width=80, text="Fcs +200", command=lambda: self.microscope.request_push_axis("F",200))
+        Fm100 = CTkButton(self, width=80,text="Fcs -200", command=lambda: self.microscope.request_push_axis("F",-200))
 
-        Fp25 = CTkButton(self, width=80,text="Fcs +25 ", command=lambda: self.microscope.move_1axis(3,25))
-        Fm25 = CTkButton(self, width=80,text="Fcs -25 ", command=lambda: self.microscope.move_1axis(3,-25))
+        Fp25 = CTkButton(self, width=80,text="Fcs +25 ", command=lambda: self.microscope.request_push_axis("F",25))
+        Fm25 = CTkButton(self, width=80,text="Fcs -25 ", command=lambda: self.microscope.request_push_axis("F",-25))
 
-        Fp5 = CTkButton(self, width=80,text="Fcs +5  ", command=lambda: self.microscope.move_1axis(3,5))
-        Fm5 = CTkButton(self, width=80,text="Fcs -5  ", command=lambda: self.microscope.move_1axis(3,-5))
+        Fp5 = CTkButton(self, width=80,text="Fcs +5  ", command=lambda: self.microscope.request_push_axis("F",5))
+        Fm5 = CTkButton(self, width=80,text="Fcs -5  ", command=lambda: self.microscope.request_push_axis("F",-5))
 
         save = CTkButton(self, width=80, fg_color='green',text="Save", command=self.save_focus)
-        Reset = CTkButton(self, width=80,fg_color='red', text="Reset", command=lambda: self.microscope.move_focus(self.parameters.get()["start"][2]))
+        Reset = CTkButton(self, width=80,fg_color='red', text="Reset", command=lambda: self.microscope.request_XYF_travel(-1,-1,self.parameters.get()["start"][2]))
         
-        ObjOn = CTkButton(self, width=80, text="ObjOn", command=lambda:  self.microscope.move_focus(self.parameters.get()["start"][2] - 600 ))
-        ObjOff = CTkButton(self, width=80, text="ObjOff", command=lambda: self.microscope.move_focus(0))
+        ObjOn = CTkButton(self, width=80, text="ObjOn", command=lambda:  self.microscope.request_XYF_travel(-1,-1,self.parameters.get()["start"][2] - 100 ))
+        ObjOff = CTkButton(self, width=80, text="ObjOff", command=lambda: self.microscope.request_XYF_travel(-1,-1,0))
 
         Fp1000.place(x=10, y=155)
         Fm1000.place(x=100, y=155)       
@@ -382,32 +380,3 @@ class Zoom_popup(Interface, CTkFrame): #widget to fill popup window, show an sto
             Interface._zoom_popup.init_window(self)
         else:
             Interface._zoom_popup = Zoom_popup(self.Tk_root, last_window=self, microscope=self.microscope, parameters=self.parameters, camera=self.camera)
-
-if __name__ == "__main__": 
-    from modules.cameracontrol import Microscope_camera
-    from modules.microscope import Microscope
-    from modules.position_grid import PositionsGrid
-    from modules.physical_controller import encoder_read, controller_startup
-    from modules.interface.main_menu import *
-    from modules.microscope_param import *
-    from modules.parametersIO import ParametersSets, create_folder
-    import customtkinter
-    ### Object for microscope to run
-
-    #Tkinter object
-    parameters = ParametersSets()
-    microscope = Microscope(addr, ready_pin, parameters)
-    position_grid = PositionsGrid(microscope, parameters)
-    micro_cam = Microscope_camera(microscope)
-    micro_cam.initialise()
-
-    #Tkinter object
-    customtkinter.set_appearance_mode("dark")
-    Tk_root = customtkinter.CTk()
-    Tk_root.geometry("230x560+800+35")   
-    
-    ### Don't display border if on the RPi display
-    Interface._freemove_main = FreeMovementInterface(Tk_root, microscope=microscope, position_grid=position_grid, camera=micro_cam, parameters=parameters)
-
-
-    Tk_root.mainloop()

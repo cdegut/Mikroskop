@@ -102,35 +102,4 @@ class MainGridInterface(Interface, CTkFrame): #main GUI window
     def go_start(self):
         start_position = self.parameters.get()["start"]
         led = self.parameters.get()["led"]
-        self.microscope.go_absolute(start_position) #this function return only after arduin is ready
-        self.microscope.set_ledpwr(led[0])
-        self.microscope.set_led_state(led[1])
-
-
-#main loop
-if __name__ == "__main__": 
-    from modules.cameracontrol import Microscope_camera
-    from modules.microscope import Microscope
-    from modules.position_grid import PositionsGrid
-    from modules.physical_controller import encoder_read, controller_startup
-    from modules.interface.main_menu import *
-    from modules.microscope_param import *
-    from modules.parametersIO import ParametersSets, create_folder
-    import customtkinter
-    ### Object for microscope to run
-
-    #Tkinter object
-    parameters = ParametersSets()
-    microscope = Microscope(addr, ready_pin, parameters)
-    position_grid = PositionsGrid(microscope, parameters)
-    micro_cam = None
-
-    #Tkinter object
-    customtkinter.set_appearance_mode("dark")
-    Tk_root = customtkinter.CTk()
-    Tk_root.geometry("230x560+800+35")   
-    
-    ### Don't display border if on the RPi display
-    Interface._grid_main = MainGridInterface(Tk_root, microscope=microscope, position_grid=position_grid, camera=None, parameters=parameters)
-
-    Tk_root.mainloop()
+        self.microscope.request_XYF_travel(start_position, trajectory_corection=True) #this function return only after arduin is ready

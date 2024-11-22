@@ -1,9 +1,11 @@
 from .super import Interface
 from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N, StringVar
 import os
-from ..cameracontrol import start_recording
 from time import time
 from .popup import led_focus_zoom_buttons
+
+from modules.controllers import *
+from modules.controllers.microscope_param import *
 
 
 class Video_record_window(Interface, CTkFrame):
@@ -108,33 +110,3 @@ class VideoTimer(): ## callable timer for measuring video lengh
         minutes = int(current_time / 60)
         secondes = current_time - (minutes * 60)
         self.text_output = f"{minutes} min {secondes} sec"
-    
-
-
-#main loop
-if __name__ == "__main__": 
-    from modules.cameracontrol import Microscope_camera
-    from modules.microscope import Microscope
-    from modules.position_grid import PositionsGrid
-    from modules.physical_controller import encoder_read, controller_startup
-    from modules.interface.main_menu import *
-    from modules.microscope_param import *
-    from modules.parametersIO import ParametersSets, create_folder
-    import customtkinter
-    ### Object for microscope to run
-
-    #Tkinter object
-    parameters = ParametersSets()
-    microscope = Microscope(addr, ready_pin, parameters)
-    position_grid = PositionsGrid(microscope, parameters)
-    micro_cam = None
-
-    #Tkinter object
-    customtkinter.set_appearance_mode("dark")
-    Tk_root = customtkinter.CTk()
-    Tk_root.geometry("230x560+800+35")   
-    
-    ### Don't display border if on the RPi display
-    Interface._video_record = Video_record_window(Tk_root, microscope=microscope, camera=None, parameters=parameters)
-
-    Tk_root.mainloop()

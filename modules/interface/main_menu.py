@@ -7,7 +7,7 @@ from .grid_record import GridRecord
 from .video import Video_record_window
 from .timelapse import Time_lapse_window
 #from .popup import Zoom_popup
-from ..microscope_param import Xmaxrange, Ymaxrange
+from modules.controllers.microscope_param import *
 
 
 class MainMenu(Interface, CTkFrame):
@@ -69,8 +69,8 @@ class MainMenu(Interface, CTkFrame):
         #self.display_image_as_label()
     
     def objective_change(self):
-        self.microscope.go_absolute([Xmaxrange, Ymaxrange, 0])
+        self.microscope.request_XYF_travel([Xmaxrange, Ymaxrange, 0])
 
     def parknquit(self):
-        self.microscope.go_absolute([Xmaxrange, Ymaxrange/2, 0])
+        self.microscope.request_XYF_travel([Xmaxrange, Ymaxrange/2, 0])
         self.exit()
