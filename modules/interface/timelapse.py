@@ -5,7 +5,7 @@ from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N
 import os
 
 from modules.controllers import *
-from modules.controllers.microscope_param import *
+from modules.controllers.pins import *
 
 class Time_lapse_window(Interface, CTkFrame):
         

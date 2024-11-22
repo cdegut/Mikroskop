@@ -5,7 +5,7 @@ from time import sleep
 #from .QTinterface.picameraQT import PreviewWidget
 from picamera2.previews.qt import QGlPicamera2, QPicamera2
 from modules.controllers import MicroscopeManager , create_folder
-from .microscope_param import *
+from .pins import *
 
 camera_full_resolution = (4056,3040)
 h264_max_resolution = (1664,1248)

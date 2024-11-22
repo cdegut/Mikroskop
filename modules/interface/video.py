@@ -5,7 +5,7 @@ from time import time
 from .popup import led_focus_zoom_buttons
 
 from modules.controllers import *
-from modules.controllers.microscope_param import *
+from modules.controllers.pins import *
 
 
 class Video_record_window(Interface, CTkFrame):

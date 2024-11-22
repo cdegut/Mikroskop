@@ -1,4 +1,3 @@
-from tests.test import LEDArray
 from .super import Interface
 from customtkinter import CTkFrame, CTkButton, CTkLabel, CTkSlider, BOTH, HORIZONTAL, N
 from modules.controllers import *

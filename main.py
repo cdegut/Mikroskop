@@ -5,7 +5,7 @@ from PyQt5 import QtCore
 
 from modules.controllers import *
 from modules.interface.main_menu import *
-from modules.controllers.microscope_param import *
+from modules.controllers.pins import *
 from modules.QTinterface.main_app import MainApp
 import customtkinter
 import sys
@@ -48,9 +48,7 @@ if __name__ == "__main__":
     preview_window = MainApp(microscope=microscope, position_grid=position_grid, camera=micro_cam,parameters=parameters, export=export)
 
     Interface._main_menu = MainMenu(Tk_root, microscope=microscope, position_grid=position_grid, camera=micro_cam,  parameters=parameters)
-    
-    #access neede to interact with preview when doing captures
-    micro_cam.qpicamera = preview_window.main_widget.qpicamera2 
+
 
     # run the old Tk interace in a Qt timer
     tk_timer = QtCore.QTimer()
