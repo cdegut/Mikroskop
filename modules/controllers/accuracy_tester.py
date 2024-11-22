@@ -5,10 +5,10 @@ import random
 import numpy as np
 import cv2
 import pandas as pd
-from controllers import *
+from modules.controllers import *
 
 repeat_before_tune = 50
-
+divider = 4 #convergence speed lower = faster
 
 def multiscale_ecc_alignment(image1, image2, num_scales=3):
     # Create a list to store downscaled versions of the images
@@ -44,34 +44,16 @@ class AccuracyTester():
         self.camera: Microscope_camera = camera
         self.parameters: ParametersSets = parameters
 
-        self.camera.switch_mode(self.camera.full_res_config, signal_function=self.camera.qpicamera.signal_done)
-        self.loop_progress = 'init'
-
-        # run the old Tk interace in a Qt timer
         self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.testing_loop)
-        self.timer.start(10)
+        self.camera.switch_mode(self.camera.full_res_config, signal_function=self.camera.qpicamera.signal_done)
 
-        #Grid Recording parameters
-        self.positions_list = None
-        self.delay_value = None
-        self.repeat_value = None
+        #Tester
         self.done_repeat = 0
-        self.index_position = 0
-        self.pic_taken = False
-        self.pre_pic_timer = 0
-        self.grid_folder = None
-        self.grid_subwells_value = None
-        self.pause_timer =0
-        self.is_regording = False
-        self.camera_is_init = False
-        self.last_image = None
 
         self.distance_X =  0
         self.distance_Y =  0
         self.last_X_error = None
         self.last_Y_error = None
-        self.back_to_start = False
 
         self.start_image = None
         self.current_image = None
@@ -82,25 +64,15 @@ class AccuracyTester():
         self.overshoot_Y = 0
         self.undershoot_Y = 0
 
-
         self.start = self.parameters.get()["start"]
         self.target_position = self.parameters.get()["start"]
 
-        self.microscope.go_absolute(self.target_position)
+        self.microscope.request_XYF_travel(self.target_position)
 
-            #reset everything
-        self.is_regording = True
+        if self.microscope.led1pwr == 0:
+            self.microscope.request_ledspwr(50,0)
 
-        self.positions_list = None
-        self.done_repeat = 0
-        self.pic_taken = False
-        self.pre_pic_timer = 0
-        self.grid_subwells_value = None
-        self.pause_timer =0
-
-        if self.microscope.led1pwr ==0:
-            self.microscope.set_ledspwr(50,0)
-
+    def initiate_files(self):
         current_time = time.localtime()        
         date = str(current_time[0])[2:] + str(current_time[1]).zfill(2) + str(current_time[2]).zfill(2) + "_"  \
             + str(current_time[3]).zfill(2) + str(current_time[4]).zfill(2)
@@ -119,13 +91,6 @@ class AccuracyTester():
         with open(f"{self.test_data_folder}/autotune.txt", "a") as data_file:
             data_file.write("Repeat\tX overshoot\tX undershoot\tX std error\tX std variability\tY overshoot\tY undershoot\tY std error\tY std variability\n")
 
-
-    def at_position(self)  -> bool:
-        self.microscope.update_real_state()
-        if self.microscope.XYFposition == self.target_position:
-            return True
-        else:
-            return False
     
     def get_X_Y_error(self,array1,array2):
         image1 = cv2.cvtColor(array1, cv2.COLOR_BGR2GRAY)
@@ -185,112 +150,134 @@ class AccuracyTester():
 
 
         std_error_X = df_sliced['X error(first image)'].std()
-        std_variability_X = df_sliced['X variability(last image'].std()
+        std_variability_X = df_sliced['X variability(last image)'].std()
         std_error_Y = df_sliced['Y error(first image)'].std()
-        std_variability_Y = df_sliced['Y variability(last image'].std()
+        std_variability_Y = df_sliced['Y variability(last image)'].std()
         data = f"{self.done_repeat}\t{self.overshoot_X}\t{self.undershoot_X}\t{std_error_X}\t{std_variability_X }\t" + \
         f"{self.overshoot_Y}\t{self.undershoot_Y}\t{std_error_Y}\t{std_variability_Y }\n"
 
         print(f"Medians of errors in steps X+ {median_X_positive:.2f}, X- {median_X_negative:.2f}, Y+ {median_Y_positive:.2f}, Y- {median_Y_negative:.2f},")
-        self.overshoot_X = self.overshoot_X + int(median_X_positive /2)
-        self.undershoot_X = self.undershoot_X + int(median_X_negative /2)
-        self.overshoot_Y = self.overshoot_Y + int(median_Y_positive /2)
-        self.undershoot_Y = self.undershoot_Y + int(median_Y_negative /2)
+        self.overshoot_X = self.overshoot_X + int(median_X_positive /divider)
+        self.undershoot_X = self.undershoot_X + int(median_X_negative /divider)
+        self.overshoot_Y = self.overshoot_Y + int(median_Y_positive /divider)
+        self.undershoot_Y = self.undershoot_Y + int(median_Y_negative /divider)
 
-
+        self.microscope.config_trajectory_corection(self.overshoot_X,self.undershoot_X,self.overshoot_Y,self.undershoot_Y)
 
         with open(f"{self.test_data_folder}/autotune.txt", "a") as data_file:
             data_file.write(data)
 
-    
-    def testing_loop(self):   
-
-        if self.at_position() == False: #return if not at position
+        dataframe: pd.DataFrame = pd.read_csv(f"{self.test_data_folder}/autotune.txt", sep='\t')
+        if dataframe.shape[0] < 2:
             return
-     
-        match self.loop_progress :
+       
+        lowest_row_X =dataframe.loc[dataframe.iloc[:, 3].idxmin()]
+        lowest_row_Y =dataframe.loc[dataframe.iloc[:, 7].idxmin()]
+        microscope_parameters = MicroscopeParameters()
+        microscope_parameters.load()
+        microscope_parameters.overshoot_X = lowest_row_X["X overshoot"]
+        microscope_parameters.undershoot_X = lowest_row_X["X undershoot"]
+        microscope_parameters.overshoot_Y = lowest_row_X["Y overshoot"]
+        microscope_parameters.undershoot_Y = lowest_row_X["Y undershoot"]
+        microscope_parameters.save()
 
-            case 'init':
-                if self.pic_taken == False and self.pre_pic_timer < 100:        
-                    self.pre_pic_timer += 1
-                    return
-                else:
-                    self.camera.create_main_array()
-                    self.camera.auto_exp_enable(False)
+ 
+###################
+###Testing loop ####
 
-                    self.loop_progress = "save start array"
-                    return
-                
-            case "save start array":
+    def start_testing(self, mode:str):
+        self.__timer = 0
+        self.__mode: str =  mode
+        self.done_repeat = 0
+        self.timer.timeout.connect(self.__get_start_image)
+        self.timer.start(100)
+        self.start = self.microscope.XYFposition
 
-                if self.camera.full_image_array is not None:
-                    self.start_image = self.camera.full_image_array.copy()
-                    self.last_image = self.camera.full_image_array.copy()
-                    self.camera.full_image_array = None
-                    self.loop_progress = "main loop"
-                    return
-            
-            case "save current array":
 
-                if self.camera.full_image_array is not None:
-                    self.current_image = self.camera.full_image_array.copy()
-                    self.camera.full_image_array = None
-                    self.loop_progress = "process difference"
-                    return
+    def __get_start_image(self):     
+        if self.microscope.at_position == False: #return if not at position
+            return
 
-            case "process difference":
-                self.process_difference()
-                self.loop_progress = "main loop"
-                return
-            
-            case "take image":
+        if self.__timer < 20:
+            self.__timer += 1
+            return
+        
+        self.timer.timeout.disconnect()
+        print("getting start image")
+        self.camera.create_main_array()
+        self.camera.auto_exp_enable(False)
+        self.timer.timeout.connect(self.__record_start_image)
+        self.__timer =0
 
-                ### pre image delay 10s
-                if self.pic_taken == False and self.pre_pic_timer < 30:        
-                    self.pre_pic_timer += 1
-                    return
-                
-                self.camera.create_main_array()
-                self.loop_progress = "save current array"
-                self.pic_taken = True
-                return
-            
-            case "main loop":
+    def __record_start_image(self):    
+        if self.camera.full_image_array is not None:
+            self.timer.timeout.disconnect()
+            self.start_image: np.ndarray = self.camera.full_image_array.copy()
+            self.last_image: np.ndarray = self.camera.full_image_array.copy()
+            self.camera.full_image_array = None
+            self.__mode_switch()
+    
+    def __mode_switch(self):
+        if self.__mode == "static":
+            self.timer.timeout.connect(self.__long_delay)
+        
+        if self.__mode == "accuracy":
+            self.__go_random()
 
-                if self.back_to_start == True:
+        if self.__mode == "accuracy autotune":
+            if self.done_repeat != 0 and self.done_repeat%repeat_before_tune == 0:
+                self.self_tune()
+            self.__go_random()
 
-                    if self.done_repeat != 0 and self.done_repeat%repeat_before_tune == 0:
-                        self.self_tune()
+    def __long_delay(self):
+        if self.__timer < 60:
+            self.__timer += 1
+            return
+        self.timer.timeout.disconnect()
+        self.__timer = 0
+        self.timer.timeout.connect(self.__next_image)
+    
+    def __go_random(self):
 
-                    new_X = random.randrange(10000, 60000)
-                    new_Y = random.randrange(10000, 80000)
-                    new_F = self.start[2]
-                    self.distance_X =  new_X - self.start[0]
-                    self.distance_Y =  new_Y - self.start[1]
-                    self.target_position = [new_X,new_Y,new_F]
-                    self.microscope.go_absolute(self.target_position)
-                    self.back_to_start = False
+        new_X = random.randrange(10000, 60000)
+        new_Y = random.randrange(10000, 80000)
+        new_F = self.start[2]
+        self.distance_X =  new_X - self.start[0]
+        self.distance_Y =  new_Y - self.start[1]
+        self.target_position = [new_X,new_Y,new_F]
+        self.microscope.request_XYF_travel(self.target_position)
+        self.microscope.run()
+        self.timer.timeout.connect(self.__go_back)
+    
+    def __go_back(self):
+        if self.microscope.at_position == False: #return if not at position
+            return
+        
+        self.timer.timeout.disconnect()
+        self.microscope.request_XYF_travel(position=self.start, trajectory_corection = True)
+        self.microscope.run()       
+        self.timer.timeout.connect(self.__next_image)
 
-                else:
-                    self.pic_taken = False
-                    self.pre_pic_timer = 0
+    def __next_image(self):
+        if self.microscope.at_position == False: #return if not at position
+            return
 
-                    if self.distance_X > 0 :
-                        X_corrected = self.start [0] + self.overshoot_X
-                    elif self.distance_X < 0:
-                        X_corrected = self.start [0] + self.undershoot_X
-                    else:
-                        X_corrected = self.start [0]
+        if self.__timer < 100:        
+            self.__timer  += 1
+            return
+        
+        self.timer.timeout.disconnect()
+        self.camera.create_main_array()
+        self.timer.timeout.connect(self.__process_new)
+        self.__timer = 0
+    
+    def __process_new(self):
 
-                    if self.distance_Y > 0 :
-                        Y_corrected = self.start [1] + self.overshoot_Y
-                    elif self.distance_Y < 0:
-                        Y_corrected = self.start [1] + self.undershoot_Y
-                    else:
-                        Y_corrected = self.start [1]
-                    self.back_to_start = True
-
-                    self.target_position = [X_corrected, Y_corrected, self.start[2]]
-                    self.done_repeat += 1 
-                    self.microscope.go_absolute(self.target_position)
-                    self.loop_progress = "take image"
+        if self.camera.full_image_array is not None:
+            self.timer.timeout.disconnect()
+            self.current_image = self.camera.full_image_array.copy()
+            self.camera.full_image_array = None
+            self.process_difference()
+            self.done_repeat += 1
+            self.__mode_switch()
+        

@@ -8,16 +8,24 @@ overshoot_X = -16
 undershoot_X = -4
 overshoot_Y = -100
 undershoot_Y = +40
+
+#fluorescent gain value
+awbR_fluo = 1
+awbB_fluo = 0.35
+awbR_white = 3
+awbB_white = 0.8
+
 #number of retry possible for motor command sent, 10 by default (normal error error rate should not exceed 2 in a row)
 retry = 10
 #number of retry possible for read position, 10 by default (normal error error rate should not exceed 2 in a row)
 read_retry = 10
 
+
+
 # I²C bus address, need to match the arduino address specified in the arduino firmware:  "Wire.begin(addr);"
 addr = 0x8 
 ready_pin = 4
 
-# physical controller parameters max value is 128
 Y_controller_short = 10
 X_controller_short = 10
 F_controller_short = 1
@@ -36,11 +44,6 @@ F_controller_pinA = 6
 F_controller_pinB = 12
 F_controller_Switch = 5
 
-#fluorescent gain value
-awbR_fluo = 1
-awbB_fluo = 0.35
-awbR_white = 3
-awbB_white = 0.8
 
 #Preview window size
 preview_resolution = (800, 600)

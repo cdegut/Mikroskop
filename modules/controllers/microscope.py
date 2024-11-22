@@ -2,10 +2,12 @@
 import time
 from smbus2 import SMBus
 import RPi.GPIO as GPIO
-from .microscope_param import *
+
+from tests.test import MicroscopeParameters
+from .pins import *
 from PyQt5 import QtCore
 from dataclasses import dataclass
-from modules.controllers import ParametersSets
+from modules.controllers import ParametersSets, LEDArray
 
 # Use GPIO numbers not pin numbers
 GPIO.setmode(GPIO.BCM)
@@ -224,24 +226,6 @@ class Microscope:
             bus.write_i2c_block_data(addr, 6, [ 6 ,index, R, G, B, checksum])
 
 
-@dataclass
-class LED:
-    index: int = 0 
-    R: int = 0
-    G: int = 0
-    B: int = 0
-
-class LEDArray:
-    def __init__(self, R=0,G=0,B=0, num = 16):
-        self.leds = [LED(i, R,G,B) for i in range(num)]
-    def half(self,R,G,B, start: int=0):
-        for led in self.leds[start:start + int(len(self.leds)/2)]:
-            led.R , led.G , led.B = R,G,B
-    def quarter(self,R,G,B, start:int =0):
-        for led in self.leds[start:start + int(len(self.leds)/4)]:
-            led.R , led.G , led.B = R,G,B
-
-
 class MicroscopeManager:
 
     """Create the manager instead of creating the Microscope class
@@ -264,6 +248,14 @@ class MicroscopeManager:
         self.micromanager_timer = QtCore.QTimer()
         self.micromanager_timer.timeout.connect(self.run)
         self.micromanager_timer.start(50)
+
+        microscope_parameters = MicroscopeParameters()
+        microscope_parameters.load()  
+             
+        self.overshoot_X: int = microscope_parameters.overshoot_X
+        self.undershoot_X: int = microscope_parameters.undershoot_X
+        self.overshoot_Y: int = microscope_parameters.overshoot_Y
+        self.undershoot_Y: int = microscope_parameters.undershoot_Y
     
     def run(self):
         """run the management task,
@@ -276,8 +268,10 @@ class MicroscopeManager:
         self.led1pwr = self.__microscope.led1pwr
         self.led2pwr = self.__microscope.led2pwr
         
-        if self.__microscope.XYFposition == self.__active_target:
+        if self.__microscope.XYFposition == self.__requested_target:
             self.at_position = True
+        else:
+            self.at_position = False
 
         if self.__requested_target != self.__active_target:
             self.__activate_target()
@@ -331,6 +325,8 @@ class MicroscopeManager:
         if axis == "F":
             self.__requested_target =  [aX , aY , aF + amount]
         
+        self.at_position = False
+        
         
     def request_XYF_travel(self, position: list[int,int,int], trajectory_corection: bool = False):
         """request a full destination in XYF
@@ -354,6 +350,8 @@ class MicroscopeManager:
 
         self.__requested_target = position
 
+        self.at_position = False
+
     def request_ledspwr(self, led1pwr: int, led2pwr:int):
         """request a leds power 0 to 100%
             will be sent to the microscope at the next exection of run()
@@ -375,16 +373,21 @@ class MicroscopeManager:
         tF = position[2]
 
         if cX - tX > 0:   
-            tX = tX + overshoot_X  # target
+            tX = tX + self.overshoot_X  # target
         elif cX - tX < 0:
-            tX = tX + undershoot_X  # target
+            tX = tX + self.undershoot_X  # target
 
         if cY - tY > 0:
-            tY = tY + overshoot_Y  # target
+            tY = tY + self.overshoot_Y  # target
         elif cY - tY < 0:
-            tY = tY + undershoot_Y  # target
+            tY = tY + self.undershoot_Y  # target
         
         return [tX, tY, tF]
 
+    def config_trajectory_corection(self, overshoot_X, undershoot_X, overshoot_Y, undershoot_Y):
+        self.overshoot_X = overshoot_X
+        self.undershoot_X = undershoot_X
+        self.overshoot_Y = overshoot_Y
+        self.undershoot_Y = undershoot_Y
 
     

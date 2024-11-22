@@ -1,6 +1,24 @@
 #generate a list of named absolute position as dictionary
 from modules.controllers import *
-from .microscope_param import *
+from .pins import *
+
+'''
+@dataclass
+class PositionInGrid:
+    column:int = 1
+    line: str = "A"
+    subwell:int = 1
+    position = XYFPosition()
+
+
+class PositionsGrid:
+    def __init__(self, name:str = "default", lines: int, columns: int):
+        self.line_namespace = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        position = self.__create()
+
+    def __create(self):
+'''
+
 
 class PositionsGrid:
 
@@ -11,7 +29,6 @@ class PositionsGrid:
         self.parameters = parameters
         self.absolute_grid = self.generate_grid()
         self.find_current_position()
-
 
 
     def generate_grid(self):

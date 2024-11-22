@@ -1,6 +1,7 @@
 import json
 import pathlib
 from os import getenv
+from dataclasses import dataclass, asdict
 
 class ParametersSets:
 
@@ -12,7 +13,7 @@ class ParametersSets:
 
     def __param_file_path(self):
         current_path = str(pathlib.Path(__file__).parent.absolute())
-        path_and_name = current_path + "/../param.json"
+        path_and_name = current_path + "/../grids_params.json"
         return path_and_name
 
     def __load_all(self):
@@ -60,9 +61,6 @@ class ParametersSets:
             self.all_parameters_sets.pop(target)
             self.__save_all()
     
-        
-
-
     #### updaate parameter from a list of tuple with the format : [("keyA", value ), ("keyB", value)]
     def update(self, param_list, subset=None):
         if not subset:
@@ -87,9 +85,33 @@ def create_folder(new_folder_path):
     p = pathlib.Path(new_folder_path)
     p.mkdir(parents=True, exist_ok=True)
 
-#main loop
-if __name__ == "__main__": 
-    p = ParametersSets()
-    print(p.get_default())
-    p.make_default("Default")
-    print(p.get_default())
+@dataclass
+class MicroscopeParameters:
+    software_endstops: bool = True
+    Xmaxrange: int = 70000
+    Ymaxrange: int = 93000
+    Fmaxrange: int = 30000
+
+    overshoot_X: int = 0
+    undershoot_X: int = 0
+    overshoot_Y: int = 0
+    undershoot_Y: int = 0
+
+    #fluorescent gain value
+    awbR_fluo: float = 1
+    awbB_fluo: float = 0.35
+    awbR_white: float = 3
+    awbB_white: float = 0.8
+
+    def save(self):
+        current_path = str(pathlib.Path(__file__).parent.absolute())
+        path_and_name = current_path + "/../microscope_param.json"
+        with open(path_and_name, "w") as param_file:
+            json.dump(asdict(self), param_file)
+
+    def load(self):
+        current_path = str(pathlib.Path(__file__).parent.absolute())
+        path_and_name = current_path + "/../microscope_param.json"
+        with open(path_and_name, "r") as param_file:
+            loaded = json.load(param_file)
+            self.__init__(**loaded)

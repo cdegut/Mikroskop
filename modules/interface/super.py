@@ -2,7 +2,7 @@ from customtkinter import CTkFrame, CTkButton, CTkLabel, N, CTkSlider, IntVar, C
 from time import localtime
 import os
 from modules.controllers import *
-from modules.controllers.microscope_param import *
+from modules.controllers.pins import *
 
 
 plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
