@@ -352,14 +352,19 @@ class MicroscopeManager:
 
         self.at_position = False
 
-    def request_ledspwr(self, led1pwr: int, led2pwr:int):
+    def request_ledspwr(self, led1pwr: int | None, led2pwr:int | None):
         """request a leds power 0 to 100%
             will be sent to the microscope at the next exection of run()
         Args:
             led1pwr (int): leds 1 power 0 to 100%
             led2pwr (int): leds 2 power 0 to 100%
         """
-      
+        if led1pwr == None:
+            led1pwr = self.led1pwr
+        
+        if led2pwr == None:
+            led2pwr = self.led2pwr
+
         self.__request_leds_pwr = [led1pwr, led2pwr]
 
     
