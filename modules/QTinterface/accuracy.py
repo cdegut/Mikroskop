@@ -19,7 +19,7 @@ class AccuracyPanel(QWidget):
         layout = QVBoxLayout()
         # Add widgets to the layout
         self.static = QPushButton("Static test")
-        self.static.toggle()
+        self.static.setCheckable(True)
         self.static.clicked.connect(self.static_test)
         layout.addWidget(self.static)
 
@@ -29,15 +29,16 @@ class AccuracyPanel(QWidget):
         layout.addWidget(self.accuracy)
 
         self.autotune = QPushButton("Autotune")
-        self.autotune.toggle()
+        #self.autotune.toggle()
+        self.autotune.setCheckable(True)
         self.autotune.clicked.connect(self.accuracy_autotune)
         layout.addWidget(self.autotune)
 
         self.setLayout(layout)
 
     def static_test(self):
-        if not self.static.isChecked():
-            self.tester.initiate_files()
+        if  self.static.isChecked():
+            self.tester.initiate_files(f_name = "static_test")
             self.static.setText("Runing")
             self.tester.start_testing("static")
         else:
@@ -45,15 +46,24 @@ class AccuracyPanel(QWidget):
             self.tester.timer.disconnect()
 
     def accuracy_test(self):
-        self.tester.initiate_files()
-        self.accuracy.setText("Runing")
-        self.tester.start_testing("accuracy")
+        if  not self.accuracy.isChecked():
+            self.tester.initiate_files(f_name = "accuracy_test")
+            self.accuracy.setText("Runing")
+            self.accuracy.start_testing("Accuracy test")
+        else:
+            self.static.setText("Static")
+            self.tester.timer.disconnect()
+
     
     def accuracy_autotune(self):
-        self.tester.initiate_files()
-        self.autotune.setText("Runing")
-        self.microscope.config_trajectory_corection(0,0,0,0)
-        self.tester.start_testing("accuracy autotune")
+        if  self.autotune.isChecked():
+            self.tester.initiate_files(f_name = "error_autotune")
+            self.autotune.setText("Runing")
+            self.microscope.config_trajectory_corection(0,0,0,0)
+            self.tester.start_testing("accuracy autotune")
+        else:
+            self.autotune.setText("Autotune")
+            self.tester.timer.disconnect()
 
 
     

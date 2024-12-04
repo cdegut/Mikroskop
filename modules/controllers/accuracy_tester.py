@@ -9,6 +9,8 @@ from modules.controllers import *
 
 repeat_before_tune = 50
 divider = 4 #convergence speed lower = faster
+#autotune_source = "variability"
+autotune_source = "error"
 
 def multiscale_ecc_alignment(image1, image2, num_scales=3):
     # Create a list to store downscaled versions of the images
@@ -64,22 +66,21 @@ class AccuracyTester():
         self.overshoot_Y = 0
         self.undershoot_Y = 0
 
-        self.start = self.parameters.get()["start"]
-        self.target_position = self.parameters.get()["start"]
+        self.start = self.microscope.XYFposition
+        self.target_position = self.start
 
-        self.microscope.request_XYF_travel(self.target_position)
 
         if self.microscope.led1pwr == 0:
             self.microscope.request_ledspwr(50,0)
 
-    def initiate_files(self):
+    def initiate_files(self, f_name):
         current_time = time.localtime()        
         date = str(current_time[0])[2:] + str(current_time[1]).zfill(2) + str(current_time[2]).zfill(2) + "_"  \
             + str(current_time[3]).zfill(2) + str(current_time[4]).zfill(2)
         data_dir = self.parameters.get()["data_dir"]      
         home = os.getenv("HOME")
 
-        self.test_data_folder = f"{home}/{data_dir}/accuracy_test-{date}/"
+        self.test_data_folder = f"{home}/{data_dir}/accuracy_tests/{f_name}-{date}/"
         create_folder(self.test_data_folder)
 
 
@@ -143,10 +144,16 @@ class AccuracyTester():
         um_per_steps = 1.25
         data = pd.read_csv(f"{self.test_data_folder}/data.txt", sep='\t')
         df_sliced = data.loc[self.done_repeat - repeat_before_tune: self.done_repeat]
-        median_X_positive = df_sliced[df_sliced['X distance'] > 0]['X error(first image)'].median() * pixel_size /um_per_steps
-        median_X_negative = df_sliced[df_sliced['X distance'] < 0]['X error(first image)'].median() * pixel_size /um_per_steps
-        median_Y_positive = df_sliced[df_sliced['Y distance'] > 0]['Y error(first image)'].median() * pixel_size /um_per_steps
-        median_Y_negative = df_sliced[df_sliced['Y distance'] < 0]['Y error(first image)'].median() * pixel_size /um_per_steps
+        if autotune_source == "variability":
+            median_X_positive = df_sliced[df_sliced['X distance'] > 0]['X variability(last image)'].median() * pixel_size /um_per_steps
+            median_X_negative = df_sliced[df_sliced['X distance'] < 0]['X variability(last image)'].median() * pixel_size /um_per_steps
+            median_Y_positive = df_sliced[df_sliced['Y distance'] > 0]['Y variability(last image)'].median() * pixel_size /um_per_steps
+            median_Y_negative = df_sliced[df_sliced['Y distance'] < 0]['Y variability(last image)'].median() * pixel_size /um_per_steps       
+        else:
+            median_X_positive = df_sliced[df_sliced['X distance'] > 0]['X error(first image)'].median() * pixel_size /um_per_steps
+            median_X_negative = df_sliced[df_sliced['X distance'] < 0]['X error(first image)'].median() * pixel_size /um_per_steps
+            median_Y_positive = df_sliced[df_sliced['Y distance'] > 0]['Y error(first image)'].median() * pixel_size /um_per_steps
+            median_Y_negative = df_sliced[df_sliced['Y distance'] < 0]['Y error(first image)'].median() * pixel_size /um_per_steps
 
 
         std_error_X = df_sliced['X error(first image)'].std()
@@ -178,7 +185,7 @@ class AccuracyTester():
         microscope_parameters.overshoot_X = lowest_row_X["X overshoot"]
         microscope_parameters.undershoot_X = lowest_row_X["X undershoot"]
         microscope_parameters.overshoot_Y = lowest_row_X["Y overshoot"]
-        microscope_parameters.undershoot_Y = lowest_row_X["Y undershoot"]
+        microscope_parameters.undershoot_Y = lowest_row_X["Y undershoot"] 
         microscope_parameters.save()
 
  
@@ -189,11 +196,55 @@ class AccuracyTester():
         self.__timer = 0
         self.__mode: str =  mode
         self.done_repeat = 0
-        self.timer.timeout.connect(self.__get_start_image)
+        self.timer.timeout.connect(self.__wiggle)
         self.timer.start(100)
         self.start = self.microscope.XYFposition
+        self.__wiggle_count = 0
+    
+    def __wiggle(self):
+        if self.microscope.at_position == False: #return if not at position
+            return
+        x = self.start[0]
+        y = self.start[1]
+        f = self.start[2]
+        
+        if self.__wiggle_count == 0:
+            self.microscope.request_XYF_travel(x+100, y+100, f)
+            self.microscope.run()
+            self.__wiggle_count += 1
+            return
+        
+        if self.__wiggle_count == 1:
+            self.microscope.request_XYF_travel(x-100, y-100, f)
+            self.microscope.run()
+            self.__wiggle_count += 1
+            return
+        
+        if self.__wiggle_count == 2:
+            self.microscope.request_XYF_travel(x+100, y+100, f)
+            self.microscope.run()
+            self.__wiggle_count += 1
+            return
 
+        if self.__wiggle_count == 3:
+            self.microscope.request_XYF_travel(x-200, y-200, f)
+            self.microscope.run()
+            self.__wiggle_count += 1
+            return
 
+        if self.__wiggle_count == 4:
+            self.microscope.request_XYF_travel(x+200, y+200, f)
+            self.microscope.run()
+            self.__wiggle_count += 1
+            return
+        
+
+        self.microscope.request_XYF_travel(x, y, f)
+        self.microscope.run()
+        self.timer.timeout.disconnect()
+        self.timer.timeout.connect(self.__get_start_image)
+
+        
     def __get_start_image(self):     
         if self.microscope.at_position == False: #return if not at position
             return
@@ -230,7 +281,7 @@ class AccuracyTester():
             self.__go_random()
 
     def __long_delay(self):
-        if self.__timer < 60:
+        if self.__timer < 3000:
             self.__timer += 1
             return
         self.timer.timeout.disconnect()
