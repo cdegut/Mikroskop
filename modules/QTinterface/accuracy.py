@@ -1,4 +1,6 @@
-from PyQt5.QtWidgets import QApplication, QPushButton,  QWidget, QVBoxLayout, QMainWindow, QHBoxLayout, QDockWidget
+from PyQt5.QtWidgets import QApplication, QPushButton,  QWidget, QVBoxLayout, QMainWindow, QHBoxLayout, QDockWidget, QLabel
+from PyQt5.QtGui import QFont
+from PyQt5.QtCore import Qt
 from modules.controllers import *
 from modules.controllers.cameracontrol import Microscope_camera
 from modules.controllers.microscope import MicroscopeManager
@@ -14,8 +16,6 @@ class AccuracyPanel(QWidget):
         self.camera: Microscope_camera = main_window.camera
         self.microscope: MicroscopeManager = main_window.microscope
         self.setGeometry(preview_resolution[0],0, 1024 - preview_resolution[0], 580)
-        self.tester = AccuracyTester(microscope=main_window.microscope, position_grid=main_window.position_grid, camera=main_window.camera,  parameters=main_window.parameters)
-
         layout = QVBoxLayout()
         # Add widgets to the layout
         self.static = QPushButton("Static test")
@@ -34,7 +34,16 @@ class AccuracyPanel(QWidget):
         self.autotune.clicked.connect(self.accuracy_autotune)
         layout.addWidget(self.autotune)
 
+        label = QLabel("--", parent=self)
+        label.setStyleSheet("background-color: rgba(0, 0, 0, 0);")  # Transparent background
+        label.setFont(QFont("Arial", 12))
+        label.setAlignment(Qt.AlignCenter)  # Align text
+        layout.addWidget(label)
         self.setLayout(layout)
+
+        self.tester = AccuracyTester(microscope=main_window.microscope, position_grid=main_window.position_grid, 
+                                     camera=main_window.camera,  parameters=main_window.parameters, infobox=label)
+
 
     def static_test(self):
         if  self.static.isChecked():
@@ -49,7 +58,7 @@ class AccuracyPanel(QWidget):
         if  not self.accuracy.isChecked():
             self.tester.initiate_files(f_name = "accuracy_test")
             self.accuracy.setText("Runing")
-            self.accuracy.start_testing("Accuracy test")
+            self.tester.start_testing("accuracy test")
         else:
             self.static.setText("Static")
             self.tester.timer.disconnect()

@@ -1,4 +1,5 @@
 from PyQt5 import QtCore
+from PyQt5.QtWidgets import QLabel
 import time
 import os
 import random
@@ -6,11 +7,13 @@ import numpy as np
 import cv2
 import pandas as pd
 from modules.controllers import *
+import time
 
 repeat_before_tune = 50
-divider = 4 #convergence speed lower = faster
-#autotune_source = "variability"
-autotune_source = "error"
+divider = 2 #convergence speed lower = faster
+pixel_size = 0.56
+um_per_steps = 1.25
+autotune_source = "variability"
 
 def multiscale_ecc_alignment(image1, image2, num_scales=3):
     # Create a list to store downscaled versions of the images
@@ -39,12 +42,29 @@ def multiscale_ecc_alignment(image1, image2, num_scales=3):
     
     return warp_matrix
 
+def orb_alignment(image1, image2):    
+    orb = cv2.ORB_create()
+    kp1, des1 = orb.detectAndCompute(image1, None)
+    kp2, des2 = orb.detectAndCompute(image2, None)
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    matches = bf.match(des1, des2)
+    matches = sorted(matches, key=lambda   x: x.distance)
+
+    src_pts = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
+    dst_pts = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
+
+    matrix, mask = cv2.estimateAffine2D(src_pts,  dst_pts)
+
+    return matrix
+
+
 class AccuracyTester():
-    def __init__(self, microscope: MicroscopeManager, position_grid: PositionsGrid, camera: Microscope_camera,  parameters: ParametersSets):
+    def __init__(self, microscope: MicroscopeManager, position_grid: PositionsGrid, camera: Microscope_camera,  parameters: GridParameters, infobox: QLabel):
         self.microscope: MicroscopeManager = microscope
         self.position_grid: PositionsGrid = position_grid
         self.camera: Microscope_camera = camera
-        self.parameters: ParametersSets = parameters
+        self.parameters: GridParameters = parameters
+        self.infobox = infobox
 
         self.timer = QtCore.QTimer()
         self.camera.switch_mode(self.camera.full_res_config, signal_function=self.camera.qpicamera.signal_done)
@@ -98,7 +118,8 @@ class AccuracyTester():
         image2 = cv2.cvtColor(array2, cv2.COLOR_BGR2GRAY)
 
         # Align images using multiscale ECC
-        warp_matrix = multiscale_ecc_alignment(image1, image2)
+        #warp_matrix = multiscale_ecc_alignment(image1, image2)
+        warp_matrix = orb_alignment(image1, image2)
 
         # Apply the warp transformation
         aligned_image2 = cv2.warpAffine(image2, warp_matrix, (image1.shape[1], image1.shape[0]), flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP)
@@ -115,7 +136,6 @@ class AccuracyTester():
         return round(X_error,1), round(Y_error,1)
 
     def process_difference(self):
-        
         X_error, Y_error = self.get_X_Y_error(self.start_image, self.current_image)
         if not self.last_X_error:
             X_drift = X_error
@@ -137,11 +157,11 @@ class AccuracyTester():
 
         self.last_X_error = X_error
         self.last_Y_error = Y_error
+        self.infobox.setText(f"Repeat n {self.done_repeat}\nImage to image drift:\nX = {X_drift:.2f}px\nY = {Y_drift:.2f}px")
 
     def self_tune(self):
 
-        pixel_size = 0.56
-        um_per_steps = 1.25
+
         data = pd.read_csv(f"{self.test_data_folder}/data.txt", sep='\t')
         df_sliced = data.loc[self.done_repeat - repeat_before_tune: self.done_repeat]
         if autotune_source == "variability":
@@ -178,25 +198,33 @@ class AccuracyTester():
         if dataframe.shape[0] < 2:
             return
        
-        lowest_row_X =dataframe.loc[dataframe.iloc[:, 3].idxmin()]
-        lowest_row_Y =dataframe.loc[dataframe.iloc[:, 7].idxmin()]
+        if autotune_source == "variability":
+            lowest_row_X =dataframe.loc[dataframe.iloc[:, 4].idxmin()]
+            lowest_row_Y =dataframe.loc[dataframe.iloc[:, 8].idxmin()]
+        else:
+            lowest_row_X =dataframe.loc[dataframe.iloc[:, 3].idxmin()]
+            lowest_row_Y =dataframe.loc[dataframe.iloc[:, 7].idxmin()]
+
         microscope_parameters = MicroscopeParameters()
         microscope_parameters.load()
         microscope_parameters.overshoot_X = lowest_row_X["X overshoot"]
         microscope_parameters.undershoot_X = lowest_row_X["X undershoot"]
-        microscope_parameters.overshoot_Y = lowest_row_X["Y overshoot"]
-        microscope_parameters.undershoot_Y = lowest_row_X["Y undershoot"] 
+        microscope_parameters.overshoot_Y = lowest_row_Y["Y overshoot"]
+        microscope_parameters.undershoot_Y = lowest_row_Y["Y undershoot"] 
         microscope_parameters.save()
 
  
 ###################
 ###Testing loop ####
 
-    def start_testing(self, mode:str):
+    def start_testing(self, mode:str, wiggle = False):
         self.__timer = 0
         self.__mode: str =  mode
         self.done_repeat = 0
-        self.timer.timeout.connect(self.__wiggle)
+        if wiggle:
+            self.timer.timeout.connect(self.__wiggle)
+        else:
+            self.timer.timeout.connect(self.__get_start_image)
         self.timer.start(100)
         self.start = self.microscope.XYFposition
         self.__wiggle_count = 0
@@ -209,37 +237,37 @@ class AccuracyTester():
         f = self.start[2]
         
         if self.__wiggle_count == 0:
-            self.microscope.request_XYF_travel(x+100, y+100, f)
+            self.microscope.request_XYF_travel([x+100, y+100, f])
             self.microscope.run()
             self.__wiggle_count += 1
             return
         
         if self.__wiggle_count == 1:
-            self.microscope.request_XYF_travel(x-100, y-100, f)
+            self.microscope.request_XYF_travel([x-100, y-100, f])
             self.microscope.run()
             self.__wiggle_count += 1
             return
         
         if self.__wiggle_count == 2:
-            self.microscope.request_XYF_travel(x+100, y+100, f)
+            self.microscope.request_XYF_travel([x+100, y+100, f])
             self.microscope.run()
             self.__wiggle_count += 1
             return
 
         if self.__wiggle_count == 3:
-            self.microscope.request_XYF_travel(x-200, y-200, f)
+            self.microscope.request_XYF_travel([x-200, y-200, f])
             self.microscope.run()
             self.__wiggle_count += 1
             return
 
         if self.__wiggle_count == 4:
-            self.microscope.request_XYF_travel(x+200, y+200, f)
+            self.microscope.request_XYF_travel([x+200, y+200, f])
             self.microscope.run()
             self.__wiggle_count += 1
             return
         
 
-        self.microscope.request_XYF_travel(x, y, f)
+        self.microscope.request_XYF_travel([x, y, f])
         self.microscope.run()
         self.timer.timeout.disconnect()
         self.timer.timeout.connect(self.__get_start_image)
@@ -272,7 +300,7 @@ class AccuracyTester():
         if self.__mode == "static":
             self.timer.timeout.connect(self.__long_delay)
         
-        if self.__mode == "accuracy":
+        if self.__mode == "accuracy test":
             self.__go_random()
 
         if self.__mode == "accuracy autotune":
@@ -290,14 +318,13 @@ class AccuracyTester():
     
     def __go_random(self):
 
-        new_X = random.randrange(10000, 60000)
-        new_Y = random.randrange(10000, 80000)
+        new_X = random.randrange(5000, 60000)
+        new_Y = random.randrange(5000, 80000)
         new_F = self.start[2]
         self.distance_X =  new_X - self.start[0]
         self.distance_Y =  new_Y - self.start[1]
         self.target_position = [new_X,new_Y,new_F]
         self.microscope.request_XYF_travel(self.target_position)
-        self.microscope.run()
         self.timer.timeout.connect(self.__go_back)
     
     def __go_back(self):
@@ -305,15 +332,14 @@ class AccuracyTester():
             return
         
         self.timer.timeout.disconnect()
-        self.microscope.request_XYF_travel(position=self.start, trajectory_corection = True)
-        self.microscope.run()       
+        self.microscope.request_XYF_travel(position=self.start, trajectory_corection = True)      
         self.timer.timeout.connect(self.__next_image)
 
     def __next_image(self):
         if self.microscope.at_position == False: #return if not at position
             return
 
-        if self.__timer < 100:        
+        if self.__timer < 20:        
             self.__timer  += 1
             return
         

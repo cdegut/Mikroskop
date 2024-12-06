@@ -47,7 +47,7 @@ class MainMenu(Interface, CTkFrame):
         VideoRecord = CTkButton(self, width=self.menu_button_w, text="Video", command=lambda: Video_record_window.open(self))
         TimeLapse = CTkButton(self, width=self.menu_button_w, text="Time lapse", command=lambda: Time_lapse_window.open(self))    
 
-        Current_parameters_set = CTkLabel(self, text = f"Selected parameter set: \n {self.parameters.selected}")
+        Current_parameters_set = CTkLabel(self, text = f"Selected parameter set: \n {self.parameters.name}")
         GridParameters = CTkButton(self, width=self.menu_button_w, text="Change Parameters", command=lambda:  Plate_parameters.open(self))
 
         FreeMoveInterface.place(relx=self.menu_button_x, y=50, anchor=CENTER)

@@ -76,7 +76,7 @@ class Time_lapse_window(Interface, CTkFrame):
 
     def test_image(self):
         home = os.getenv("HOME")
-        self.camera.capture_param["data_dir"] = f"{home}/{self.parameters.get()['data_dir']}/time_lapse/tests"
+        self.camera.capture_param["data_dir"] = f"{home}/{self.parameters.data_dir}/time_lapse/tests"
         self.camera.capture_param["picture_name"] = self.timestamp()
         self.camera.capture_with_preset()
 
@@ -87,7 +87,7 @@ class Time_lapse_window(Interface, CTkFrame):
         self.max_frame = int(60 / self.timer *  int(self.TotalTimeMenu.get()))
         
         home = os.getenv("HOME")
-        self.camera.capture_param["data_dir"] = f"{home}/{self.parameters.get()['data_dir']}/time_lapse/"
+        self.camera.capture_param["data_dir"] = f"{home}/{self.parameters.data_dir}/time_lapse/"
         self.camera.capture_param["picture_name"] = f"{'0'.zfill(len(str(self.max_frame)))}-{self.timestamp()}"
         self.start_timer = time()
         self.camera.capture_with_preset()     

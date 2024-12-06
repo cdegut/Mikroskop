@@ -22,7 +22,7 @@ class PositionsGrid:
 
 class PositionsGrid:
 
-    def __init__(self, microscope: MicroscopeManager, parameters: ParametersSets):
+    def __init__(self, microscope: MicroscopeManager, parameters: GridParameters):
         self.microscope = microscope
         self.current_grid_position = ["##",1]
         self.line_namespace = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -35,31 +35,30 @@ class PositionsGrid:
         # generate the position grid of all the well and subwell based onthe parameter file
         # the grid is a dictionary of well, containing dictionary of subwell
         absolute_grid = {}
-        parameters =  self.parameters.get()
-        fx = parameters["XYFocusDrift"][0]
-        fy = parameters["XYFocusDrift"][1]
-        sx = parameters["XYaxisSkew"][0]
-        sy = parameters["XYaxisSkew"][1]
+        fx = self.parameters.XYFocusDrift[0]
+        fy = self.parameters.XYFocusDrift[1]
+        sx = self.parameters.XYaxisSkew[0]
+        sy = self.parameters.XYaxisSkew[1]
 
-        for l in range (0, parameters["lines"]):
+        for l in range (0, self.parameters.lines):
             
-            for c in range(0, parameters["columns"]):
+            for c in range(0, self.parameters.columns):
 
-                x = parameters['start'][0] + parameters['Xsteps']*l + (sx * c)
+                x = self.parameters.start[0] + self.parameters.Xsteps*l + (sx * c)
 
-                y = parameters['start'][1] + parameters['Ysteps']*c + (sy * l)
+                y = self.parameters.start[1] + self.parameters.Ysteps*c + (sy * l)
 
-                f = parameters['start'][2] +  (fx * l ) + (fy * c)
+                f = self.parameters.start[2] +  (fx * l ) + (fy * c)
 
                 sub_position = {}
-                for s in range (0, parameters["subwells"]):
-                    sub_position[s+1] = [x + parameters["subwells_spacing"][0] * s, y + parameters["subwells_spacing"][1] * s, f + parameters["subwells_spacing"][2] * s]
+                for s in range (0, self.parameters.subwells):
+                    sub_position[s+1] = [x + self.parameters.subwells_spacing[0] * s, y + self.parameters.subwells_spacing[1] * s, f + self.parameters.subwells_spacing[2] * s]
 
                 absolute_grid[str(self.line_namespace[l])+str(c+1)] = sub_position
 
 
         #initialise nb_of_subwell for subwell switching fct
-        self.nb_of_subwells = self.parameters.get()["subwells"]
+        self.nb_of_subwells = self.parameters.subwells
 
         self.absolute_grid = absolute_grid
         return absolute_grid

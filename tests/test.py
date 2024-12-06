@@ -1,57 +1,96 @@
-#Software Endstop (need to be =< to hardware set endstop)
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
+import pathlib
 import json
+import os 
 
-software_endstops = True
-Xmaxrange = 70000
-Ymaxrange = 93000
-Fmaxrange = 30000
-
-overshoot_X = -16
-undershoot_X = -4
-overshoot_Y = -100
-undershoot_Y = +40
-
-#fluorescent gain value
-awbR_fluo = 1
-awbB_fluo = 0.35
-awbR_white = 3
-awbB_white = 0.8
+path = f"{str(pathlib.Path(__file__).parent.absolute())}/grids_parameters/"
 
 @dataclass
-class MicroscopeParameters:
-    software_endstops: bool = True
-    Xmaxrange: int = 70000
-    Ymaxrange: int = 93000
-    Fmaxrange: int = 30000
+class test_grid_param:
+    name: str = "Default"
+    columns: int =  6
+    lines:int = 4
+    start: list = field(default_factory=lambda: [7200,81950, 24980])
+    data_dir: str = "/microscope_data/"
+    selected: bool = True
+    protected: bool = False
+    subwells_spacing: list = field(default_factory=lambda: [3000,0,0])
+    Xsteps: int = -29000
+    Ysteps: int = -7200
+    XYFocusDrift: list = field(default_factory=lambda: [0,0])
+    XYaxisSkew: list = field(default_factory=lambda: [0,0])
+    dyn_endstops: dict = field(default_factory=lambda: {
+        "dyn_maxFcs": 28000,
+        "dyn_Xmax": 70000,
+        "dyn_Xmin": 2000,
+        "dyn_Ymax": 90000,
+        "dyn_Ymin": 1550,
+        "safe_Fcs": 10000 })
+    
+    delay: int = 2
+    start_well: str = "A1"
+    finish_well: str = "B2"
+    grid_subwells: int = 1
+    led: list = field(default_factory=lambda:  [50,0])
+    repeat: int = 2
+    subwells: int = 1
 
-    overshoot_X: int = 0
-    undershoot_X: int = 0
-    overshoot_Y: int = 0
-    undershoot_Y: int = 0
-
-    #fluorescent gain value
-    awbR_fluo: float = 1
-    awbB_fluo: float = 0.35
-    awbR_white: float = 3
-    awbB_white: float = 0.8
-
-    def save(self):
-        with open("microscope_param.json", "w") as param_file:
-            json.dump(asdict(self), param_file)
-
-    def load(self):
+    def load(self, name:str):
+        path_and_name = f"{path}{name}.json"
+        self.selected = False
+        self.save()
         try:
-            with open("microscope_param.json", "r") as param_file:
+            with open(path_and_name, "r") as param_file:
                 loaded = json.load(param_file)
                 self.__init__(**loaded)
-        except:
-            self.save()
+                self.selected = True
+                self.name = name #override name with file name
+                self.save()
+            return
+        except FileNotFoundError:
+            print(f"File {path_and_name} does not exist yet, creating it with current parameters")
+            self.save(name)
+            self.load(name)
+
+    def save(self, name = None):
+        if not name:
+            path_and_name = f"{path}{self.name}.json"
+        else:
+            path_and_name = f"{path}{name}.json"
+        with open(path_and_name, "w") as param_file:
+            json.dump(asdict(self), param_file)
+    
+    
+    def delete(self):
+        if not self.Protected:
+            os.remove(f"{path}{self.name}.json")
+ 
+    def load_last_selected(self):
+        for parameter in list_all_parameters():
+            if parameter != "Default":
+                if read_parameter_value(parameter, "selected") == True:
+                    self.load(parameter)
+                    return
+        
+        self.load("Default")
 
     
 
-param = MicroscopeParameters()
-param.load()
+def list_all_parameters():
+    name_list: list = []
+    for param in os.listdir(path):
+        name_list.append(param.split(sep = ".")[0])
+    return name_list
+
+def read_parameter_value(name, value):
+    path_and_name = f"{path}{name}.json"
+    with open(path_and_name, "r") as param_file:
+        loaded = json.load(param_file)
+    return loaded[value]
+
+grid_parameters = test_grid_param()
+grid_parameters.load_last_selected()
+print(grid_parameters.name)
 
 
 
