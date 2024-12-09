@@ -301,9 +301,9 @@ class Focus_popup(Interface, CTkFrame):
         Fm5 = CTkButton(self, width=80,text="Fcs -5  ", command=lambda: self.microscope.request_push_axis("F",-5))
 
         save = CTkButton(self, width=80, fg_color='green',text="Save", command=self.save_focus)
-        Reset = CTkButton(self, width=80,fg_color='red', text="Reset", command=lambda: self.microscope.request_XYF_travel(-1,-1,self.parameters.get()["start"][2]))
+        Reset = CTkButton(self, width=80,fg_color='red', text="Reset", command=lambda: self.microscope.request_XYF_travel(-1,-1,self.parameters.start[2]))
         
-        ObjOn = CTkButton(self, width=80, text="ObjOn", command=lambda:  self.microscope.request_XYF_travel(-1,-1,self.parameters.get()["start"][2] - 100 ))
+        ObjOn = CTkButton(self, width=80, text="ObjOn", command=lambda:  self.microscope.request_XYF_travel(-1,-1,self.parameters.start[2] - 100 ))
         ObjOff = CTkButton(self, width=80, text="ObjOff", command=lambda: self.microscope.request_XYF_travel(-1,-1,0))
 
         Fp1000.place(x=10, y=155)
@@ -324,7 +324,8 @@ class Focus_popup(Interface, CTkFrame):
         self.back_button()
 
     def save_focus(self):
-        self.parameters.update_start(None , None, self.microscope.XYFposition[2], None)
+        self.parameters.start[2] = self.microscope.XYFposition[2]
+        self.parameters.save()
         self.position_grid.generate_grid()
    
     

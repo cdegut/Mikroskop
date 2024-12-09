@@ -5,7 +5,7 @@ from modules.controllers import *
 
 
 class Plate_parameters(Interface,CTkFrame):
-    def __init__(self, Tk_root, microscope:MicroscopeManager , position_grid, camera, parameters: ParametersSets):
+    def __init__(self, Tk_root, microscope:MicroscopeManager , position_grid, camera, parameters: GridParameters):
         Interface.__init__(self, Tk_root, microscope=microscope, position_grid=position_grid, camera=camera, parameters=parameters)
         self._param_config = ParametersConfig(self.Tk_root, self, self.microscope, self.position_grid, self.parameters, self.camera)
         self.init_window()
@@ -26,12 +26,12 @@ class Plate_parameters(Interface,CTkFrame):
         self.Tk_root.title("Grid") 
         self.pack(fill=BOTH, expand=1)
 
-        self.Xsteps = self.parameters.get()["Xsteps"]
-        self.Ysteps = self.parameters.get()["Ysteps"]
+        self.Xsteps = self.parameters.Xsteps
+        self.Ysteps = self.parameters.Ysteps
         self._param_config.Xold_steps = self.Xsteps
         self._param_config.Yold_steps = self.Ysteps
 
-        self.subwells_spacing = self.parameters.get()["subwells_spacing"]
+        self.subwells_spacing = self.parameters.subwells_spacing
 
         self.parameter_menu(20,10)
         self.lines_columns_subwels(20,80)
@@ -51,18 +51,18 @@ class Plate_parameters(Interface,CTkFrame):
         Configure_XY.place(relx=0.5, y=y_p+50, anchor=N)
 
     def A1_button(self, x_p, y_p):
-        A1X = self.parameters.get()["start"][0]
-        A1Y = self.parameters.get()["start"][1]
+        A1X = self.parameters.start[0]
+        A1Y = self.parameters.start[1]
         A1Label = CTkLabel(self, text=f"A1 position X: {A1X} Y: {A1Y}")
         A1position =  CTkButton(self, text="Change A1 position", command=self.set_A1_position)
         A1Label.place(x=x_p, y=y_p)
         A1position.place(relx=0.5, y=y_p+30, anchor=N)
     
     def focus_button(self, x_p, y_p):
-        FocusX = self.parameters.get()["XYFocusDrift"][0]
-        FocusY = self.parameters.get()["XYFocusDrift"][1]
-        DriftX = self.parameters.get()["XYaxisSkew"][0]
-        DriftY = self.parameters.get()["XYaxisSkew"][1]
+        FocusX = self.parameters.XYFocusDrift[0]
+        FocusY = self.parameters.XYFocusDrift[1]
+        DriftX = self.parameters.XYaxisSkew[0]
+        DriftY = self.parameters.XYaxisSkew[1]
         Label = CTkLabel(self, text=f"Focus drift X: {FocusX} Y: {FocusY}\nAxes skew X: {DriftX} Y: {DriftY}")
         fs =  CTkButton(self, text="Set Focus drift \nand axes skew", command=self.set_focus_drift)
         Label.place(x=x_p, y=y_p)
@@ -85,9 +85,9 @@ class Plate_parameters(Interface,CTkFrame):
         SubWellsLabel = CTkLabel(self, text="Subwells:")
         SubWellsMenu = CTkOptionMenu(self, width=w, variable=self.subwells, values=["1","2","3","4"])
 
-        self.lines.set(self.parameters.get()["lines"])
-        self.columns.set(self.parameters.get()["columns"])
-        self.subwells.set(self.parameters.get()["subwells"])
+        self.lines.set(self.parameters.lines)
+        self.columns.set(self.parameters.columns)
+        self.subwells.set(self.parameters.subwells)
 
         #Save = CTkButton(self, text="Save changes", command=self.save_grid_param)
         New = CTkButton(self, text="New Parameter Set",  command=self.new_grid_param)
@@ -107,8 +107,8 @@ class Plate_parameters(Interface,CTkFrame):
 
     def parameter_menu(self, x_p, y_p):
         self.parameters_selector = StringVar()
-        self.parameters_selector.set(self.parameters.selected)
-        parameters_set_list = self.parameters.list_all()
+        self.parameters_selector.set(self.parameters.name)
+        parameters_set_list = list_all_parameters()
 
         ParametersSet = CTkOptionMenu(self, width=100, variable=self.parameters_selector, values=parameters_set_list,  command=self.parameter_set_changed)
         ParametersSet_label =  CTkLabel(self, text="Parameters set:")
@@ -116,18 +116,18 @@ class Plate_parameters(Interface,CTkFrame):
         ParametersSet.place(x=x_p, y=y_p+30)
     
     def parameter_set_changed(self, new_param):
-        self.parameters.select(new_param)
+        self.parameters.load(new_param)
         self.position_grid.generate_grid()
-        endstops_dict = self.parameters.get()["dyn_endstops"] ## Load the specific dynamic endstops
-        self.microscope.__microscope.set_dynamic_endsotop(endstops_dict)
+        endstops_dict = self.parameters.dyn_endstops ## Load the specific dynamic endstops
+        self.microscope.set_dynamic_endsotop(endstops_dict)
         self.clear_frame()
         self.init_window()
 
     def save_grid_param(self):
-        self.parameters.update([ 
-        ("lines", int(self.lines.get())), 
-        ("columns", int(self.columns.get())),
-        ("subwells", int(self.subwells.get())) ])
+        self.parameters.lines = int(self.lines.get())
+        self.parameters.columns= int(self.columns.get())
+        self.parameters.subwells=int(self.subwells.get())
+        self.parameters.save()
         self.position_grid.generate_grid()
     
     def new_grid_param(self):
@@ -137,27 +137,29 @@ class Plate_parameters(Interface,CTkFrame):
         i=1
         name = f"{l}-{c}-{s}-({i})"
 
-        while name in self.parameters.all_parameters_sets:
+        while name in list_all_parameters():
             i += 1
             name = f"{l}-{c}-{s}-({i})"
         
-        self.parameters.copy(self.parameters.selected, name)
+        self.parameters.save(name)
+        self.parameters.load(name)
 
-        Y_ratio = self.parameters.get()["columns"]/c
-        X_ratio = self.parameters.get()["lines"]/l
+        Y_ratio = self.parameters.columns/c
+        X_ratio = self.parameters.lines/l
 
-        self.parameters.select(name)
-        oldX = self.parameters.get()["Xsteps"]
-        oldY = self.parameters.get()["Ysteps"]
-        self.parameters.update([("Protected", False)])
-        self.parameters.update([("Xsteps", int(oldX * X_ratio) )])
-        self.parameters.update([("Ysteps", int(oldY * Y_ratio) )])
+        self.parameters.name
+        oldX = self.parameters.Xsteps
+        oldY = self.parameters.Ysteps
+        self.parameters.protected = False
+        self.parameters.Xsteps =  int(oldX * X_ratio)
+        self.parameters.Ysteps = int(oldY * Y_ratio)
+
         self.save_grid_param()
         self.init_window()
 
     def delete_grid_param(self):
-        self.parameters.delete(self.parameters.selected)
-        self.parameters.select("Default")
+        self.parameters.delete(self.parameters.name)
+        self.parameters.load("Default")
         self.init_window()
 
     def set_steps(self):
@@ -197,7 +199,7 @@ class ParametersConfig(Interface, CTkFrame):
         self.Tk_window.title("Steps") 
         self.pack(fill=BOTH, expand=1)
         self.show_record_label()
-        self.start = self.parameters.get()["start"]   
+        self.start = self.parameters.start 
             
         Cancel = CTkButton(self, text="Back", command=self.close)
         
@@ -221,8 +223,8 @@ class ParametersConfig(Interface, CTkFrame):
         A1 = CTkButton(self, width=w,text="A1", command=lambda: self.position_grid.go("A1"))        
         w = 65
         h = 30
-        nlines = self.parameters.get()['lines']
-        ncolumns = self.parameters.get()['columns']
+        nlines = self.parameters.lines
+        ncolumns = self.parameters.columns
         last_line = f"{self.position_grid.line_namespace[nlines-1]}1"
         last_column = f"A{ncolumns}"
         opposite = f"{self.position_grid.line_namespace[nlines-1]}{ncolumns}"
@@ -276,9 +278,9 @@ class ParametersConfig(Interface, CTkFrame):
 
     def focus_skew_buttons(self, menus_position):
         w = 90
-        nlines = self.parameters.get()['lines']
+        nlines = self.parameters.lines
         last_line = f"{self.position_grid.line_namespace[nlines-1]}1"
-        last_column = f"A{self.parameters.get()['columns']}"
+        last_column = f"A{self.parameters.columns}"
 
         ExplanationLabel = CTkLabel(self, text="Use the button to go to end of line \n Adjust focus, position, and save. \nRepeat for columns")
         ExplanationLabel.place(relx=0.5,y=menus_position[1])
@@ -319,39 +321,39 @@ class ParametersConfig(Interface, CTkFrame):
         Fm5.place(x=menus_position[0]+100,y=menus_position[1]+390)
 
     def save_focus_drift(self, axis):
-        self.microscope.update_real_state()
         if axis == "X":
-            divisor = self.parameters.get()['lines'] -1
+            divisor = self.parameters.lines -1
         if axis == "Y":
-            divisor = self.parameters.get()['columns'] - 1
+            divisor = self.parameters.columns - 1
 
         drift = int( (self.microscope.XYFposition[2] - self.start[2]) / divisor)
         
         if axis == "X":
-            XYdrift = drift, self.parameters.get()["XYFocusDrift"][1]
-            self.parameters.update([("XYFocusDrift", XYdrift)])
+            XYdrift = drift, self.parameters.XYFocusDrift[1]
+            self.parameters.XYFocusDrift =  XYdrift
         if axis == "Y":
-            XYdrift = self.parameters.get()["XYFocusDrift"][0], drift
-            self.parameters.update([("XYFocusDrift", XYdrift)])
+            XYdrift = self.parameters.XYFocusDrift[0] = drift
+            self.parameters.XYFocusDrift = XYdrift
         
+        self.parameters.save()
         self.position_grid.generate_grid()
     
     def save_axis_skew(self, axis):
-        self.microscope.update_real_state()
         if axis == "X":
-            divisor = self.parameters.get()['lines'] -1.
+            divisor = self.parameters.lines -1.
             skew = int( (self.microscope.XYFposition[0] - self.start[0]) / divisor)
         if axis == "Y":
-            divisor = self.parameters.get()['columns'] - 1
+            divisor = self.parameters.columns - 1
             skew = int( (self.microscope.XYFposition[1] - self.start[1]) / divisor)
         
         if axis == "X":
-            XYskew = skew, self.parameters.get()["XYaxisSkew"][1]
-            self.parameters.update([("XYaxisSkew", XYskew)])
+            XYskew = skew, self.parameters.XYaxisSkew[1]
+            self.parameters.XYaxisSkew = XYskew
         if axis == "Y":
-            XYskew = self.parameters.get()["XYaxisSkew"][0], skew
-            self.parameters.update([("XYaxisSkew", XYskew)])
+            XYskew = self.parameters.XYaxisSkew[0] = skew
+            self.parameters.XYaxisSkew = XYskew
         
+        self.parameters.save()
         self.position_grid.generate_grid()
     
         
@@ -360,7 +362,7 @@ class ParametersConfig(Interface, CTkFrame):
 
         A1 = CTkButton(self, width=40,text="Go Current A1", command=lambda: self.position_grid.go("A1"))
 
-        self.A1Label = CTkLabel(self, text=f"Current A1 position:\nX: {self.parameters.get()['start'][0]} Y: {self.parameters.get()['start'][1]} F: {self.parameters.get()['start'][2]}")       
+        self.A1Label = CTkLabel(self, text=f"Current A1 position:\nX: {self.parameters.start[0]} Y: {self.parameters.start[1]} F: {self.parameters.start[2]}")       
         self.A1Label.place(x=10, y=280)
         A1.place(x=10, y=320)
 
@@ -372,9 +374,10 @@ class ParametersConfig(Interface, CTkFrame):
     def save_A1(self):
         self.microscope.update_real_state()
         start = self.microscope.XYFposition
-        self.parameters.update([("start", start)])
+        self.parameters.start =start
         self.start = start
-        self.A1Label.configure(text=f"Current A1 position:\nX: {self.parameters.get()['start'][0]} Y: {self.parameters.get()['start'][1]} F: {self.parameters.get()['start'][2]}")
+        self.A1Label.configure(text=f"Current A1 position:\nX: {self.parameters.start[0]} Y: {self.parameters.start[1]} F: {self.parameters.start[2]}")
+        self.parameters.save()
         self.position_grid.generate_grid()
 
     def measure(self):
@@ -396,10 +399,11 @@ class ParametersConfig(Interface, CTkFrame):
         self.measure()
         if x:
             self.Xold_steps = self.Xsteps
-            self.parameters.update([("Xsteps", self.Xsteps)])
+            self.parameters.Xsteps = self.Xsteps
         if y:
             self.Yold_steps = self.Ysteps
-            self.parameters.update([("Ysteps", self.Ysteps)])
+            self.parameters.Ysteps = self.Ysteps
+        self.parameters.save()
         self.position_grid.generate_grid()
     
     def close_xy(self):

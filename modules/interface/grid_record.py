@@ -54,21 +54,20 @@ class GridRecord(Interface, CTkFrame):
         self.clear_frame()
 
         self.pack(fill=BOTH, expand=1)
-        self.current_parameters = self.parameters.get()
 
         if self.is_regording == False:
             #Set all menus on default options
-            self.repeat.set(self.current_parameters["repeat"])
-            self.delay.set(self.current_parameters["delay"])
-            self.startcolumn.set(self.current_parameters["start_well"][1:])
-            self.startline.set(self.current_parameters["start_well"][0])
-            self.finishcolumn.set(self.current_parameters["finish_well"][1:])
-            self.finishline.set(self.current_parameters["finish_well"][0])
-            self.grid_subwells.set(self.current_parameters["grid_subwells"])
+            self.repeat.set(self.parameters.repeat)
+            self.delay.set(self.parameters.delay)
+            self.startcolumn.set(self.parameters.start_well[1:])
+            self.startline.set(self.parameters.start_well[0])
+            self.finishcolumn.set(self.parameters.finish_well[1:])
+            self.finishline.set(self.parameters.finish_well[0])
+            self.grid_subwells.set(self.parameters.grid_subwells)
 
-            column_list = [str(x) for x in range(1, self.current_parameters["columns"]+1) ]
+            column_list = [str(x) for x in range(1, self.parameters.columns+1) ]
             line_list = []
-            for i in range(0, self.current_parameters["lines"]):
+            for i in range(0, self.parameters.lines):
                 line_list.append(self.position_grid.line_namespace[i])
             SubwellsList = [str(x) for x in range(1, self.position_grid.nb_of_subwells+1)]
 
@@ -129,12 +128,12 @@ class GridRecord(Interface, CTkFrame):
         self.init_window()   
 
     def save_grid_parameters(self):
-        self.parameters.update([ 
-        ("start_well", str(self.startline.get()) + str(self.startcolumn.get()) ), 
-        ("finish_well", str(self.finishline.get()) + str(self.finishcolumn.get())  ), 
-        ("grid_subwells", int(self.grid_subwells.get())), 
-        ("delay", int(self.delay.get())), 
-        ("repeat", int(self.repeat.get())) ])
+        self.parameters.start_well = str(self.startline.get()) + str(self.startcolumn.get())
+        self.parameters.finish_well= str(self.finishline.get()) + str(self.finishcolumn.get()) 
+        self.parameters.grid_subwells= int(self.grid_subwells.get())
+        self.parameters.delay= int(self.delay.get())
+        self.parameters.repeat= int(self.repeat.get())
+        self.parameters.save()
         
     def start_grid(self):
         #reset everything
@@ -167,7 +166,7 @@ class GridRecord(Interface, CTkFrame):
         date = str(current_time[0])[2:] + str(current_time[1]).zfill(2) + str(current_time[2]).zfill(2) + "_"  \
             + str(current_time[3]).zfill(2) + str(current_time[4]).zfill(2)
 
-        data_dir = self.current_parameters["data_dir"]
+        data_dir = self.parameters.data_dir
         
         home = os.getenv("HOME")
         self.grid_folder = f"{home}/{data_dir}/grid-{date}/"

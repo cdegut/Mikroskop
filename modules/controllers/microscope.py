@@ -3,11 +3,11 @@ import time
 from smbus2 import SMBus
 import RPi.GPIO as GPIO
 
-from tests.test import MicroscopeParameters
+from modules.controllers.parametersIO import MicroscopeParameters, GridParameters
 from .pins import *
 from PyQt5 import QtCore
 from dataclasses import dataclass
-from modules.controllers import ParametersSets, LEDArray
+from modules.controllers import LEDArray
 
 # Use GPIO numbers not pin numbers
 GPIO.setmode(GPIO.BCM)
@@ -15,7 +15,7 @@ GPIO.setmode(GPIO.BCM)
 
 class Microscope:
 
-    def __init__(self, addr, ready_pin, parameters=None):
+    def __init__(self, addr, ready_pin, parameters: GridParameters =None):
         self.addr = addr
         self.ready_pin = ready_pin
         GPIO.setup(ready_pin, GPIO.IN) # set up the GPIO channels - one input for ready pin
@@ -27,7 +27,7 @@ class Microscope:
         self.update_real_state()
         
         if parameters: ## if no parameter set are given, dynamic endstop are disabled
-            endstops_dict = parameters.get()["dyn_endstops"]
+            endstops_dict = parameters.dyn_endstops
         else:
             endstops_dict = None
 
@@ -232,7 +232,7 @@ class MicroscopeManager:
         Use request method to set up next movement
         data will be sent at the next run()
     """  
-    def __init__(self, addr, ready_pin, parameters: ParametersSets =None):
+    def __init__(self, addr, ready_pin, parameters: GridParameters =None):
         self.__microscope: Microscope = Microscope(addr, ready_pin, parameters)
         self.__microscope.update_real_state()
         self.__active_target: list[int,int,int] = self.__microscope.XYFposition
@@ -256,6 +256,7 @@ class MicroscopeManager:
         self.undershoot_X: int = microscope_parameters.undershoot_X
         self.overshoot_Y: int = microscope_parameters.overshoot_Y
         self.undershoot_Y: int = microscope_parameters.undershoot_Y
+        print(f"{self.overshoot_Y} : {self.undershoot_Y}")
     
     def run(self):
         """run the management task,
@@ -327,7 +328,9 @@ class MicroscopeManager:
         
         self.at_position = False
         
-        
+    def set_dynamic_endsotop(self, dyn_endstop: dict):
+        self.__microscope.set_dynamic_endsotop(dyn_endstop)
+    
     def request_XYF_travel(self, position: list[int,int,int], trajectory_corection: bool = False):
         """request a full destination in XYF
             will be sent to the microscope at the next exection of run()
@@ -352,14 +355,19 @@ class MicroscopeManager:
 
         self.at_position = False
 
-    def request_ledspwr(self, led1pwr: int, led2pwr:int):
+    def request_ledspwr(self, led1pwr: int | None, led2pwr:int | None):
         """request a leds power 0 to 100%
             will be sent to the microscope at the next exection of run()
         Args:
             led1pwr (int): leds 1 power 0 to 100%
             led2pwr (int): leds 2 power 0 to 100%
         """
-      
+        if led1pwr == None:
+            led1pwr = self.led1pwr
+        
+        if led2pwr == None:
+            led2pwr = self.led2pwr
+
         self.__request_leds_pwr = [led1pwr, led2pwr]
 
     

@@ -9,7 +9,7 @@ class FreeMovementInterface(Interface, CTkFrame):
         Interface.__init__(self, Tk_root, microscope=microscope, position_grid=position_grid, camera=camera, parameters=parameters)
 
         self.init_window()
-        self.start_position = self.parameters.get()["start"]
+        self.start_position = self.parameters.start
 
     ######Function called to open this window, generate an new object the first time, 
     ###### then recall the init_window function of the same object
@@ -54,5 +54,5 @@ class FreeMovementInterface(Interface, CTkFrame):
 
  
     def go_start(self):
-        start_position = self.parameters.get()["start"]
+        start_position = self.parameters.start
         self.microscope.request_XYF_travel(start_position, trajectory_corection=True) #this function return only after arduin is ready

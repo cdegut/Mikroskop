@@ -40,7 +40,8 @@ if __name__ == "__main__":
      
     ### Object for microscope to run
     app = QApplication(sys.argv)
-    parameters = ParametersSets()
+    parameters = GridParameters()
+    parameters.load_last_selected()
     microscope = MicroscopeManager(addr, ready_pin, parameters)
     position_grid = PositionsGrid(microscope, parameters)
     micro_cam = Microscope_camera(microscope)

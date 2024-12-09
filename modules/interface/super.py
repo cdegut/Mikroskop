@@ -3,6 +3,7 @@ from time import localtime
 import os
 from modules.controllers import *
 from modules.controllers.pins import *
+from modules.controllers.parametersIO import *
 
 
 plate_name = "Plate" ##is a place holder to later add a plate type selector, maybe
@@ -13,7 +14,8 @@ plate_name = "Plate" ##is a place holder to later add a plate type selector, may
 
 class Interface: 
 
-    def __init__(self, Tk_root: CTk, last_window=None, microscope: MicroscopeManager =None, position_grid: PositionsGrid =None, camera: Microscope_camera = None, parameters=None):
+    def __init__(self, Tk_root: CTk, last_window=None, microscope: MicroscopeManager =None, position_grid: PositionsGrid =None, 
+                 camera: Microscope_camera = None, parameters: GridParameters=None):
         CTkFrame.__init__(self, Tk_root)
         self.Tk_root = Tk_root
         self.microscope = microscope
@@ -29,9 +31,7 @@ class Interface:
     _current_parameters_set = None
 
     def go_centerXY(self):
-        X_center = self.microscope.microscope.dyn_Ymin + (self.microscope.microscope.dyn_Xmax - self.microscope.microscope.dyn_Xmin)/2
-        Y_center = self.microscope.microscope.dyn_Ymin + (self.microscope.microscope.dyn_Ymax - self.microscope.microscope.dyn_Ymin)/2
-        self.microscope.move_X_Y(X_center,Y_center) 
+        pass
 
 
     #####################################################
@@ -78,7 +78,8 @@ class Interface:
 
     
     def save_positions(self,parameter_subset): 
-        self.parameters.update_start(self.microscope.XYFposition[0],self.microscope.XYFposition[1], self.microscope.XYFposition[2],parameter_subset)
+        self.parameters.start = [self.microscope.XYFposition[0],self.microscope.XYFposition[1], self.microscope.XYFposition[2] ]
+        self.parameters.save()
         self.position_grid.generate_grid() 
 
     #def guess_parameters_subset(self):
@@ -103,12 +104,12 @@ class Interface:
         timestamp = self.timestamp()
         picture_name = timestamp + "_" + str(self.position_grid.current_grid_position[0]) + "-" + str(self.position_grid.current_grid_position[1])
         home = os.getenv("HOME")
-        data_dir = self.parameters.get()["data_dir"]
+        data_dir = self.parameters.data_dir
         self.camera.capture_and_save(picture_name, f"{home}/{data_dir}")
     
     def snap_timestamp(self, full_res=False):
         picture_name = self.timestamp()
-        data_dir = self.parameters.get()["data_dir"]
+        data_dir = self.parameters.data_dir
         home = os.getenv("HOME")
         if not full_res:
             self.camera.capture_and_save(picture_name, f"{home}/{data_dir}/img")

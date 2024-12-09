@@ -1,17 +1,18 @@
 from customtkinter import CTkFrame, CTkButton, CTkLabel, BOTH, CTkOptionMenu, N
 from .super import Interface
 from .popup import led_focus_zoom_buttons
-from .plate_parameters import Plate_parameters, ParametersConfig
+from .plate_parameters import ParametersConfig
+from modules.controllers.parametersIO import*
 
 
 class MainGridInterface(Interface, CTkFrame): #main GUI window
     
-    def __init__(self, Tk_root, microscope, position_grid, camera, parameters):
-        Interface.__init__(self, Tk_root, microscope=microscope, position_grid=position_grid, camera=camera, parameters=parameters)
+    def __init__(self, Tk_root, microscope, position_grid, camera, parameters: GridParameters):
+        Interface.__init__(self, Tk_root, microscope=microscope, position_grid=position_grid, camera=camera, parameters= parameters)
         self._param_config = None
 
         self.init_window()
-        self.start_position = self.parameters.get()["start"]
+        self.start_position = self.parameters.start
     
     ######Function called to open this window, generate an new object the first time, 
     ###### then recall the init_window function of the same object
@@ -61,11 +62,11 @@ class MainGridInterface(Interface, CTkFrame): #main GUI window
     def grid_position_pad(self, pad_position):
         w = 65
         h = 30
-        nlines = self.parameters.get()['lines']
+        nlines = self.parameters.lines
         last_line = f"{self.position_grid.line_namespace[nlines-1]}1"
-        last_column = f"A{self.parameters.get()['columns']}"
-        opposite = f"{self.position_grid.line_namespace[nlines-1]}{self.parameters.get()['columns']}"
-        center = f"{self.position_grid.line_namespace[int(nlines / 2)]}{int(self.parameters.get()['columns']/2)}"
+        last_column = f"A{self.parameters.columns}"
+        opposite = f"{self.position_grid.line_namespace[nlines-1]}{self.parameters.columns}"
+        center = f"{self.position_grid.line_namespace[int(nlines / 2)]}{int(self.parameters.columns)}"
 
         A1 = CTkButton(self, width=w, fg_color='Green', text="A1", command=lambda: self.position_grid.go("A1"))
 
@@ -100,6 +101,5 @@ class MainGridInterface(Interface, CTkFrame): #main GUI window
 
 
     def go_start(self):
-        start_position = self.parameters.get()["start"]
-        led = self.parameters.get()["led"]
-        self.microscope.request_XYF_travel(start_position, trajectory_corection=True) #this function return only after arduin is ready
+        start_position = self.parameters.start
+        self.microscope.request_XYF_travel(start_position, trajectory_corection=True)
