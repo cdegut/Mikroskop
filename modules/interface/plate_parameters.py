@@ -329,10 +329,10 @@ class ParametersConfig(Interface, CTkFrame):
         drift = int( (self.microscope.XYFposition[2] - self.start[2]) / divisor)
         
         if axis == "X":
-            XYdrift = drift, self.parameters.XYFocusDrift[1]
+            XYdrift = [drift, self.parameters.XYFocusDrift[1]]
             self.parameters.XYFocusDrift =  XYdrift
         if axis == "Y":
-            XYdrift = self.parameters.XYFocusDrift[0] = drift
+            XYdrift = [self.parameters.XYFocusDrift[0], drift]
             self.parameters.XYFocusDrift = XYdrift
         
         self.parameters.save()
@@ -347,10 +347,10 @@ class ParametersConfig(Interface, CTkFrame):
             skew = int( (self.microscope.XYFposition[1] - self.start[1]) / divisor)
         
         if axis == "X":
-            XYskew = skew, self.parameters.XYaxisSkew[1]
+            XYskew = [skew, self.parameters.XYaxisSkew[1]]
             self.parameters.XYaxisSkew = XYskew
         if axis == "Y":
-            XYskew = self.parameters.XYaxisSkew[0] = skew
+            XYskew = [self.parameters.XYaxisSkew[0], skew]
             self.parameters.XYaxisSkew = XYskew
         
         self.parameters.save()
@@ -372,7 +372,6 @@ class ParametersConfig(Interface, CTkFrame):
         led_focus_zoom_buttons(self, 360)
 
     def save_A1(self):
-        self.microscope.update_real_state()
         start = self.microscope.XYFposition
         self.parameters.start =start
         self.start = start
@@ -381,12 +380,10 @@ class ParametersConfig(Interface, CTkFrame):
         self.position_grid.generate_grid()
 
     def measure(self):
-        self.microscope.update_real_state() 
         self.Xsteps = int( (self.microscope.XYFposition[0] - self.start[0]) / int(self.divisorX.get()))
         self.Ysteps = int( (self.microscope.XYFposition[1] - self.start[1]) / int(self.divisorY.get()))
     
     def measure_focus(self):
-        self.microscope.update_real_state() 
         self.Fsteps = int( (self.microscope.XYFposition[2] - self.start[2]) / int(self.divisorX.get()))
     
     def label_update(self):

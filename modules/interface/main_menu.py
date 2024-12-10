@@ -69,8 +69,8 @@ class MainMenu(Interface, CTkFrame):
         #self.display_image_as_label()
     
     def objective_change(self):
-        self.microscope.request_XYF_travel([Xmaxrange, Ymaxrange, 0])
+        self.microscope.request_XYF_travel([self.microscope.parameters.Xmaxrange, self.microscope.parameters.Ymaxrange, 0])
 
     def parknquit(self):
-        self.microscope.request_XYF_travel([Xmaxrange, Ymaxrange/2, 0])
+        self.microscope.request_XYF_travel([self.microscope.parameters.Xmaxrange, self.microscope.parameters.Ymaxrange/2, 0])
         self.exit()

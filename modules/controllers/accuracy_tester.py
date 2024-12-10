@@ -207,10 +207,10 @@ class AccuracyTester():
 
         microscope_parameters = MicroscopeParameters()
         microscope_parameters.load()
-        microscope_parameters.overshoot_X = lowest_row_X["X overshoot"]
-        microscope_parameters.undershoot_X = lowest_row_X["X undershoot"]
-        microscope_parameters.overshoot_Y = lowest_row_Y["Y overshoot"]
-        microscope_parameters.undershoot_Y = lowest_row_Y["Y undershoot"] 
+        microscope_parameters.overshoot_X = int(lowest_row_X["X overshoot"])
+        microscope_parameters.undershoot_X = int(lowest_row_X["X undershoot"])
+        microscope_parameters.overshoot_Y = int(lowest_row_Y["Y overshoot"])
+        microscope_parameters.undershoot_Y = int(lowest_row_Y["Y undershoot"]) 
         microscope_parameters.save()
 
  

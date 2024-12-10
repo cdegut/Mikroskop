@@ -40,15 +40,15 @@ if __name__ == "__main__":
      
     ### Object for microscope to run
     app = QApplication(sys.argv)
-    parameters = GridParameters()
-    parameters.load_last_selected()
-    microscope = MicroscopeManager(addr, ready_pin, parameters)
-    position_grid = PositionsGrid(microscope, parameters)
+    grid_parameters = GridParameters()
+    grid_parameters.load_last_selected()
+    microscope = MicroscopeManager(addr, ready_pin)
+    position_grid = PositionsGrid(microscope, grid_parameters)
     micro_cam = Microscope_camera(microscope)
     controller = PhysicalController(microscope)
-    preview_window = MainApp(microscope=microscope, position_grid=position_grid, camera=micro_cam,parameters=parameters, export=export)
+    preview_window = MainApp(microscope=microscope, position_grid=position_grid, camera=micro_cam,parameters=grid_parameters, export=export)
 
-    Interface._main_menu = MainMenu(Tk_root, microscope=microscope, position_grid=position_grid, camera=micro_cam,  parameters=parameters)
+    Interface._main_menu = MainMenu(Tk_root, microscope=microscope, position_grid=position_grid, camera=micro_cam,  parameters=grid_parameters)
 
 
     # run the old Tk interace in a Qt timer

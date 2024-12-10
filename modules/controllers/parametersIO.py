@@ -122,7 +122,8 @@ class MicroscopeParameters:
             print(f"File {path_and_name} does not exist yet, creating it with default parameters")
             self.save()
 
-grid_param_path = f"{str(pathlib.Path(__file__).parent.absolute())}/../grids_parameters/"
+grid_param_path = f"{str(pathlib.Path(__file__).parent.absolute())}/../../grids_parameters/"
+create_folder(grid_param_path)
 
 @dataclass
 class GridParameters:

@@ -196,8 +196,8 @@ class Interface:
     def XYsliders(self, position=(60,20), l=220): #### Place the two navigation sliders
         self.Xvar = IntVar()
         self.Yvar = IntVar()
-        Xaxis = CTkSlider(self, from_=0, to=Xmaxrange/1000, height=l, width=60, progress_color="transparent", orientation="vertical", variable=self.Xvar)  
-        Yaxis = CTkSlider(self, from_=0, to=Ymaxrange/1000, height=l, width=60, progress_color="transparent", orientation="vertical", variable=self.Yvar)
+        Xaxis = CTkSlider(self, from_=0, to=self.microscope.parameters.Xmaxrange/1000, height=l, width=60, progress_color="transparent", orientation="vertical", variable=self.Xvar)  
+        Yaxis = CTkSlider(self, from_=0, to=self.microscope.parameters.Ymaxrange/1000, height=l, width=60, progress_color="transparent", orientation="vertical", variable=self.Yvar)
         self.Xlabel = CTkLabel(self, text="##", font=("arial", 22))
         self.Ylabel = CTkLabel(self, text="##", font=("arial", 22))
 
@@ -220,8 +220,8 @@ class Interface:
         positions = self.microscope.XYFposition
         Xvar = self.Xvar.get()
         Yvar = self.Yvar.get()
-        Xlabel_scale = (position[1]+(l-30)-Xvar*((l-60)/(Xmaxrange/1000)))
-        Ylabel_scale = (position[1]+(l-30)-Yvar*((l-60)/(Ymaxrange/1000)))
+        Xlabel_scale = (position[1]+(l-30)-Xvar*((l-60)/(self.microscope.parameters.Xmaxrange/1000)))
+        Ylabel_scale = (position[1]+(l-30)-Yvar*((l-60)/(self.microscope.parameters.Ymaxrange/1000)))
         if positions != self.last_positions:  #update the scale only if microscope is moving
             self.Xvar.set(positions[0]/1000)
             self.Yvar.set(positions[1]/1000)

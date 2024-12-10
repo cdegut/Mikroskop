@@ -94,8 +94,8 @@ class PositionsGrid:
     def find_current_position(self):
         #iterate through all the possible well position to find a match
 
-        X_range = range(self.microscope.XYFposition[0] + undershoot_X , self.microscope.XYFposition[0] + overshoot_X+1)
-        Y_range = range(self.microscope.XYFposition[1] + undershoot_Y , self.microscope.XYFposition[1] + overshoot_Y+1)
+        X_range = range(self.microscope.XYFposition[0] + self.microscope.undershoot_X , self.microscope.XYFposition[0] + self.microscope.overshoot_X+1)
+        Y_range = range(self.microscope.XYFposition[1] + self.microscope.undershoot_Y , self.microscope.XYFposition[1] + self.microscope.overshoot_Y+1)
         F_range = range(self.microscope.XYFposition[2] - 15 , self.microscope.XYFposition[2] + 15)
 
         for well in self.absolute_grid:

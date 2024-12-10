@@ -15,7 +15,7 @@ GPIO.setmode(GPIO.BCM)
 
 class Microscope:
 
-    def __init__(self, addr, ready_pin, parameters: GridParameters =None):
+    def __init__(self, addr, ready_pin, parameters: MicroscopeParameters):
         self.addr = addr
         self.ready_pin = ready_pin
         GPIO.setup(ready_pin, GPIO.IN) # set up the GPIO channels - one input for ready pin
@@ -25,13 +25,9 @@ class Microscope:
         self.led2pwr = 0
         self.runing = False
         self.update_real_state()
+        self.parameters = parameters
+        self.dynamic_endstops = False
         
-        if parameters: ## if no parameter set are given, dynamic endstop are disabled
-            endstops_dict = parameters.dyn_endstops
-        else:
-            endstops_dict = None
-
-        self.set_dynamic_endsotop(endstops_dict)
 
         #Dynamic endsotop these will be used to modify the movement according to established safe parameters
     def set_dynamic_endsotop(self, endstops_dict):
@@ -54,6 +50,8 @@ class Microscope:
         return GPIO.input(self.ready_pin) 
 
     def send_motor_cmd(self, motor, destination):
+        if destination < 0:
+            destination = 0
 
         #Generate the message
         destination_as_bytes = int(destination).to_bytes(4, byteorder='big', signed=False)        
@@ -118,13 +116,17 @@ class Microscope:
 
     def make_safe(self, motor, destination): #Software and dynamic endstops, update destination to avoid collision or out of range
 
-        if software_endstops:
-            if motor == 1 and destination > Xmaxrange:
-                destination = Xmaxrange            
-            if motor == 2 and destination > Ymaxrange:
-                destination = Ymaxrange
-            if motor == 3 and destination > Fmaxrange:
-                destination = Fmaxrange   
+        if destination < 0:
+            return 0
+        
+        if self.parameters.software_endstops:
+            if motor == 1 and destination > self.parameters.Xmaxrange:
+                destination = self.parameters.Xmaxrange            
+            if motor == 2 and destination > self.parameters.Ymaxrange:
+                destination = self.parameters.Ymaxrange
+            if motor == 3 and destination > self.parameters.Fmaxrange:
+                destination = self.parameters.Fmaxrange   
+        
 
         #Dynamic endstops should be used to delimite a safe area coresponding to the observation window
         if self.dynamic_endstops:
@@ -149,14 +151,6 @@ class Microscope:
                 destination = self.safe_Fcs
             
         return destination
-
-    def move_1axis(self, axis, movement): # for small axis movement 
-	#convert a movement into a destination          
-        motor_position = self.XYFposition[axis-1]
-        motor_destination = motor_position + movement
-        if motor_destination < 0:
-            return
-        self.move_single_axis(axis, motor_destination)           
         
     def go_absolute(self, destinations: list[int,int,int]): #ordered movement of the 3 axis, move focus first of last depending on condition to avoid triggering dyn_endstop
         if destinations[2] < self.XYFposition[2]: #move focus first if it's going down (park)
@@ -232,9 +226,13 @@ class MicroscopeManager:
         Use request method to set up next movement
         data will be sent at the next run()
     """  
-    def __init__(self, addr, ready_pin, parameters: GridParameters =None):
-        self.__microscope: Microscope = Microscope(addr, ready_pin, parameters)
+    def __init__(self, addr, ready_pin):
+        self.parameters = MicroscopeParameters()
+        self.parameters.load()  
+        self.__microscope: Microscope = Microscope(addr, ready_pin, self.parameters)
+
         self.__microscope.update_real_state()
+
         self.__active_target: list[int,int,int] = self.__microscope.XYFposition
         self.__requested_target: list[int,int,int] = self.__microscope.XYFposition
         self.__request_leds_pwr: list[int,int] = [self.__microscope.led1pwr,self.__microscope.led2pwr]
@@ -248,14 +246,11 @@ class MicroscopeManager:
         self.micromanager_timer = QtCore.QTimer()
         self.micromanager_timer.timeout.connect(self.run)
         self.micromanager_timer.start(50)
-
-        microscope_parameters = MicroscopeParameters()
-        microscope_parameters.load()  
              
-        self.overshoot_X: int = microscope_parameters.overshoot_X
-        self.undershoot_X: int = microscope_parameters.undershoot_X
-        self.overshoot_Y: int = microscope_parameters.overshoot_Y
-        self.undershoot_Y: int = microscope_parameters.undershoot_Y
+        self.overshoot_X: int = self.parameters.overshoot_X
+        self.undershoot_X: int = self.parameters.undershoot_X
+        self.overshoot_Y: int = self.parameters.overshoot_Y
+        self.undershoot_Y: int = self.parameters.undershoot_Y
         print(f"{self.overshoot_Y} : {self.undershoot_Y}")
     
     def run(self):
