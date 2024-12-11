@@ -87,8 +87,10 @@ class Time_lapse_window(Interface, CTkFrame):
         self.max_frame = int(60 / self.timer *  int(self.TotalTimeMenu.get()))
         
         home = os.getenv("HOME")
-        self.camera.capture_param["data_dir"] = f"{home}/{self.parameters.data_dir}/time_lapse/"
-        self.camera.capture_param["picture_name"] = f"{'0'.zfill(len(str(self.max_frame)))}-{self.timestamp()}"
+        data_folder = f"{home}/{self.parameters.data_dir}/time_lapse/{self.timestamp()}/"
+        create_folder(data_folder)
+        self.camera.capture_param["data_dir"] = data_folder
+        self.camera.capture_param["picture_name"] = f"{'0'.zfill(len(str(self.max_frame)))}-{self.timestamp()}.png"
         self.start_timer = time()
         self.camera.capture_with_preset()     
         
@@ -105,7 +107,7 @@ class Time_lapse_window(Interface, CTkFrame):
             if (time() - self.start_timer) > self.timer:
                 self.start_timer = time()
                 
-                pic_name = f"{str(self.frame_index).zfill(len(str(self.max_frame)))}-{self.timestamp()}"
+                pic_name = f"{str(self.frame_index).zfill(len(str(self.max_frame)))}-{self.timestamp()}.png"
                 self.camera.capture_param["picture_name"] = pic_name
                 self.camera.capture_with_preset()  
             

@@ -268,29 +268,30 @@ class Microscope_camera(Picamera2):
 
 
     def awb_preset(self, awb):
+        
         if awb == "Green Fluo":
             self.controls.AwbEnable = False
-            self.controls.ColourGains = awbR_fluo,  awbB_fluo
+            self.controls.ColourGains = self.microscope.parameters.awbR_fluo,  self.microscope.parameters.awbB_fluo
             #camera.controls.Contrast = 10
         
         if awb == "Green Fluo 2":
             self.controls.AwbEnable = False
-            self.controls.ColourGains = awbR_fluo,  0.25
+            self.controls.ColourGains = self.microscope.parameters.awbR_fluo,  0.25
         
         if awb == "Green Fluo 3":
             self.controls.AwbEnable = False
-            self.controls.ColourGains = awbR_fluo,  0.15
+            self.controls.ColourGains = self.microscope.parameters.awbR_fluo,  0.15
 
         if awb == "Green Fluo 3":
             self.controls.AwbEnable = False
-            self.controls.ColourGains = awbR_fluo,  0.05
+            self.controls.ColourGains = self.microscope.parameters.awbR_fluo,  0.05
 
         if awb == "auto":
             self.controls.AwbEnable = True
         if awb == "White LED":
             self.controls.AwbEnable = True
             self.controls.AwbEnable = False
-            self.controls.ColourGains = awbR_white,  awbB_white
+            self.controls.ColourGains = self.microscope.parameters.awbR_white,  self.microscope.parameters.awbB_white
             #camera.controls.Contrast = 10 
 
     def current_exposure(self):

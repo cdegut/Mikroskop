@@ -166,7 +166,7 @@ class GridRecord(Interface, CTkFrame):
         date = str(current_time[0])[2:] + str(current_time[1]).zfill(2) + str(current_time[2]).zfill(2) + "_"  \
             + str(current_time[3]).zfill(2) + str(current_time[4]).zfill(2)
 
-        data_dir = self.parameters.data_dir
+        data_dir = f"{self.parameters.data_dir}/grids/"
         
         home = os.getenv("HOME")
         self.grid_folder = f"{home}/{data_dir}/grid-{date}/"
@@ -179,6 +179,7 @@ class GridRecord(Interface, CTkFrame):
         self.well_info.configure(text = f"{self.positions_list[0][0]} - 1" )
 
         Interface._grid_record_job = self.after(100, self.__record_grid)
+        self.pause_timer = self.delay_value * 10
 
     def __record_grid(self):
         if self.is_regording == False:
@@ -205,10 +206,10 @@ class GridRecord(Interface, CTkFrame):
             #generate a picture name, accounting for subwells or not
             if self.grid_subwells_value == 1:
                 position = self.positions_list[self.index_position]
-                picture_name = str(position[0]) + "_" + str(self.done_repeat+1).zfill(len(str(self.repeat_value)))
+                picture_name = f"{str(position[0])}_{str(self.done_repeat+1).zfill(len(str(self.repeat_value)))}-{self.timestamp()}"
                 self.well_info.configure(text = f"{position[0]} \n Repeat {self.done_repeat+1}" )
             else:
-                picture_name = str(position[0]) + "-" + str(position[1]) + "_" + str(self.done_repeat+1).zfill(len(str(self.repeat_value)))
+                picture_name = f"{str(position[0])}-{str(position[1])}_{str(self.done_repeat+1).zfill(len(str(self.repeat_value)))}-{self.timestamp()}"
                 self.well_info.configure(text = f"{position[0]} - {position[1]} \n Repeat {self.done_repeat+1}" )
 
             self.camera.capture_and_save(picture_name, self.grid_folder)
@@ -217,6 +218,7 @@ class GridRecord(Interface, CTkFrame):
             return
 
         if self.camera.is_capturing == True:
+            self.after(100, self.__record_grid)
             return
 
         #Next position
@@ -232,6 +234,7 @@ class GridRecord(Interface, CTkFrame):
             if self.done_repeat >= self.repeat_value: ## End
                 position = self.positions_list[0]
                 self.position_grid.go(position[0], position[1])
+                self.stop_switch()
                 return
 
         position = self.positions_list[self.index_position]
