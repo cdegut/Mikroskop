@@ -3,3 +3,4 @@ firmware/.pio
 firmware/.vscode
 .git
 firmware/platformio.ini
+firmware/lib/TMCStepper

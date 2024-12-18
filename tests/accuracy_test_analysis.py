@@ -5,7 +5,7 @@ step_per_mm = 800
 pixel_size = 0.56
 autotune_repeat = 50
 
-def plot_colum(axis, data: pd.DataFrame, column):
+def plot_colum(axis, data: pd.DataFrame, column, limit: list = None):
     x_data = data[data.columns[0]]
     y_data = data[column] * pixel_size
     axis.scatter(x_data, y_data, label=column)  # Use scatter for points only
@@ -18,16 +18,19 @@ def plot_colum(axis, data: pd.DataFrame, column):
         mean_x = block_x.mean()
         
         # Plot standard deviation as a horizontal line for the block
-        axis.hlines(y=block_y.mean(), xmin=block_x.min(), xmax=block_x.max(), color='red', linestyle='--', linewidth=1, label='Std Dev' if start == 0 else "")
+        #axis.hlines(y=block_y.mean(), xmin=block_x.min(), xmax=block_x.max(), color='red', linestyle='--', linewidth=1, label='Std Dev' if start == 0 else "")
 
-        axis.fill_betweenx([block_y.mean() - std_dev, block_y.mean() + std_dev], block_x.min(), block_x.max(), color='red', alpha=0.2)
+        #axis.fill_betweenx([block_y.mean() - std_dev, block_y.mean() + std_dev], block_x.min(), block_x.max(), color='red', alpha=0.2)
         
         axis.axvline(x=start, color='firebrick', linestyle='--', linewidth=0.5)  # Add vertical line every 50 units
 
     axis.set_xlabel(f'{data.columns[0]}')
     axis.set_ylabel(f'{column} (μm)')
     axis.set_title(f'{column} as a function of {data.columns[0]}')
-    axis.legend()
+    if limit is not None:
+        axis.set_ylim(limit)
+
+    #axis.legend()
 
 # Load the tab-separated file into a DataFrame
 #file_path = 'S:\\microscope_data\\accuracy_test-241116_1059\\data.txt'  # Replace with your actual file path
@@ -36,10 +39,10 @@ def plot_colum(axis, data: pd.DataFrame, column):
 
 #file_path = 'S:\\microscope_data\\accuracy_test-BacklashNut-NoBearing\\data.txt'
 
-file_path = 'S:\\microscope_data\\accuracy_test-241117_2310\\data.txt'
+file_path = fr"F:\microscope_data\accuracy_tests\error_autotune-241205_1443\data.txt"
 
 data = pd.read_csv(file_path, sep='\t')
-
+data = data.iloc[:150]
 # Display the first few rows to understand the data structure
 print(data.head())
 
@@ -53,8 +56,8 @@ fig.tight_layout(pad=4.0)
 
 plot_colum(axis=axes[0], data=data, column="X error(first image)")
 plot_colum(axis=axes[1], data=data, column="Y error(first image)")
-plot_colum(axis=axes[2], data=data, column="X variability(last image)")
-plot_colum(axis=axes[3], data=data, column="Y variability(last image)")
+plot_colum(axis=axes[2], data=data, column="X variability(last image)", limit=[-150,+150])
+plot_colum(axis=axes[3], data=data, column="Y variability(last image)", limit=[-150,+150])
 
 
 if len(data) > autotune_repeat:
