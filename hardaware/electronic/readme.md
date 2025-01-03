@@ -6,6 +6,8 @@ the gerber zip file contain all that is needed to order the PCB from a manufactu
 
 This version use an integrated 5V regulator, a version with an external 5V 5A regulator is being tested for easier assembly and component sourcing.
 
+![Electronic-fig.jpg](electronic-fig.jpg)
+
 ![PCB render](PCB_render.png)
 
 ![PCB render](Schematic_Microscope_Minima.svg)
