@@ -57,3 +57,5 @@ CONF_SWAPSIZE=2048
 sudo dphys-swapfile setup
 sudo dphys-swapfile swapon
 ```
+
+![Visit Stats](https://widgetbite.com/stats/cdegut)
