@@ -7,7 +7,10 @@ the gerber zip file contain all that is needed to order the PCB from a manufactu
 This version use an integrated 5V regulator, a version with an external 5V 5A regulator is being tested for easier assembly and component sourcing.
 
 ![Electronic-fig.jpg](electronic-fig.jpg)
+Photograph of the populated custom PCB and schematic of the interconnections. Red shows power line, black shows transistor to transistor logic (TTL), and green shows the I2C link.
 
 ![PCB render](PCB_render.png)
+3D render of the PCB
 
 ![PCB render](Schematic_Microscope_Minima.svg)
+PCB Schematics
