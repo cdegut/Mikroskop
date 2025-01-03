@@ -9,9 +9,13 @@ Welcome to the repository for an affordable, high-performance, open-source micro
 ## Navigation
 
 [Guides](Guides/readme.md)
+
 [3D printable Files](hardware/print_files/readme.md)
+
 [Samples images and video](samples)
+
 [Arduino firmware](firmware/readme.md)
+
 [Python sources](modules/readme.md)
 
 
