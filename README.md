@@ -10,6 +10,8 @@ Welcome to the repository for an affordable, high-performance, open-source micro
 
 [Guides](Guides/readme.md)
 
+[Bill of materials](hardware/) 
+
 [3D printable Files](hardware/print_files/readme.md)
 
 [Samples images and video](samples)
@@ -18,5 +20,4 @@ Welcome to the repository for an affordable, high-performance, open-source micro
 
 [Python sources](modules/readme.md)
 
-
-[Visit Stats](https://widgetbite.com/stats/cdegut)
+![Visit Stats](https://widgetbite.com/stats/cdegut)
