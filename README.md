@@ -1,61 +1,18 @@
-# microcontrol
-Software for the microscope
-Works on raspberypi os bookworm,
+# An open-sourced 3D printable microscope with a large CNC stage
 
-# Raspbery pi config in /boot/firmware/config.txt
-## I2C
-```
-# activate I2C interface
-dtparam=i2c_arm=on
-# Clock stretching by slowing down to 10KHz
-dtparam=i2c_arm_baudrate=10000
-```
-## Screen configuration
-for MPI7002, 7" 1024x600 touch screen; change:
-```
-dtoverlay=vc4-kms-v3d
-```
-to
-```
-dtoverlay=vc4-fkms-v3d
-```
-and at the end add:
-```
-# Allow for 1024x600 resolution do not add if using different screen
-hdmi_group=2
-hdmi_mode=87
-hdmi_cvt 1024 600 60 6 0 0 0
-hdmi_drive=1
-```
+[bioRxiv.org](https://www.biorxiv.org/content/10.1101/2024.12.31.630915v1)
+
+Welcome to the repository for an affordable, high-performance, open-source microscope. Designed with researchers in mind, this versatile platform supports brightfield, fluorescence imaging, and high-throughput scanning of standard microtiter plates. It is fully 3D-printable, easy to assemble, and built for customization. Explore the project to access design files, firmware, and software, and join the growing community of users advancing accessible microscopy.
+
+![Visual Abstract](img/VisualAbstract.jpg)
+
+## Navigation
+
+[Guides](Guides/readme.md)
+[3D printable Files](hardware/print_files/readme.md)
+[Samples images and video](samples)
+[Arduino firmware](firmware/readme.md)
+[Python sources](modules/readme.md)
 
 
-
-
-# Package needed
-upgrade pip and install the needed packages:
-```
-pip install --upgrade pip setuptools wheel smbus2 customtkinter packaging opencv-python --break-system-packages
-sudo apt install python3-rpi-lgpio
-```
-
-# Misc
-Strongly suggest to increase the size of the Swap file
-
-```
-sudo dphys-swapfile swapoff
-sudo nano /etc/dphys-swapfile
-```
-change:
-```
-CONF_SWAPSIZE=100
-```
-to
-```
-CONF_SWAPSIZE=2048
-```
-```
-sudo dphys-swapfile setup
-sudo dphys-swapfile swapon
-```
-
-![Visit Stats](https://widgetbite.com/stats/cdegut)
+[Visit Stats](https://widgetbite.com/stats/cdegut)
