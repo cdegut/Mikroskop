@@ -10,7 +10,7 @@ Welcome to the repository for an affordable, high-performance, open-source micro
 
 [Guides](Guides/readme.md)
 
-[Bill of materials](hardware/) 
+[Bill of materials](hardware/)
 
 [3D printable Files](hardware/print_files/readme.md)
 
