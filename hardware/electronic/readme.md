@@ -12,6 +12,14 @@ Photograph of the populated custom PCB and schematic of the interconnections. Re
 The main printed part for the electronic is the electronic bracket that serve as a mount for all the electronic.
 ![General](img/ElectronicBraquetGeneral.jpg)
 
+![PCB render](img/PCB_render.png)
+3D render of the PCB
+
+![PCB render](img/Schematic_Microscope_Minima.svg)
+PCB Schematics
+
+## Heat set inserts
+
 The bracket requires:
 
 * 2 - M4 ø 6 mm OD heat set insert
@@ -19,8 +27,6 @@ The bracket requires:
 
 ![Inserts](img/BracketInserts.jpg)
 
-![PCB render](img/PCB_render.png)
-3D render of the PCB
+## In Assembly context
 
-![PCB render](img/Schematic_Microscope_Minima.svg)
-PCB Schematics
+![Assembly](img/assembly.jpg)
