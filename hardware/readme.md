@@ -1,4 +1,4 @@
-# Files and building instructions
+** WIP expect everything to be dispnible by the end of week 10th of january **
 
 This folder contain all the 3d printable files for building the microscope, with building instruction and some extra information in the readme files.
 
@@ -12,7 +12,7 @@ This folder contain all the 3d printable files for building the microscope, with
 
 [4 Focus Axis](mecanical_stage/Focus_axis/readme.md)
 
-[5 Electronic](mecanical_stage/Y_axis/readme.md)
+[5 Electronic](electronic/readme.md)
 
 [6 Y Axis](mecanical_stage/Y_axis/readme.md)
 

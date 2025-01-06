@@ -18,7 +18,7 @@ These parts are mounted on the X axis, and carry the optical stack
 * 4 - M2 ø 4 mm OD heat set insert
 Add the heat set insert:
 
-![Heat set inserts](img/inserts.jpg)
+![Heat set inserts](img/Inserts.jpg)
 
 ## Assembly
 

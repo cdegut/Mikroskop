@@ -8,7 +8,7 @@ Welcome to the repository for an affordable, high-performance, open-source micro
 
 ## Navigation
 
-[Guides](Guides/readme.md)
+[Building Instruction](hardware/readme.md)
 
 [Bill of materials](hardware/)
 
