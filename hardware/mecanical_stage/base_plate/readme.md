@@ -5,3 +5,8 @@ The base plate is designed to bu laser cut from 5 mm acrylic, but can also be 3D
 The feet can be printed in PLA, but printing in TPU will greatly improve stage stability.
 
 ![Base Plate and Feet](base.jpg)
+
+# Files
+
+* [Base Plate](Base_Plate_V1.3mf)
+* [Feet](Feet_V1.3mf)
