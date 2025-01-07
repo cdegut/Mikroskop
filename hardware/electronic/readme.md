@@ -30,3 +30,11 @@ The bracket requires:
 ## In Assembly context
 
 ![Assembly](img/assembly.jpg)
+
+## Connection
+
+![Connection image](./img/ElectronicBoard-Connection.jpg)
+
+## Alternate power supply
+
+![External 5V](./img/AltPSU.jpg)

@@ -1,4 +1,4 @@
-** WIP expect everything to be dispnible by the 10th of january **
+WIP expect everything to be dispnible by the 10th of january
 
 This folder contains all the 3d printable files for building the microscope, with building instruction and some extra information in the readme files.
 

@@ -29,3 +29,13 @@ Assemble all part and fit the [optical stack](../../optical_stack/readme.md):
 
 Then fit on the X axis:
 ![Add on X axis](img/add_on_X.jpg)
+
+## Off axis Blue LED
+
+The [off axis blue LED](../../illumination/blue_light_module/readme.md) can be mounted on the optics carriage.
+![Off axis blue](img/blueLED.jpg)
+
+## Illumination connection
+
+The [light snek](../../illumination/readme.md), holding the illumination system is going to be directly connected to the carriage:
+![Light Snek Connection](img/lightSnekConnection.jpg)
