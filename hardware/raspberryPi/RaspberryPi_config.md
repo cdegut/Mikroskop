@@ -1,6 +1,6 @@
-# Raspbery pi config
+# Raspberry pi config
 
-These are specific configurations needed for the Raspbery Pi to work well with the microscope.
+These are specific configurations needed for the Raspberry Pi to work well with the microscope.
 
 all these change need to be made in
 
@@ -8,7 +8,7 @@ all these change need to be made in
 
 ### I2C
 
-*Mandatory change*
+Mandatory change
 
 ```bash
 # activate I2C interface

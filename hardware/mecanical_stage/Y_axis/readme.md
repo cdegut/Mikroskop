@@ -3,7 +3,7 @@
 The Y axis support and move the sample perpendicularly to the X axis.
 It have 3 main printed parts, the back motor plate, the front panel and and a Y carriage.
 Like all axis, the non printed part are 2 8 mm linear rods, a trapezoid lead screw and a NEMA 17 motor.
-For increased stability the carraige use 3 LMU-8 linear bearings
+For increased stability the carriage use 3 LMU-8 linear bearings
 
 ![General View](img/general.jpg)
 
