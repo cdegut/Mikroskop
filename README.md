@@ -7,6 +7,7 @@ Welcome to the repository for an affordable, high-performance, open-source micro
 ![Visual Abstract](img/VisualAbstract.jpg)
 
 A 200um tardigrade, 40x objective with  ring light for oblique illumination and Kristiansen type diffusion (magic tape above the sample!)
+
 [![YouTube Video](https://img.youtube.com/vi/YF4frYpX1ZY/0.jpg)](https://www.youtube.com/watch?v=YF4frYpX1ZY)
 
 ## Navigation

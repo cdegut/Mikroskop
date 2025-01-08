@@ -24,24 +24,5 @@ This folder contains all the 3d printable files for building the microscope, wit
 
 ## Bill of Materials
 
-### Motion system
+![Bill Of meterials](bill_of_materials.md)
 
-#### X axis
-
-* 2 - 150 mm ø 8 mm linear rods
-* 2 - LMU-8 linear bearing
-* 1 - 150 mm ø 8 mm 2 mm pitch trapezoidal lead screw and nut
-* 1 - 6 mm to 8 mm flexible shaft coupler
-* 1 - Pancake NEMA 17 stepper motor
-* 1 - Derlin V Wheel
-* 4 - M4 ø 6 mm OD heat set insert
-
-#### Y axis
-
-* 2 - 100 mm ø 8 mm linear rods
-* 1 - 100 mm ø 8 mm 2 mm pitch trapezoidal lead screw and nut
-* 1 - 6 mm to 8 mm flexible shaft coupler
-* 1 - Pancake NEMA 17 stepper motor
-* 2 - LMU-8 8mm linear bearings
-* 3 - M4 ø 6 mm OD heat set insert
-* 4 - M2 ø 4 mm OD heat set insert
