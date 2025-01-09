@@ -26,6 +26,7 @@
 |           | ** OPTICS ** |
 |   1       | *f50* ø = 12.7 mm (1/2 inch) achromatic doublet |[ThorLabs](https://www.thorlabs.com/thorproduct.cfm?partnumber=AC127-050-A) | [Aliexpress](https://www.aliexpress.com/item/1005007663163643.html) |
 |   3       | 15 mm PMMA lens |[Amazon.co.uk](https://www.amazon.co.uk/PATIKIL-Diameter-Condenser-Flashlight-Transparent/dp/B0BR5PMGWD) | [Aliexpress](https://www.aliexpress.com/item/1005006610294774.html) |
+|   1       | 250x250x5 mm perspex plate *if laser cutting is possible |   
 |           | **LIGHT** |
 |   1       | 1 W white LED mounted on star heatsink |
 |   6       | 2 x 3 mm Neodymium magnets for the condenser|
@@ -36,11 +37,11 @@
 |   1       | kit 26 AWG silicon insulation flexible wire
 |   1       | 16xRGB LED Ring light 
 |           | **CONTROL** |
-|   1       | Raspberry Pi HQ Camera C - mount |
-|   1       | Raspberry Pi 4 |
-|   1       | SD Card > 32Gb |
-|   1       | 150 mm Flex Cable for Raspberry Pi Camera |
-|   1       | Arduino R4 Minima |
+|   1       | Raspberry Pi HQ Camera C - mount | [The Pi Hut](https://thepihut.com/products/raspberry-pi-high-quality-camera-module) | N.A. |
+|   1       | Raspberry Pi 4 4Gb |  [The Pi Hut](https://thepihut.com/products/raspberry-pi-4-model-b?variant=20064052740158) | N.A. |
+|   1       | SD Card > 32Gb | [Amazon.co.uk] https://www.amazon.co.uk/SanDisk-256GB-Ultra-microSDXC-Adapter/dp/B0B7NV73PJ | N.A. | 
+|   1       | 200 mm Flex Cable for Raspberry Pi Camera |  [The Pi Hut](https://thepihut.com/products/flex-cable-for-raspberry-pi-camera-or-display-200mm-8) | |
+|   1       | Arduino R4 Minima | [The Pi Hut](https://thepihut.com/products/arduino-uno-r4-minima) | [AliExpress](https://www.aliexpress.com/item/1005008070945257.html) |
 |   5       | Female-Female dupont wire for I2C |
 |           | **MAIN BOARD** |
 |   1       | Main PCB       |
