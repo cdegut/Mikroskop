@@ -1,3 +1,4 @@
+**Please wait for version 1.2 of the board before starting, it is coming very soon, you can print the plastic parts in the meantime**
 # Electronic mainboard
 
 The electronic main board mostly serves as an interconnect for off-the-shelf modules Power and control for the motors are managed by Trinamic TMC2209 stepper drivers in a StepStick-compatible format. While it is technically possible to use different drivers, the firmware employs the StallGuard4 feature of the Trinamic drivers for homing the axes. If a different driver is used, end-stop switches will need to be added, and the firmware reconfigured accordingly (not recomeended to try)
