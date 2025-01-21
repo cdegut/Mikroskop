@@ -29,27 +29,27 @@
 |   1       | 250x250x5 mm perspex plate *if laser cutting is possible* |   
 |           | **LIGHT** |
 |   1       | 1 W white LED mounted on star heatsink |
-|   6       | 2 x 3 mm Neodymium magnets for the condenser|
-|   2 + x2  |  for sample holder (2 + 2 per holders) |
+|   6       | 2 x 6 mm Neodymium magnets for the condenser|
+|   2 + x2  | 2 x 6 mm Neodymium magnets for the condenser for sample holder (2 + 2 per holders) |
 |   1       | <span style="color:blue"> 3 W blue LED mounted on star heatsink  </span>|
 |   1       | <span style="color:blue"> **OR** 1 W blue LED mounted on star heatsink  </span>|
 |   100g    | <span style="color:blue"> PETG or heat resistant plastic (not needed for 1W option)  </span>|
-|   1       | kit 26 AWG silicon insulation flexible wire
-|   1       | 16xRGB LED Ring light 
+|   1       | kit 26 AWG silicon insulation flexible wire | [Amazon.co.uk](https://www.amazon.co.uk/Silicone-Electrical-Wire-HuLuWa-Stranded-Aircraft/dp/B0C8HPNV8Y) | [AliExpress](https://www.aliexpress.com/item/1005007256968315.html) |
+|   1       | 16xRGB LED Ring light | [The Pi Hut](https://thepihut.com/products/adafruit-neopixel-ring-16-x-5050-rgb-led-with-integrated-drivers) | [AliExpress](https://www.aliexpress.com/item/1005002287819725.html) |
 |           | **CONTROL** |
 |   1       | Raspberry Pi HQ Camera C - mount | [The Pi Hut](https://thepihut.com/products/raspberry-pi-high-quality-camera-module) | N.A. |
 |   1       | Raspberry Pi 4 4Gb |  [The Pi Hut](https://thepihut.com/products/raspberry-pi-4-model-b?variant=20064052740158) | N.A. |
-|   1       | SD Card > 32Gb | [Amazon.co.uk](https://www.amazon.co.uk/SanDisk-256GB-Ultra-microSDXC-Adapter/dp/B0B7NV73PJ) | N.A. | 
+|   1       | SD Card > 32Gb | [Amazon.co.uk](https://www.amazon.co.uk/SanDisk-256GB-Ultra-microSDXC-Adapter/dp/B0B7NV73PJ) | N.A. |
 |   1       | 200 mm Flex Cable for Raspberry Pi Camera |  [The Pi Hut](https://thepihut.com/products/flex-cable-for-raspberry-pi-camera-or-display-200mm-8) | |
 |   1       | Arduino R4 Minima | [The Pi Hut](https://thepihut.com/products/arduino-uno-r4-minima) | [AliExpress](https://www.aliexpress.com/item/1005008070945257.html) |
 |   5       | Female-Female dupont wire for I2C |
 |   1       | 16V Power supply | [Amazon.co.uk](https://www.amazon.co.uk/KFD-Keyboard-PSR-2000-PSR-S900-Workstation/dp/B07B9GDY4P)
 |           | **MAIN BOARD** |
-|   1       | Main PCB       | Upload files to [JLCPCB](https://jlcpcb.com/) 
+|   1       | Main PCB       | Upload files to [JLCPCB](https://jlcpcb.com/) ||
 |   3       | TMC 2209 stepstick module stepper driver | [Amazon.co.uk](https://www.amazon.co.uk/BIQU-DIRECT-Printer-Stepstick-Heatsink/dp/B07ZCTRS6N) | [AliExpress](https://www.aliexpress.com/item/33028050145.html)
 |   1       | Adafruit 3.3v <-> 5v 12C safe logic level converter | [The Pi Hut](https://thepihut.com/products/adafruit-4-channel-i2c-safe-bi-directional-logic-level-converter)
-|   2       | Waveshare DC-DC Buck Mini Module 6-36V to 5V 4A ***PCB version 1.3*** | [The Pi Hut](https://thepihut.com/products/dc-dc-buck-mini-module-3-3v-5v) |
-|   **OR** 2| Mini 560 -5V buck converter ***PCB version 1.3*** || [AliExpress](https://www.aliexpress.com/item/1005002525645136.html)  |
+|   2       | Waveshare DC-DC Buck Mini Module 6-36V to 5V 4A ***PCB version 1.2*** | [The Pi Hut](https://thepihut.com/products/dc-dc-buck-mini-module-3-3v-5v) ||
+|   **OR** 2| Mini 560 -5V buck converter ***PCB version 1.2*** || [AliExpress 5V vers](https://www.aliexpress.com/item/1005002525645136.html)  |
 |   6       | 1000 µf Electrolytic capacitor |
 |   2       | IRLU024NPBF |
 |   2       | 10kΩ resistor |
@@ -67,7 +67,7 @@
 |   2       | 1x6 2.54 mm PCB female pin headers for I2C level converter socket
 |   OR 3    | 1x32 2.54 mm PCB female pin headers (will need cutting)
 |   2       | 1x32 2.54 mm PCB breakable male pin headers for Arduino and I2C connector
-|  either 1 | Ring LED connector: Through hole 4 poles 2.54 mm pitch screw terminal block
+|  either 1 | Ring LED connector: Through hole 3 poles 2.54 mm pitch screw terminal block
 |  or 1     | Ring LED connector: 1x3 2.54 mm PCB female pin headers if you have a dupont wire  crimping tool
 
 
