@@ -3,13 +3,13 @@
 PwmOut Led1(Led1Pin);
 PwmOut Led2(Led2Pin);
 
-Stepstick X(XstepPin, XdirPin, XEnPin); 
+Stepstick X(XstepPin, XdirPin, XEnPin, XidxPin); 
 TMC2209Stepper X_driver(&Serial1, R_SENSE, X_DRIVER_ADDRESS);
 
-Stepstick Y(YstepPin, YdirPin, YEnPin); 
+Stepstick Y(YstepPin, YdirPin, YEnPin, YidxPin); 
 TMC2209Stepper Y_driver(&Serial1, R_SENSE, Y_DRIVER_ADDRESS);
 
-Stepstick Focus(FstepPin, FdirPin, FEnPin); 
+Stepstick Focus(FstepPin, FdirPin, FEnPin, FidxPin); 
 TMC2209Stepper F_driver(&Serial1, R_SENSE, F_DRIVER_ADDRESS);
 
 CRGBArray<NeoPixelCount> NeoPixel;

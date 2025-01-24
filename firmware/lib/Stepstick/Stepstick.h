@@ -34,7 +34,7 @@ class Stepstick {
   
   public:
     Stepstick(uint8_t stepPin, uint8_t dirPin);
-    Stepstick(uint8_t stepPin, uint8_t dirPin, uint8_t enPin);
+    Stepstick(uint8_t stepPin, uint8_t dirPin, uint8_t enPin = -1, uint8_t idxPin = -1);
     void begin();
     void setup_TMC(TMC2209Stepper *TMCdriver, uint8_t microsteps = 4,  uint16_t current = 800);
 
@@ -119,6 +119,7 @@ class Stepstick {
     uint8_t _dirPin;
     uint8_t _DiagPin = -1;
     uint8_t _enPin = -1;
+    uint8_t _idxPin = -1;
 
      /*
     //port and bitmasks

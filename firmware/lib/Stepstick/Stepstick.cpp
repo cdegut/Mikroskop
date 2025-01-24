@@ -9,21 +9,26 @@ Stepstick::Stepstick(uint8_t stepPin, uint8_t dirPin)
 
 }
 
-Stepstick::Stepstick(uint8_t stepPin, uint8_t dirPin, uint8_t enPin)
+Stepstick::Stepstick(uint8_t stepPin, uint8_t dirPin, uint8_t enPin, uint8_t idxPin)
 {
   _stepPin = stepPin;
   _dirPin = dirPin;
   _enPin = enPin;
-
+  _idxPin = idxPin;
 }
 
 void Stepstick::begin() 
 {
   pinMode(_stepPin, OUTPUT);
   pinMode(_dirPin, OUTPUT);
+
   if (_enPin != -1) {
     pinMode(_enPin, OUTPUT);
     digitalWrite(_enPin, LOW);
+  }
+
+  if (_idxPin != -1) {
+    pinMode(_idxPin, INPUT_PULLDOWN);
   }
 
 }
@@ -339,4 +344,5 @@ void Stepstick::axis_find_zero_stallguard(uint16_t bump) {
   _min_range = 0;
   Serial.println("Done");
 }
+
 
